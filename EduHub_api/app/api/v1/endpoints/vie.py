@@ -628,7 +628,7 @@ async def souscrire_abonnement(
     abonnement = AbonnementTransport(
         numero_carte=f"TR{total + 1:08d}",
         montant=ligne.tarif_abonnement,
-        statut_paiement=StatutPaiement.PENDING,
+        statut_paiement=StatutPaiement.EN_ATTENTE,
         **donnees.model_dump(),
     )
     session.add(abonnement)

@@ -149,7 +149,7 @@ class VersementBourse(Base):
     date_prevue: Mapped[date] = mapped_column(Date, nullable=False)
     date_versement: Mapped[date | None] = mapped_column(Date)
     statut: Mapped[StatutPaiement] = mapped_column(
-        Enum(StatutPaiement, native_enum=False), default=StatutPaiement.PENDING, nullable=False
+        Enum(StatutPaiement, native_enum=False), default=StatutPaiement.EN_ATTENTE, nullable=False
     )
     reference: Mapped[str | None] = mapped_column(String(80))
 
@@ -364,7 +364,7 @@ class AbonnementTransport(Base):
     date_fin: Mapped[date] = mapped_column(Date, nullable=False)
     montant: Mapped[float] = mapped_column(Float, default=0.0, nullable=False)
     statut_paiement: Mapped[StatutPaiement] = mapped_column(
-        Enum(StatutPaiement, native_enum=False), default=StatutPaiement.PENDING, nullable=False
+        Enum(StatutPaiement, native_enum=False), default=StatutPaiement.EN_ATTENTE, nullable=False
     )
     actif: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
 

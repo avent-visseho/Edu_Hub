@@ -328,7 +328,7 @@ async def _bourses(ctx: ContexteSeed) -> None:
                             "montant": montant,
                             "date_prevue": date(annee, 11, 5) + timedelta(days=30 * mois),
                             "date_versement": date(annee, 11, 8) + timedelta(days=30 * mois),
-                            "statut": StatutPaiement.PAID,
+                            "statut": StatutPaiement.PAYE,
                             "reference": generer_reference("VRS"),
                         }
                     )
@@ -490,7 +490,7 @@ async def _transport(ctx: ContexteSeed) -> None:
                     "date_debut": date.today() - timedelta(days=ctx.entier(10, 120)),
                     "date_fin": date.today() + timedelta(days=ctx.entier(30, 240)),
                     "montant": tarif * 18,
-                    "statut_paiement": StatutPaiement.PAID,
+                    "statut_paiement": StatutPaiement.PAYE,
                     "actif": True,
                 }
             )

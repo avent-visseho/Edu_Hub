@@ -104,7 +104,7 @@ class Langue(StrEnum):
 
 
 class StatutPaiement(StrEnum):
-    PENDING = "PENDING"
-    PAID = "PAID"
-    FAILED = "FAILED"
-    REFUNDED = "REFUNDED"
+    EN_ATTENTE = "EN_ATTENTE"
+    PAYE = "PAYE"
+    ECHOUE = "ECHOUE"
+    REMBOURSE = "REMBOURSE"

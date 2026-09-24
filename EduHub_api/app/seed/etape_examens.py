@@ -693,7 +693,9 @@ def _candidat(
             "montant_frais": float(ctx.entier(5000, 15000))
             if type_candidature == TypeCandidature.LIBRE
             else 0.0,
-            "statut_paiement": "PAID" if type_candidature == TypeCandidature.LIBRE else "PENDING",
+            "statut_paiement": (
+                "PAYE" if type_candidature == TypeCandidature.LIBRE else "EN_ATTENTE"
+            ),
             "type_handicap": type_handicap,
             "tiers_temps": type_handicap != "AUCUN",
             "amenagements_demandes": None
@@ -1572,7 +1574,7 @@ def _budget(
                     "fournisseur": None if categorie == "PERSONNEL" else "Fournisseur agréé",
                     "montant": round(paye / max(1, len(centres)), 2),
                     "date_depense": date.today(),
-                    "statut_paiement": "PAID",
+                    "statut_paiement": "PAYE",
                 }
             )
 

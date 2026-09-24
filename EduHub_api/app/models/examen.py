@@ -465,7 +465,7 @@ class Candidat(Base):
     # --- Frais ---
     montant_frais: Mapped[float] = mapped_column(Float, default=0.0, nullable=False)
     statut_paiement: Mapped[StatutPaiement] = mapped_column(
-        Enum(StatutPaiement, native_enum=False), default=StatutPaiement.PENDING, nullable=False
+        Enum(StatutPaiement, native_enum=False), default=StatutPaiement.EN_ATTENTE, nullable=False
     )
     reference_paiement: Mapped[str | None] = mapped_column(String(80))
     date_paiement: Mapped[date | None] = mapped_column(Date)
@@ -1264,7 +1264,7 @@ class DepenseExamen(Base):
     montant: Mapped[float] = mapped_column(Float, default=0.0, nullable=False)
     date_depense: Mapped[date] = mapped_column(Date, nullable=False)
     statut_paiement: Mapped[StatutPaiement] = mapped_column(
-        Enum(StatutPaiement, native_enum=False), default=StatutPaiement.PENDING, nullable=False
+        Enum(StatutPaiement, native_enum=False), default=StatutPaiement.EN_ATTENTE, nullable=False
     )
     justificatif_url: Mapped[str | None] = mapped_column(String(500))
 

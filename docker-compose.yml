@@ -1,0 +1,100 @@
+name: eduhub
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: eduhub-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-eduhub}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-eduhub}
+      POSTGRES_DB: ${POSTGRES_DB:-eduhub}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-eduhub}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    container_name: eduhub-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  minio:
+    image: minio/minio:latest
+    container_name: eduhub-minio
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-eduhub}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-eduhub123}
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build:
+      context: ./EduHub_api
+      dockerfile: Dockerfile
+    container_name: eduhub-api
+    restart: unless-stopped
+    env_file:
+      - ./EduHub_api/.env
+    environment:
+      EDUHUB_DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-eduhub}:${POSTGRES_PASSWORD:-eduhub}@postgres:5432/${POSTGRES_DB:-eduhub}
+      EDUHUB_REDIS_URL: redis://redis:6379/0
+      EDUHUB_S3_ENDPOINT_URL: http://minio:9000
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./EduHub_api:/app
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_started
+
+  front:
+    build:
+      context: ./EduHub_front
+      dockerfile: Dockerfile
+    container_name: eduhub-front
+    restart: unless-stopped
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:8000/api/v1
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./EduHub_front:/app
+      - /app/node_modules
+      - /app/.next
+    depends_on:
+      - api
+
+volumes:
+  postgres_data:
+  redis_data:
+  minio_data:

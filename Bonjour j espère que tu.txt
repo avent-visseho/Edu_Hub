@@ -1,0 +1,3769 @@
+Bonjour, j'espère que tu vas bien, j'ai un projet très gigantesque, le thème c'est l'éducation au bénin, l'objectif est de construire une plateforme numérique qui répond vraiment aux besoins des étudiants et des enseignats, avec à la clé une opportunité de collaborer sur des projet impactant, qui permet de gérer toutes les interactions entre les étudiants, les enseignants, les ministères, les structures gravitant autour d monde de l'éducation, la plateforme doit être totalement inclusive : accessible pour les personnes en situation de handicap visuel ou auditif, quelle que soit l'alphabétisation.
+
+- je veux une solution fonctionnelle et inclusives
+- interfaces claire et accessible, pensé pour une connectivité limitée
+- Gestion de contenu, même basique, avec des données fictives ou réelles
+
+donc en tant que expert parcours vraiment, regarde tout ce qui a rapport avec la vie de l'éducation, on veux pouvoir absolument tout gérer, même les transport universitaire, donc pense bsolument à tout ce qui existe et faison une combinaison de absolument tout.
+
+
+le nom de la plateforme sera EduHub
+
+# SYSTÈME INTÉGRÉ DE GESTION DE L'ÉDUCATION AU BÉNIN
+
+## Spécification fonctionnelle, métier, données et architecture du prototype
+
+### Version 1.0 — Prototype de démonstration
+
+---
+
+# 1. RÉSUMÉ DU PROJET
+
+Le projet consiste à développer une plateforme numérique intégrée permettant de gérer, dans un système unique, l'ensemble des processus liés à l'éducation.
+
+La plateforme couvrira progressivement :
+
+* l'éducation préscolaire ;
+* l'enseignement primaire ;
+* l'enseignement secondaire général ;
+* l'enseignement technique ;
+* la formation professionnelle ;
+* l'alphabétisation ;
+* l'enseignement supérieur ;
+* la recherche ;
+* les examens ;
+* les concours ;
+* les certifications ;
+* l'orientation ;
+* les bourses ;
+* les aides sociales ;
+* les enseignants ;
+* les établissements ;
+* les parents ;
+* les infrastructures ;
+* les transports ;
+* les bibliothèques ;
+* les ressources pédagogiques ;
+* les projets ;
+* les stages ;
+* l'emploi ;
+* les statistiques ;
+* la gouvernance ;
+* l'accessibilité ;
+* l'inclusion ;
+* l'analyse de données ;
+* l'intelligence artificielle.
+
+Le prototype sera entièrement autonome.
+
+Il ne dépendra :
+
+* d'aucune API EducMaster ;
+* d'aucune API ministérielle ;
+* d'aucune base de données gouvernementale ;
+* d'aucun service externe obligatoire.
+
+Toutes les données utilisées dans le prototype seront **fictives ou générées automatiquement**.
+
+---
+
+# 2. OBJECTIF DU PROTOTYPE
+
+L'objectif n'est pas de produire immédiatement un système national en production.
+
+L'objectif est de produire une **simulation fonctionnelle extrêmement complète** permettant de démontrer ce que pourrait devenir une plateforme numérique nationale de l'éducation.
+
+Le prototype doit donner l'impression d'utiliser un véritable système national.
+
+Un démonstrateur doit pouvoir montrer :
+
+> Un étudiant est inscrit dans un établissement, possède un dossier scolaire, reçoit ses bulletins, suit ses cours, possède des notes, passe des examens, obtient des résultats, peut demander une bourse, utiliser le transport universitaire, rejoindre un projet, effectuer un stage et finalement entrer dans le monde professionnel.
+
+En parallèle :
+
+> Un enseignant gère ses classes, ses cours, les présences, les notes et les bulletins.
+
+Et :
+
+> Un établissement gère ses élèves, ses enseignants, ses classes, ses salles, ses examens, ses résultats et ses infrastructures.
+
+Enfin :
+
+> Une administration peut interroger l'ensemble des données et produire des analyses extrêmement précises.
+
+---
+
+# 3. PHILOSOPHIE DU PROJET
+
+Le système repose sur cinq principes.
+
+## 3.1. Tout gérer
+
+Aucun domaine important de la vie éducative ne doit être volontairement exclu du modèle.
+
+---
+
+## 3.2. Tout simuler
+
+Les données réelles ne sont pas nécessaires pour la démonstration.
+
+Le système possède son propre générateur de données fictives.
+
+---
+
+## 3.3. Tout relier
+
+Les modules ne doivent pas fonctionner comme des applications indépendantes.
+
+Exemple :
+
+```text
+Élève
+  ↓
+Établissement
+  ↓
+Classe
+  ↓
+Enseignant
+  ↓
+Matière
+  ↓
+Notes
+  ↓
+Moyenne
+  ↓
+Bulletin
+  ↓
+Examen
+  ↓
+Résultat
+  ↓
+Orientation
+```
+
+---
+
+## 3.4. Tout rechercher
+
+L'administration doit pouvoir interroger les données de manière très avancée.
+
+Exemple :
+
+> « Afficher tous les élèves des CEG de l'Atlantique ayant une moyenne générale supérieure ou égale à 18/20. »
+
+Ou :
+
+> « Quels sont les établissements ayant un taux de réussite inférieur à 50 % au BEPC ? »
+
+Ou :
+
+> « Quels établissements du Littoral ont plus de 1 000 élèves mais moins de 20 salles ? »
+
+Ou :
+
+> « Quels élèves ont une progression supérieure à 3 points entre le premier et le troisième trimestre ? »
+
+---
+
+## 3.5. Accessibilité universelle
+
+Le système doit pouvoir être utilisé par :
+
+* une personne voyante ;
+* une personne malvoyante ;
+* une personne aveugle ;
+* une personne sourde ;
+* une personne ayant des difficultés de lecture ;
+* une personne peu alphabétisée ;
+* un utilisateur disposant d'une connexion faible.
+
+---
+
+# 4. RÉFÉRENCE FONCTIONNELLE : EDUCMASTER
+
+EducMaster constitue l'une des références fonctionnelles utilisées pour construire le périmètre.
+
+Le portail actuel présente EducMaster comme un système d'information et de gestion de l'éducation couvrant notamment :
+
+* les apprenants ;
+* les enseignants ;
+* les établissements ;
+* les emplois du temps ;
+* les examens ;
+* la cartographie ;
+* les indicateurs ;
+* les rapports statistiques.
+
+Le sous-système maternel/primaire présente également :
+
+* apprenants ;
+* enseignants ;
+* écoles ;
+* classes ;
+* examens ;
+* ressources humaines ;
+* planning ;
+* statistiques ;
+* cartographie.
+
+Le sous-système secondaire couvre notamment :
+
+* apprenants ;
+* classes ;
+* examens ;
+* établissements ;
+* ressources humaines ;
+* planning ;
+* indicateurs.
+
+La plateforme officielle dispose également d'un espace DEC consacré aux examens et concours.
+
+**Toutes ces fonctions doivent être représentées dans notre propre système.**
+
+---
+
+# 5. PÉRIMÈTRE GLOBAL
+
+Le système est divisé en 18 grands domaines.
+
+```text
+01. Identité et utilisateurs
+02. Organisation institutionnelle
+03. Établissements
+04. Apprenants
+05. Enseignants et personnel
+06. Scolarité
+07. Pédagogie
+08. Évaluations et bulletins
+09. Examens et concours
+10. Diplômes et certifications
+11. Orientation
+12. Vie étudiante
+13. Ressources et services
+14. Projets, recherche et innovation
+15. Stages et emploi
+16. Infrastructures
+17. Gouvernance et statistiques
+18. IA, recherche et aide à la décision
+```
+
+---
+
+# 6. HIÉRARCHIE INSTITUTIONNELLE
+
+Le système doit être capable de représenter une organisation complexe.
+
+```text
+État
+│
+├── Ministère
+│   │
+│   ├── Direction
+│   │
+│   ├── Direction des examens
+│   │
+│   ├── Direction départementale
+│   │
+│   └── Structures rattachées
+│
+├── Établissements scolaires
+│
+├── Universités
+│
+├── Instituts
+│
+├── Centres de formation
+│
+└── Centres d'alphabétisation
+```
+
+Les documents fournis définissent déjà une chaîne :
+
+```text
+Super administrateur
+        ↓
+Ministère
+        ↓
+Direction des examens
+        ↓
+Direction départementale
+        ↓
+Établissement
+        ↓
+Candidat
+```
+
+Cette hiérarchie est conservée et généralisée.
+
+---
+
+# 7. UTILISATEURS
+
+## 7.1. Rôles principaux
+
+```text
+SUPER_ADMIN
+MINISTRY_ADMIN
+DIRECTOR_ADMIN
+DEPARTMENT_ADMIN
+EXAM_ADMIN
+SCHOOL_ADMIN
+SCHOOL_STAFF
+TEACHER
+STUDENT
+PARENT
+CANDIDATE
+CORRECTOR
+INVIGILATOR
+JURY_MEMBER
+RESEARCHER
+COMPANY
+PARTNER
+TRANSPORT_MANAGER
+LIBRARIAN
+HEALTH_WORKER
+FINANCE_MANAGER
+```
+
+---
+
+# 8. AUTORISATION
+
+Chaque utilisateur possède :
+
+```text
+Utilisateur
+    ↓
+Rôle
+    ↓
+Permissions
+    ↓
+Ressources
+    ↓
+Actions
+```
+
+Permissions :
+
+```text
+CREATE
+READ
+UPDATE
+DELETE
+VALIDATE
+APPROVE
+REJECT
+PUBLISH
+EXPORT
+PRINT
+ASSIGN
+ARCHIVE
+```
+
+---
+
+# 9. GESTION DES ANNÉES
+
+Le système doit gérer :
+
+* année scolaire ;
+* année académique ;
+* semestre ;
+* trimestre ;
+* session ;
+* période d'évaluation.
+
+Exemple :
+
+```text
+2026-2027
+ ├── Trimestre 1
+ ├── Trimestre 2
+ └── Trimestre 3
+```
+
+Pour l'université :
+
+```text
+2026-2027
+ ├── Semestre 1
+ └── Semestre 2
+```
+
+---
+
+# 10. RÉFÉRENTIELS
+
+Les référentiels sont centralisés.
+
+```text
+Départements
+Communes
+Arrondissements
+Villages
+Quartiers
+Types établissements
+Statuts établissements
+Cycles
+Niveaux
+Séries
+Filières
+Matières
+Diplômes
+Types examens
+Types concours
+Types documents
+Types handicap
+Types bourses
+Types formations
+```
+
+---
+
+# 11. MODULE ÉTABLISSEMENTS
+
+Chaque établissement possède :
+
+```text
+Identité
+Code
+Nom
+Type
+Statut
+Ministère
+Département
+Commune
+Adresse
+Coordonnées GPS
+Directeur
+Téléphone
+Email
+Année de création
+Capacité
+```
+
+---
+
+# 12. INFRASTRUCTURES DE L'ÉTABLISSEMENT
+
+Un établissement peut posséder :
+
+```text
+Terrain
+Bâtiments
+Étages
+Salles
+Laboratoires
+Bibliothèque
+Salle informatique
+Salle numérique
+Cantine
+Internat
+Sanitaires
+Infirmerie
+Terrain sportif
+Administration
+Salle des professeurs
+```
+
+Chaque salle possède :
+
+```text
+Nom
+Type
+Capacité
+Bâtiment
+Étage
+Équipement
+Accessibilité
+Disponibilité
+```
+
+---
+
+# 13. ÉQUIPEMENTS
+
+Gestion :
+
+* ordinateurs ;
+* vidéoprojecteurs ;
+* tableaux ;
+* imprimantes ;
+* équipements scientifiques ;
+* équipements sportifs ;
+* mobilier ;
+* équipements accessibles.
+
+Chaque équipement :
+
+```text
+Référence
+Type
+État
+Localisation
+Date acquisition
+Valeur
+Maintenance
+```
+
+---
+
+# 14. MODULE APPRENANT
+
+Le profil de l'apprenant constitue l'une des entités centrales.
+
+```text
+Identité
+Photo
+Identifiant
+Date naissance
+Lieu naissance
+Sexe
+Nationalité
+Adresse
+Contact
+Parent/tuteur
+Situation scolaire
+Besoins spécifiques
+```
+
+---
+
+# 15. DOSSIER SCOLAIRE
+
+Le dossier conserve tout le parcours.
+
+```text
+Établissements
+Inscriptions
+Classes
+Présences
+Absences
+Notes
+Évaluations
+Bulletins
+Examens
+Concours
+Résultats
+Diplômes
+Certificats
+Sanctions
+Récompenses
+Projets
+Stages
+Compétences
+```
+
+---
+
+# 16. IDENTIFIANT ÉDUCATIF
+
+Chaque apprenant possède :
+
+```text
+EDU-2026-000001
+```
+
+Cet identifiant est utilisé dans tout le système.
+
+---
+
+# 17. INSCRIPTION
+
+Workflow :
+
+```text
+Demande
+ ↓
+Dossier
+ ↓
+Vérification
+ ↓
+Validation
+ ↓
+Inscription
+ ↓
+Affectation classe
+```
+
+Une inscription contient :
+
+```text
+Année
+Établissement
+Classe
+Régime
+Statut
+Date
+Documents
+```
+
+---
+
+# 18. TRANSFERT
+
+Un apprenant peut changer d'établissement.
+
+```text
+Demande transfert
+ ↓
+Établissement origine
+ ↓
+Établissement destination
+ ↓
+Validation
+ ↓
+Transfert
+ ↓
+Historisation
+```
+
+L'historique doit être conservé.
+
+---
+
+# 19. MODULE ENSEIGNANT
+
+Profil :
+
+```text
+Identité
+Matricule
+Qualification
+Diplômes
+Spécialités
+Matières
+Statut
+Ancienneté
+Établissement
+Affectation
+```
+
+---
+
+# 20. CARRIÈRE ENSEIGNANT
+
+```text
+Recrutement
+ ↓
+Affectation
+ ↓
+Prise de service
+ ↓
+Mutation
+ ↓
+Promotion
+ ↓
+Formation
+ ↓
+Évaluation
+```
+
+Le périmètre est cohérent avec le rôle que le ministère attribue à la gestion des ressources humaines et aux fonctionnalités EducMaster autour des compétences et carrières.
+
+---
+
+# 21. CLASSES
+
+Une classe possède :
+
+```text
+Année
+Établissement
+Niveau
+Série
+Filière
+Salle
+Professeur principal
+Élèves
+```
+
+---
+
+# 22. MATIÈRES
+
+```text
+Mathématiques
+Français
+Anglais
+SVT
+Physique-Chimie
+Histoire-Géographie
+Philosophie
+Informatique
+Économie
+etc.
+```
+
+Chaque matière possède :
+
+```text
+Coefficient
+Volume horaire
+Niveau
+Série
+Programme
+```
+
+---
+
+# 23. PROGRAMMES ET CURRICULA
+
+Gestion :
+
+```text
+Cycle
+Niveau
+Matière
+Programme
+Chapitre
+Compétence
+Objectif pédagogique
+Ressource
+```
+
+---
+
+# 24. EMPLOI DU TEMPS
+
+Le système génère :
+
+```text
+Classe
+Matière
+Enseignant
+Salle
+Jour
+Heure
+```
+
+Détection automatique des conflits :
+
+```text
+Enseignant déjà occupé
+Salle déjà occupée
+Classe déjà occupée
+```
+
+---
+
+# 25. PRÉSENCE
+
+Pour chaque séance :
+
+```text
+Présent
+Absent
+Retard
+Absence justifiée
+Absence injustifiée
+```
+
+Analyse :
+
+```text
+Taux présence
+Nombre absences
+Nombre retards
+Évolution
+```
+
+---
+
+# 26. ÉVALUATIONS
+
+Types :
+
+```text
+Devoir
+Interrogation
+TP
+Projet
+Examen blanc
+Examen
+Contrôle continu
+Oral
+Évaluation pratique
+```
+
+Chaque évaluation possède :
+
+```text
+Matière
+Date
+Barème
+Coefficient
+Classe
+Enseignant
+```
+
+---
+
+# 27. NOTES
+
+Workflow :
+
+```text
+Création évaluation
+ ↓
+Saisie
+ ↓
+Validation enseignant
+ ↓
+Validation établissement
+ ↓
+Calcul moyenne
+ ↓
+Publication
+```
+
+---
+
+# 28. CALCUL DES MOYENNES
+
+Le système doit gérer :
+
+* moyenne simple ;
+* moyenne pondérée ;
+* coefficients ;
+* moyenne matière ;
+* moyenne trimestre ;
+* moyenne annuelle ;
+* moyenne générale.
+
+Exemple :
+
+```text
+Mathématiques = 18 × coefficient 4
+Français = 16 × coefficient 3
+Anglais = 17 × coefficient 2
+```
+
+---
+
+# 29. BULLETINS
+
+Le bulletin constitue une fonctionnalité obligatoire du prototype.
+
+Un bulletin contient :
+
+```text
+Identité élève
+Établissement
+Classe
+Année
+Période
+Matières
+Notes
+Coefficients
+Moyennes
+Rang
+Moyenne générale
+Appréciations
+Absences
+Retards
+Décision
+Signature
+```
+
+---
+
+# 30. BULLETIN NUMÉRIQUE
+
+Chaque bulletin peut être :
+
+* consulté ;
+* imprimé ;
+* téléchargé en PDF ;
+* archivé ;
+* vérifié par QR code.
+
+Exemple :
+
+```text
+BULLETIN — TRIMESTRE 2
+
+Élève : Jean A.
+Classe : 3ème A
+Moyenne : 16,85 / 20
+Rang : 4 / 57
+
+Décision :
+Très bon niveau
+```
+
+---
+
+# 31. CONSEIL DE CLASSE
+
+Gestion :
+
+```text
+Classe
+Enseignants
+Élèves
+Moyennes
+Absences
+Appréciations
+Décisions
+```
+
+Décisions possibles :
+
+```text
+Passage
+Redoublement
+Orientation
+Encouragement
+Avertissement
+```
+
+---
+
+# 32. CONSEILS ET DISTINCTIONS
+
+Le système peut détecter :
+
+```text
+Meilleure moyenne
+Meilleure progression
+Meilleure matière
+Assiduité exceptionnelle
+```
+
+---
+
+# 33. EXAMENS
+
+Le module reprend intégralement la logique des documents fournis.
+
+Le document de référence prévoit notamment :
+
+* création des examens/concours ;
+* sessions ;
+* séries ;
+* matières ;
+* pièces jointes ;
+* candidats ;
+* centres ;
+* saisie des notes ;
+* calcul des moyennes ;
+* publication ;
+* jurys ;
+* contentieux ;
+* budget ;
+* archivage.
+
+---
+
+# 34. TYPES D'EXAMENS
+
+Le système doit pouvoir gérer :
+
+```text
+CEP
+BEPC
+BAC
+Examens techniques
+Examens professionnels
+Examens universitaires
+Examens blancs
+Examens internes
+Certifications
+```
+
+---
+
+# 35. CONCOURS
+
+Le système doit également gérer :
+
+```text
+Concours scolaires
+Concours universitaires
+Concours professionnels
+Concours d'entrée
+Concours de recrutement
+Concours administratifs
+```
+
+---
+
+# 36. CONFIGURATION D'UN EXAMEN
+
+```text
+Nom
+Code
+Type
+Session
+Année
+Ministère
+Direction responsable
+Date début
+Date fin
+Centre
+Conditions
+Séries
+Matières
+Documents requis
+Frais
+Règlement
+```
+
+---
+
+# 37. SESSION
+
+Une session représente une occurrence précise.
+
+Exemple :
+
+```text
+BEPC 2027
+Session normale
+Juin 2027
+```
+
+---
+
+# 38. CANDIDATURE
+
+Un candidat peut :
+
+```text
+Créer compte
+Remplir dossier
+Ajouter photo
+Ajouter documents
+Choisir série
+Choisir centre
+Soumettre
+Suivre statut
+```
+
+---
+
+# 39. STATUT DOSSIER
+
+```text
+BROUILLON
+SOUMIS
+EN_ETUDE
+INCOMPLET
+REJETE
+VALIDE
+CONVOQUE
+COMPOSE
+CORRIGE
+ADMIS
+NON_ADMIS
+```
+
+---
+
+# 40. PIÈCES JOINTES
+
+Les pièces jointes sont une fonctionnalité essentielle.
+
+Chaque dossier peut contenir :
+
+```text
+Photo identité
+Acte naissance
+Certificat
+Diplôme
+Relevé
+Attestation
+Certificat médical
+Quittance
+Autorisation
+Document administratif
+Autre pièce
+```
+
+Le système doit gérer :
+
+```text
+Nom fichier
+Type
+Taille
+Version
+Date
+Auteur
+Statut
+```
+
+---
+
+# 41. VALIDATION DES PIÈCES
+
+Chaque pièce peut être :
+
+```text
+EN_ATTENTE
+VALIDEE
+REJETEE
+A_CORRIGER
+```
+
+Motif du rejet :
+
+```text
+Document illisible
+Document incorrect
+Document expiré
+Mauvais format
+Document manquant
+```
+
+---
+
+# 42. RÉPARTITION DES CANDIDATS
+
+Le système affecte les candidats :
+
+```text
+Département
+ ↓
+Centre
+ ↓
+Bâtiment
+ ↓
+Salle
+ ↓
+Place
+```
+
+Le document fourni prévoit explicitement la répartition des candidats par centre et salle.
+
+---
+
+# 43. CENTRES DE COMPOSITION
+
+Gestion :
+
+```text
+Centre
+Responsable
+Établissement
+Bâtiments
+Salles
+Capacités
+Candidats
+Surveillants
+Correcteurs
+```
+
+---
+
+# 44. SURVEILLANTS
+
+Gestion :
+
+```text
+Enseignant
+Centre
+Salle
+Date
+Horaire
+Statut
+Convocation
+```
+
+---
+
+# 45. CORRECTEURS
+
+Gestion :
+
+```text
+Correcteur
+Matière
+Série
+Copies attribuées
+Copies corrigées
+Notes
+```
+
+---
+
+# 46. CHEFS DE CENTRE
+
+Gestion :
+
+```text
+Nom
+Centre
+Téléphone
+Responsabilités
+Convocation
+Rapports
+Incidents
+```
+
+---
+
+# 47. JURYS
+
+Le système doit gérer :
+
+```text
+Président
+Membres
+Examens
+Séries
+Délibérations
+Décisions
+```
+
+Le document fourni inclut explicitement la constitution des jurys.
+
+---
+
+# 48. ÉPREUVES
+
+Une épreuve possède :
+
+```text
+Examen
+Session
+Série
+Matière
+Date
+Heure
+Durée
+Barème
+Coefficient
+Sujet
+Instructions
+```
+
+---
+
+# 49. BANQUE D'ÉPREUVES
+
+Le prototype doit permettre :
+
+```text
+Ajouter épreuve
+Rechercher
+Filtrer
+Télécharger
+Archiver
+Classer
+```
+
+Filtres :
+
+```text
+Examen
+Série
+Niveau
+Matière
+Année
+Session
+```
+
+Le portail EducMaster comporte lui-même une rubrique « Banque des Épreuves ».
+
+---
+
+# 50. COPIES
+
+Pour une simulation complète :
+
+```text
+Candidat
+ ↓
+Copie
+ ↓
+Correcteur
+ ↓
+Correction
+ ↓
+Note
+ ↓
+Validation
+```
+
+---
+
+# 51. SAISIE DES NOTES D'EXAMEN
+
+Le document de référence prévoit explicitement la saisie des notes et le calcul des moyennes.
+
+Le système doit gérer :
+
+```text
+Note
+Absence
+Note éliminatoire
+Copie absente
+Fraude
+Dispense
+```
+
+---
+
+# 52. DÉLIBÉRATION
+
+```text
+Notes
+ ↓
+Calcul
+ ↓
+Règles d'admission
+ ↓
+Jury
+ ↓
+Validation
+ ↓
+Publication
+```
+
+---
+
+# 53. RÉSULTATS
+
+Chaque résultat possède :
+
+```text
+Candidat
+Examen
+Session
+Série
+Matières
+Notes
+Moyenne
+Mention
+Décision
+Rang
+```
+
+---
+
+# 54. MENTIONS
+
+Exemple :
+
+```text
+Passable
+Assez bien
+Bien
+Très bien
+Excellent
+```
+
+Les règles sont configurables.
+
+---
+
+# 55. RÉSULTATS PAR ÉTABLISSEMENT
+
+Dashboard :
+
+```text
+Candidats inscrits
+Présents
+Absents
+Admis
+Non admis
+Taux réussite
+Moyenne établissement
+Meilleur candidat
+```
+
+---
+
+# 56. RÉSULTATS PAR DÉPARTEMENT
+
+```text
+Département
+Nombre candidats
+Admis
+Non admis
+Taux réussite
+Moyenne
+```
+
+---
+
+# 57. CONTENTIEUX EXAMENS
+
+Le système reprend le module prévu dans les documents.
+
+Workflow :
+
+```text
+Réclamation
+ ↓
+Dossier
+ ↓
+Pièces
+ ↓
+Instruction
+ ↓
+Décision
+ ↓
+Notification
+```
+
+---
+
+# 58. DIPLÔMES
+
+Après validation :
+
+```text
+Résultat
+ ↓
+Diplôme
+```
+
+Diplôme :
+
+```text
+Numéro
+Candidat
+Examen
+Session
+Date
+Mention
+QR Code
+Statut
+```
+
+---
+
+# 59. VÉRIFICATION DE DIPLÔME
+
+```text
+Scanner QR
+ ↓
+Entrer numéro
+ ↓
+Vérifier
+```
+
+Réponse :
+
+```text
+Diplôme valide
+Nom
+Examen
+Session
+Date
+```
+
+---
+
+# 60. CONVOCATIONS
+
+Génération automatique :
+
+```text
+Candidat
+Surveillant
+Correcteur
+Chef centre
+Jury
+```
+
+Format :
+
+* PDF ;
+* impression ;
+* QR code.
+
+---
+
+# 61. GESTION BUDGÉTAIRE
+
+Le document fourni inclut la gestion budgétaire et comptable.
+
+Le prototype prévoit :
+
+```text
+Budget
+Ligne budgétaire
+Dépense
+Recette
+Paiement
+Fournisseur
+Justificatif
+```
+
+Pour les examens :
+
+```text
+Centre
+Surveillants
+Correcteurs
+Transport
+Matériel
+Impression
+Logistique
+```
+
+---
+
+# 62. GESTION FINANCIÈRE
+
+Les paiements réels ne sont pas nécessaires.
+
+Le prototype utilise :
+
+```text
+PAID
+PENDING
+FAILED
+REFUNDED
+```
+
+---
+
+# 63. ORIENTATION
+
+Gestion :
+
+```text
+Profil étudiant
+Résultats
+Série
+Formation
+Établissement
+Choix
+Affectation
+```
+
+---
+
+# 64. FORMATIONS
+
+Chaque formation possède :
+
+```text
+Nom
+Code
+Niveau
+Diplôme
+Durée
+Établissement
+Conditions
+Matières
+Compétences
+Débouchés
+Places
+```
+
+---
+
+# 65. UNIVERSITÉ
+
+Gestion :
+
+```text
+Université
+Faculté
+École
+Institut
+Département
+Filière
+Formation
+Étudiant
+Enseignant
+UE
+ECUE
+Crédits
+Notes
+Semestres
+```
+
+---
+
+# 66. BULLETIN UNIVERSITAIRE
+
+```text
+Semestre
+UE
+ECUE
+Crédits
+Notes
+Moyenne
+Crédits acquis
+Décision
+```
+
+---
+
+# 67. BOURSES
+
+Workflow :
+
+```text
+Programme
+ ↓
+Ouverture
+ ↓
+Candidature
+ ↓
+Dossier
+ ↓
+Évaluation
+ ↓
+Validation
+ ↓
+Attribution
+ ↓
+Suivi
+```
+
+---
+
+# 68. AIDES SOCIALES
+
+Types :
+
+```text
+Aide transport
+Aide logement
+Aide restauration
+Aide exceptionnelle
+Aide handicap
+Aide matériel
+```
+
+---
+
+# 69. TRANSPORT
+
+Gestion :
+
+```text
+Bus
+Moto
+Tricycle
+Navette
+Ligne
+Arrêt
+Conducteur
+Itinéraire
+Horaires
+```
+
+Pour le prototype :
+
+```text
+GPS fictif
+Position fictive
+ETA fictive
+```
+
+---
+
+# 70. TRANSPORT UNIVERSITAIRE
+
+Dashboard étudiant :
+
+```text
+Ligne 03
+Bus B-024
+Prochain arrêt
+08 minutes
+Places disponibles
+32
+```
+
+---
+
+# 71. LOGEMENT
+
+Gestion :
+
+```text
+Résidence
+Bâtiment
+Chambre
+Lit
+Étudiant
+Demande
+Affectation
+```
+
+---
+
+# 72. RESTAURATION
+
+Gestion :
+
+```text
+Restaurant
+Cantine
+Menu
+Repas
+Tarif
+Fréquentation
+```
+
+---
+
+# 73. SANTÉ
+
+Pour la simulation :
+
+```text
+Centre santé
+Service
+Rendez-vous
+Campagne
+Orientation
+```
+
+Les données médicales détaillées restent fictives.
+
+---
+
+# 74. BIBLIOTHÈQUE
+
+Gestion :
+
+```text
+Livre
+Auteur
+Catégorie
+Exemplaire
+Emprunt
+Retour
+Retard
+```
+
+---
+
+# 75. RESSOURCES PÉDAGOGIQUES
+
+Types :
+
+```text
+PDF
+Vidéo
+Audio
+Image
+Présentation
+Exercice
+Quiz
+Livre
+Cours
+```
+
+---
+
+# 76. E-LEARNING
+
+```text
+Cours
+ ↓
+Module
+ ↓
+Chapitre
+ ↓
+Ressource
+ ↓
+Exercice
+ ↓
+Évaluation
+ ↓
+Progression
+```
+
+---
+
+# 77. PROJETS
+
+Les établissements, enseignants, étudiants, entreprises et administrations peuvent créer des projets.
+
+```text
+Projet
+Titre
+Description
+Domaine
+Objectifs
+Porteur
+Budget
+Participants
+Compétences
+Deadline
+Statut
+```
+
+---
+
+# 78. ÉQUIPES
+
+```text
+Projet
+ ↓
+Équipe
+ ├── Étudiants
+ ├── Enseignants
+ ├── Chercheurs
+ └── Partenaires
+```
+
+---
+
+# 79. RECHERCHE
+
+Gestion :
+
+```text
+Chercheur
+Laboratoire
+Publication
+Article
+Thèse
+Mémoire
+Projet scientifique
+Financement
+Conférence
+```
+
+---
+
+# 80. STAGES
+
+```text
+Entreprise
+ ↓
+Offre
+ ↓
+Candidature
+ ↓
+Sélection
+ ↓
+Convention
+ ↓
+Stage
+ ↓
+Évaluation
+ ↓
+Attestation
+```
+
+---
+
+# 81. EMPLOI
+
+Profil :
+
+```text
+Formation
+Compétences
+Certifications
+Projets
+Stages
+Portfolio
+```
+
+Offres :
+
+```text
+Entreprise
+Poste
+Compétences
+Localisation
+Type contrat
+```
+
+---
+
+# 82. ALPHABÉTISATION
+
+Gestion :
+
+```text
+Centre
+Formateur
+Apprenant
+Programme
+Langue
+Niveau
+Progression
+Certification
+```
+
+---
+
+# 83. LANGUES
+
+Le système doit être conçu pour permettre :
+
+```text
+Français
+Fon
+Yoruba
+Bariba
+Dendi
+Adja
+etc.
+```
+
+Dans le prototype, quelques langues peuvent être simulées avec un système de traduction.
+
+---
+
+# 84. ACCESSIBILITÉ
+
+Le système doit prévoir :
+
+```text
+Mode contraste élevé
+Grande police
+Lecteur audio
+Navigation clavier
+Lecteur écran
+Sous-titres
+Transcription
+Pictogrammes
+Interface simplifiée
+```
+
+---
+
+# 85. MODE « LECTURE »
+
+Tout contenu important peut être lu vocalement.
+
+Exemple :
+
+```text
+[▶ Lire]
+
+Moyenne générale :
+16 virgule 82 sur 20.
+```
+
+---
+
+# 86. MODE « SIMPLIFIÉ »
+
+Une interface alternative :
+
+```text
+📚 Mes cours
+
+📝 Mes notes
+
+📅 Mon emploi du temps
+
+🏆 Mes résultats
+
+🚌 Mon transport
+```
+
+---
+
+# 87. PARENTS
+
+Dashboard :
+
+```text
+Enfants
+Présence
+Notes
+Bulletins
+Examens
+Convocations
+Messages
+Paiements
+Notifications
+```
+
+---
+
+# 88. COMMUNICATION
+
+Messages entre :
+
+```text
+Étudiant ↔ Enseignant
+Parent ↔ Enseignant
+Établissement ↔ Parent
+Ministère ↔ Établissement
+Administration ↔ Étudiant
+```
+
+---
+
+# 89. NOTIFICATIONS
+
+Types :
+
+```text
+Information
+Urgence
+Examen
+Résultat
+Absence
+Paiement
+Bourse
+Transport
+Cours
+Projet
+```
+
+---
+
+# 90. DOCUMENTS
+
+Gestion centralisée :
+
+```text
+Document
+Type
+Auteur
+Propriétaire
+Statut
+Version
+Date
+Signature
+```
+
+---
+
+# 91. ARCHIVES
+
+Le système doit archiver :
+
+* dossiers ;
+* bulletins ;
+* notes ;
+* examens ;
+* copies ;
+* résultats ;
+* diplômes ;
+* convocations ;
+* documents administratifs.
+
+Le modèle fourni prévoit explicitement les archives et l'archivage des épreuves par filière, classe/niveau, matière et année/session.
+
+---
+
+# 92. MOTEUR DE RECHERCHE
+
+C'est l'une des fonctionnalités majeures du prototype.
+
+Recherche globale :
+
+```text
+Élève
+Enseignant
+Établissement
+Classe
+Examen
+Concours
+Diplôme
+Projet
+Document
+```
+
+---
+
+# 93. REQUÊTES AVANCÉES
+
+L'administrateur doit pouvoir construire des filtres.
+
+Exemple :
+
+```text
+Type :
+Élève
+
+Département :
+Atlantique
+
+Établissement :
+CEG *
+
+Moyenne générale :
+>= 18
+
+Année :
+2026-2027
+```
+
+Résultat :
+
+```text
+87 élèves trouvés
+```
+
+---
+
+# 94. AUTRES EXEMPLES DE RECHERCHE
+
+### Exemple 1
+
+> Élèves de CEG ayant plus de 18 de moyenne.
+
+### Exemple 2
+
+> Élèves ayant moins de 8 en mathématiques et plus de 15 en français.
+
+### Exemple 3
+
+> Établissements ayant plus de 1 000 élèves.
+
+### Exemple 4
+
+> Enseignants affectés à plusieurs établissements.
+
+### Exemple 5
+
+> Élèves avec plus de 20 % d'absences.
+
+### Exemple 6
+
+> Candidats BEPC non admis avec une moyenne comprise entre 9 et 10.
+
+### Exemple 7
+
+> Élèves ayant progressé de plus de 5 points.
+
+### Exemple 8
+
+> Établissements dont le taux de réussite dépasse 90 %.
+
+---
+
+# 95. QUERY BUILDER
+
+L'administration dispose d'un constructeur visuel :
+
+```text
+SI
+    Département = Atlantique
+ET
+    Type établissement = CEG
+ET
+    Moyenne générale >= 18
+ALORS
+    afficher élèves
+```
+
+---
+
+# 96. VARIABLES DISPONIBLES
+
+```text
+Nom
+Âge
+Sexe
+Département
+Commune
+Établissement
+Classe
+Série
+Moyenne
+Matière
+Absences
+Résultats
+Examen
+Mention
+Bourse
+Handicap
+Projet
+Stage
+```
+
+---
+
+# 97. EXPORT
+
+Résultats :
+
+```text
+CSV
+Excel
+PDF
+JSON
+```
+
+---
+
+# 98. CARTOGRAPHIE
+
+Carte nationale fictive.
+
+Filtres :
+
+```text
+Écoles
+CEG
+Lycées
+Universités
+Centres formation
+Centres alphabétisation
+Transport
+Résidences
+```
+
+---
+
+# 99. ANALYTICS
+
+Dashboard :
+
+```text
+Effectifs
+Répartition filles/garçons
+Moyennes
+Réussite
+Abandon
+Présence
+Enseignants
+Infrastructure
+```
+
+---
+
+# 100. ANALYSE PRÉDICTIVE
+
+À terme :
+
+```text
+Risque abandon
+Risque échec
+Besoin enseignant
+Besoin infrastructure
+Prévision effectifs
+```
+
+Pour le prototype, les prédictions peuvent être simulées ou calculées sur les données fictives.
+
+---
+
+# 101. MOTEUR DE RÈGLES
+
+Créer un moteur générique.
+
+Exemple :
+
+```text
+SI moyenne >= 18
+ALORS catégorie = "Excellent"
+```
+
+Autre :
+
+```text
+SI absence > 20%
+ALORS alerte = "Assiduité"
+```
+
+---
+
+# 102. IA
+
+L'IA n'est pas nécessaire au fonctionnement du cœur.
+
+Elle constitue une couche supplémentaire.
+
+Fonctions possibles :
+
+```text
+Assistant étudiant
+Assistant enseignant
+Analyse des résultats
+Génération de rapports
+Recherche en langage naturel
+Orientation assistée
+Analyse documentaire
+```
+
+---
+
+# 103. RECHERCHE EN LANGAGE NATUREL
+
+C'est une fonctionnalité particulièrement intéressante pour la démonstration.
+
+L'administrateur écrit :
+
+> « Montre-moi les élèves des CEG de Porto-Novo qui ont au moins 17 de moyenne en mathématiques. »
+
+Le système transforme la demande en filtre structuré.
+
+```text
+department = "Ouémé"
+city = "Porto-Novo"
+institution_type = "CEG"
+math_average >= 17
+```
+
+Puis affiche le résultat.
+
+---
+
+# 104. TABLEAU DE BORD NATIONAL
+
+```text
+APPRENANTS
+ENSEIGNANTS
+ÉTABLISSEMENTS
+CLASSES
+EXAMENS
+CONCOURS
+RÉSULTATS
+BOURSES
+INFRASTRUCTURES
+TRANSPORT
+PROJETS
+```
+
+---
+
+# 105. TABLEAU DE BORD ÉTABLISSEMENT
+
+```text
+Élèves
+Enseignants
+Classes
+Présence
+Notes
+Bulletins
+Examens
+Infrastructure
+Documents
+```
+
+---
+
+# 106. TABLEAU DE BORD ENSEIGNANT
+
+```text
+Mes classes
+Mes cours
+Mon emploi du temps
+Présences
+Notes
+Bulletins
+Ressources
+Projets
+```
+
+---
+
+# 107. TABLEAU DE BORD ÉTUDIANT
+
+```text
+Mon parcours
+Mes cours
+Mon emploi du temps
+Mes notes
+Mes bulletins
+Mes examens
+Mes diplômes
+Mes bourses
+Mon transport
+Mes projets
+Mes stages
+```
+
+---
+
+# 108. TABLEAU DE BORD PARENT
+
+```text
+Mes enfants
+Résultats
+Bulletins
+Présence
+Examens
+Notifications
+```
+
+---
+
+# 109. TABLEAU DE BORD EXAMENS
+
+```text
+Sessions
+Examens
+Candidats
+Centres
+Salles
+Surveillants
+Correcteurs
+Copies
+Notes
+Jurys
+Résultats
+Contentieux
+Archives
+```
+
+---
+
+# 110. TABLEAU DE BORD MINISTÈRE
+
+```text
+Vue nationale
+Départements
+Établissements
+Apprenants
+Personnel
+Examens
+Résultats
+Infrastructure
+Budget
+Statistiques
+```
+
+---
+
+# 111. ARCHITECTURE TECHNIQUE
+
+## Backend
+
+**FastAPI**
+
+Pourquoi :
+
+* rapide à développer ;
+* excellent pour les APIs ;
+* Python ;
+* Pydantic ;
+* documentation OpenAPI automatique ;
+* adapté à la Data/IA ;
+* facilement extensible.
+
+---
+
+# 112. Base de données
+
+**PostgreSQL**
+
+PostgreSQL sera la source principale de vérité.
+
+Il stockera :
+
+* utilisateurs ;
+* organisations ;
+* établissements ;
+* apprenants ;
+* enseignants ;
+* scolarité ;
+* examens ;
+* résultats ;
+* documents metadata ;
+* transport ;
+* projets ;
+* statistiques ;
+* etc.
+
+---
+
+# 113. ORM
+
+Utilisation recommandée :
+
+**SQLAlchemy 2 + Alembic**
+
+Structure :
+
+```text
+app/
+├── core/
+├── models/
+├── schemas/
+├── api/
+├── services/
+├── repositories/
+├── permissions/
+├── workflows/
+└── modules/
+```
+
+---
+
+# 114. FRONTEND
+
+Je recommande :
+
+**Next.js + React + TypeScript**
+
+avec :
+
+* Tailwind CSS ;
+* composants accessibles ;
+* TanStack Query ;
+* React Hook Form ;
+* Zod ;
+* Recharts ;
+* bibliothèque de composants cohérente.
+
+---
+
+# 115. POURQUOI NEXT.JS
+
+Le prototype aura énormément d'écrans :
+
+```text
+Dashboard
+Tables
+Formulaires
+Rapports
+Profils
+Cartes
+Examens
+Documents
+Graphiques
+```
+
+Next.js permet de construire rapidement une application web structurée et responsive.
+
+---
+
+# 116. ARCHITECTURE FRONTEND
+
+```text
+frontend/
+├── app/
+│   ├── dashboard/
+│   ├── students/
+│   ├── teachers/
+│   ├── schools/
+│   ├── classes/
+│   ├── exams/
+│   ├── competitions/
+│   ├── results/
+│   ├── bulletins/
+│   ├── scholarships/
+│   ├── transport/
+│   ├── projects/
+│   ├── research/
+│   └── settings/
+│
+├── components/
+├── features/
+├── lib/
+├── hooks/
+└── types/
+```
+
+---
+
+# 117. API FASTAPI
+
+Structure :
+
+```text
+/api/v1
+```
+
+Modules :
+
+```text
+/auth
+/users
+/organizations
+/institutions
+/students
+/teachers
+/parents
+/classes
+/subjects
+/curricula
+/timetable
+/attendance
+/assessments
+/grades
+/report-cards
+/exams
+/competitions
+/candidates
+/exam-centers
+/exam-rooms
+/invigilators
+/correctors
+/juries
+/results
+/certificates
+/scholarships
+/transport
+/housing
+/health
+/library
+/learning
+/projects
+/research
+/internships
+/jobs
+/infrastructure
+/documents
+/notifications
+/analytics
+/search
+```
+
+---
+
+# 118. MODÈLE DE DONNÉES PRINCIPAL
+
+Le modèle PostgreSQL doit notamment contenir :
+
+```text
+User
+Role
+Permission
+Organization
+Ministry
+Department
+Commune
+Institution
+School
+University
+Faculty
+DepartmentUnit
+Building
+Room
+Equipment
+
+Learner
+Parent
+Teacher
+Staff
+Researcher
+
+AcademicYear
+Term
+Semester
+Level
+Series
+Program
+Subject
+Curriculum
+Class
+Enrollment
+
+Attendance
+Assessment
+Grade
+GradeItem
+ReportCard
+ReportCardSubject
+
+Exam
+ExamSession
+ExamSeries
+ExamSubject
+Candidate
+CandidateDocument
+ExamCenter
+ExamRoom
+SeatAssignment
+Invigilator
+Corrector
+Copy
+Jury
+ExamResult
+Appeal
+Certificate
+ExamArchive
+
+Scholarship
+ScholarshipApplication
+
+Transport
+TransportLine
+TransportStop
+Vehicle
+Driver
+Trip
+
+Residence
+RoomAllocation
+
+Library
+Book
+BookCopy
+Loan
+
+Course
+Lesson
+LearningResource
+Quiz
+LearningProgress
+
+Project
+ProjectMember
+ResearchProject
+Publication
+
+Internship
+InternshipApplication
+Company
+JobOffer
+JobApplication
+
+Document
+Notification
+Message
+AuditLog
+```
+
+---
+
+# 119. RELATIONS CENTRALES
+
+```text
+Learner
+ ├── Enrollment
+ ├── Attendance
+ ├── Grade
+ ├── ReportCard
+ ├── ExamCandidate
+ ├── ExamResult
+ ├── Certificate
+ ├── ScholarshipApplication
+ ├── ProjectMember
+ ├── Internship
+ └── JobApplication
+```
+
+---
+
+# 120. GÉNÉRATEUR DE DONNÉES
+
+Le prototype doit avoir un véritable moteur de simulation.
+
+Exemple :
+
+```text
+12 départements
+77 communes
+1 000 établissements
+50 000 apprenants
+5 000 enseignants
+3 000 classes
+100 000 notes
+20 examens
+10 concours
+500 projets
+```
+
+Les volumes peuvent être augmentés progressivement.
+
+---
+
+# 121. DONNÉES RÉALISTES
+
+Les données doivent être fictives mais cohérentes.
+
+Exemple :
+
+```text
+Awa S.
+CEG Sainte-Rita
+Classe : 3ème C
+Mathématiques : 18
+Français : 17
+Anglais : 19
+SVT : 18
+Moyenne : 18,1
+```
+
+---
+
+# 122. RELATIONS COHÉRENTES
+
+Si :
+
+```text
+Élève → CEG
+```
+
+alors :
+
+```text
+Élève → Classe
+Classe → Salle
+Classe → Enseignants
+Enseignants → Matières
+```
+
+Toutes les données doivent être reliées.
+
+---
+
+# 123. SCÉNARIO COMPLET DE DÉMONSTRATION
+
+## Étape 1
+
+Administrateur crée :
+
+```text
+Département Atlantique
+Commune Abomey-Calavi
+CEG Exemple
+```
+
+## Étape 2
+
+Il crée :
+
+```text
+Classes
+Enseignants
+Matières
+Salles
+```
+
+## Étape 3
+
+Il inscrit :
+
+```text
+500 élèves
+```
+
+## Étape 4
+
+Les enseignants saisissent :
+
+```text
+Notes
+Présences
+Appréciations
+```
+
+## Étape 5
+
+Le système produit :
+
+```text
+Bulletins
+```
+
+## Étape 6
+
+L'établissement inscrit les candidats au :
+
+```text
+BEPC
+```
+
+## Étape 7
+
+Le système :
+
+```text
+valide les dossiers
+affecte les centres
+affecte les salles
+génère les convocations
+```
+
+## Étape 8
+
+Les notes sont saisies.
+
+## Étape 9
+
+Le jury délibère.
+
+## Étape 10
+
+Les résultats sont publiés.
+
+---
+
+# 124. SCÉNARIO ADMINISTRATIF AVANCÉ
+
+Le ministre veut connaître :
+
+> Les élèves ayant au moins 18/20 de moyenne dans les CEG.
+
+Il ouvre :
+
+```text
+Analyse avancée
+```
+
+Puis :
+
+```text
+Type = Élève
+
+Établissement
+= CEG
+
+Moyenne générale
+>= 18
+
+Année
+= 2026-2027
+```
+
+Résultat :
+
+```text
+127 élèves
+```
+
+Il peut :
+
+```text
+Voir
+Filtrer
+Exporter
+Créer un rapport
+Afficher sur carte
+```
+
+---
+
+# 125. ANALYSE GÉOGRAPHIQUE
+
+L'administrateur peut demander :
+
+> « Montre les établissements dont la moyenne est inférieure à 10. »
+
+Carte :
+
+```text
+Département
+ ├── établissement A : 9,8
+ ├── établissement B : 8,9
+ └── établissement C : 9,4
+```
+
+---
+
+# 126. ANALYSE DES PERFORMANCES
+
+Par :
+
+```text
+Département
+Commune
+Établissement
+Classe
+Série
+Matière
+Enseignant
+Année
+```
+
+---
+
+# 127. COMPARAISONS TEMPORELLES
+
+```text
+2024-2025
+2025-2026
+2026-2027
+```
+
+Graphique :
+
+```text
+Moyenne
+│
+│       ●
+│    ●
+│ ●
+└────────────
+```
+
+---
+
+# 128. ALERTES
+
+Le système peut détecter :
+
+```text
+Classe avec trop d'absences
+Établissement avec faible réussite
+Baisse importante des résultats
+Salle surchargée
+Manque d'enseignants
+Élèves à risque
+Documents incomplets
+```
+
+---
+
+# 129. RAPPORTS AUTOMATIQUES
+
+Exemples :
+
+```text
+Rapport annuel
+Rapport établissement
+Rapport département
+Rapport examen
+Rapport réussite
+Rapport enseignants
+Rapport infrastructure
+Rapport inclusion
+```
+
+---
+
+# 130. AUDIT
+
+Chaque opération importante est enregistrée.
+
+```text
+Utilisateur
+Action
+Objet
+Date
+Ancienne valeur
+Nouvelle valeur
+```
+
+---
+
+# 131. SÉCURITÉ
+
+Le prototype doit simuler une architecture sérieuse :
+
+* JWT ;
+* refresh token ;
+* RBAC ;
+* permissions ;
+* audit ;
+* validation ;
+* protection des endpoints ;
+* hashage des mots de passe.
+
+---
+
+# 132. DOCUMENTS ET STOCKAGE
+
+Pour le prototype :
+
+**MinIO** peut être utilisé localement comme stockage compatible S3.
+
+Il stockera :
+
+```text
+photos
+bulletins
+convocations
+diplômes
+pièces jointes
+épreuves
+documents pédagogiques
+```
+
+---
+
+# 133. PDF
+
+Le backend doit pouvoir générer :
+
+* bulletin ;
+* convocation ;
+* relevé ;
+* certificat ;
+* diplôme ;
+* rapport ;
+* statistiques.
+
+---
+
+# 134. QR CODES
+
+Utilisations :
+
+```text
+Diplôme
+Bulletin
+Convocation
+Certificat
+Document
+```
+
+---
+
+# 135. RESPONSIVE
+
+Le système doit fonctionner sur :
+
+```text
+Desktop
+Laptop
+Tablet
+Mobile
+```
+
+---
+
+# 136. PWA
+
+Le frontend doit être installable comme application web.
+
+Objectifs :
+
+* cache ;
+* faible consommation ;
+* interface mobile ;
+* fonctionnement partiel hors connexion.
+
+---
+
+# 137. MODE DÉMONSTRATION
+
+Un compte spécial :
+
+```text
+demo@education.local
+```
+
+permet d'accéder à une simulation complète.
+
+Le système charge automatiquement :
+
+```text
+Bénin fictif
+12 départements
+Communes
+Établissements
+Élèves
+Enseignants
+Examens
+Résultats
+```
+
+---
+
+# 138. ENVIRONNEMENT DE DÉVELOPPEMENT
+
+```text
+Docker Compose
+```
+
+Services :
+
+```text
+frontend
+backend
+postgres
+redis
+minio
+```
+
+Architecture :
+
+```text
+                  Next.js
+                     │
+                  FastAPI
+                     │
+        ┌────────────┼────────────┐
+        │            │            │
+    PostgreSQL     Redis        MinIO
+```
+
+---
+
+# 139. ENVIRONNEMENTS
+
+```text
+development
+staging
+demo
+production
+```
+
+Le prototype utilisera principalement :
+
+```text
+development
+demo
+```
+
+---
+
+# 140. SEED
+
+Commande :
+
+```bash
+python -m app.seed
+```
+
+ou :
+
+```bash
+make seed
+```
+
+Elle génère toute la base fictive.
+
+---
+
+# 141. RESET
+
+Le prototype doit également avoir :
+
+```bash
+make reset-db
+make seed
+```
+
+pour reconstruire rapidement l'environnement de démonstration.
+
+---
+
+# 142. OBJECTIF DE RAPIDITÉ
+
+Il ne faut pas construire les 130 fonctionnalités comme 130 projets différents.
+
+Il faut construire des **moteurs génériques réutilisables**.
+
+Exemple :
+
+Le moteur de documents sert pour :
+
+```text
+Candidature
+Bourse
+Examen
+Diplôme
+Stage
+Administration
+```
+
+Le moteur de notifications sert partout.
+
+Le moteur de recherche sert partout.
+
+Le moteur de permissions sert partout.
+
+Le moteur de workflow sert partout.
+
+---
+
+# 143. LES 10 MOTEURS DU SYSTÈME
+
+```text
+1. Identity Engine
+2. Organization Engine
+3. Workflow Engine
+4. Document Engine
+5. Notification Engine
+6. Search Engine
+7. Analytics Engine
+8. Reporting Engine
+9. Audit Engine
+10. AI Engine
+```
+
+Les modules métiers utilisent ces moteurs.
+
+---
+
+# 144. PRIORITÉ DE DÉVELOPPEMENT
+
+## Phase 1 — Core
+
+```text
+Auth
+Users
+Roles
+Organizations
+Institutions
+Departments
+Academic years
+```
+
+## Phase 2 — Scolarité
+
+```text
+Students
+Teachers
+Classes
+Subjects
+Enrollment
+Attendance
+Grades
+Bulletins
+```
+
+## Phase 3 — Examens
+
+```text
+Exams
+Sessions
+Candidates
+Documents
+Centers
+Rooms
+Invigilators
+Correctors
+Copies
+Juries
+Results
+Appeals
+Certificates
+Archives
+```
+
+## Phase 4 — Gouvernance
+
+```text
+Dashboards
+Statistics
+Search
+Query builder
+Maps
+Reports
+```
+
+## Phase 5 — Vie étudiante
+
+```text
+Orientation
+Scholarships
+Transport
+Housing
+Library
+Learning
+Projects
+```
+
+## Phase 6 — Professionnel
+
+```text
+Research
+Internships
+Jobs
+Companies
+Skills
+```
+
+## Phase 7 — Avancé
+
+```text
+Accessibility
+Offline
+AI
+Natural language search
+Advanced analytics
+```
+
+---
+
+# 145. PREMIÈRE VERSION À MONTRER À UN INVESTISSEUR OU À UNE INSTITUTION
+
+Le parcours de démonstration doit être extrêmement fluide.
+
+### Écran 1
+
+```text
+Bienvenue dans
+EDUCATION BENIN
+```
+
+### Écran 2
+
+Choix :
+
+```text
+Élève
+Enseignant
+Parent
+Établissement
+Administration
+Ministère
+```
+
+### Écran 3
+
+Dashboard.
+
+### Écran 4
+
+Navigation complète.
+
+### Écran 5
+
+Recherche nationale.
+
+### Écran 6
+
+Analyse.
+
+### Écran 7
+
+Examens.
+
+### Écran 8
+
+Bulletin.
+
+### Écran 9
+
+Transport.
+
+### Écran 10
+
+Projet étudiant.
+
+---
+
+# 146. EXEMPLE DE DÉMONSTRATION FINALE
+
+Le présentateur peut dire :
+
+> « Je vais vous montrer le parcours d'un étudiant. »
+
+Il ouvre :
+
+```text
+Jean K.
+```
+
+Puis :
+
+```text
+CEG Exemple
+↓
+Classe 3ème B
+↓
+Bulletin
+↓
+Moyenne 17,82
+↓
+BEPC
+↓
+Admis
+↓
+Orientation
+↓
+Université
+↓
+Bourse
+↓
+Transport
+↓
+Projet
+↓
+Stage
+```
+
+Puis il passe dans le rôle :
+
+```text
+MINISTÈRE
+```
+
+et recherche :
+
+> « Tous les élèves des CEG ayant plus de 18 de moyenne. »
+
+La plateforme retourne instantanément les données.
+
+Puis :
+
+> « Afficher ceux qui ont plus de 18 en mathématiques mais moins de 12 en français. »
+
+Puis :
+
+> « Afficher les établissements avec moins de 60 % de réussite au BEPC. »
+
+Puis :
+
+> « Afficher les établissements ayant plus de 500 élèves mais moins de 10 salles. »
+
+Cette capacité d'analyse doit être l'un des éléments forts de la démonstration.
+
+---
+
+# 147. RÉSULTAT ATTENDU
+
+À la fin du prototype, nous devons avoir :
+
+```text
+UNE PLATEFORME WEB
+        +
+UNE BASE POSTGRESQL
+        +
+UNE API FASTAPI
+        +
+UN FRONTEND NEXT.JS
+        +
+UN JEU DE DONNÉES FICTIVES
+        +
+UN SYSTÈME DE RÔLES
+        +
+UN SYSTÈME D'EXAMENS COMPLET
+        +
+UN SYSTÈME DE SCOLARITÉ
+        +
+UN SYSTÈME DE BULLETINS
+        +
+UN SYSTÈME DE DOCUMENTS
+        +
+UN SYSTÈME DE RECHERCHE
+        +
+UN SYSTÈME ANALYTIQUE
+        +
+DES DASHBOARDS
+        +
+UNE CARTOGRAPHIE
+        +
+LA VIE ÉTUDIANTE
+        +
+LES PROJETS
+        +
+LES STAGES
+        +
+L'EMPLOI
+        +
+L'ACCESSIBILITÉ
+```
+
+---
+
+# 148. ARCHITECTURE FINALE
+
+```text
+                         EDUCATION BENIN
+                               │
+                         NEXT.JS / REACT
+                               │
+                         FASTAPI / PYTHON
+                               │
+                   ┌───────────┴───────────┐
+                   │                       │
+              DOMAINES MÉTIERS         MOTEURS
+                   │                       │
+       ┌───────────┼────────────┐          │
+       │           │            │          │
+   SCOLARITÉ    EXAMENS      ÉTUDIANT      │
+       │           │            │          │
+       └───────────┼────────────┘          │
+                   │                       │
+              PostgreSQL              Search
+                   │                   Workflow
+                   │                   Documents
+                   │                   Notifications
+                   │                   Analytics
+                   │                   Audit
+                   │
+                MinIO
+                   │
+            fichiers/documents
+```
+
+---
+
+# 149. DÉFINITION DU PRODUIT
+
+Le produit peut être résumé ainsi :
+
+> **Education Bénin est une plateforme numérique intégrée simulant la gestion complète du système éducatif, depuis l'inscription d'un apprenant jusqu'à son parcours scolaire, ses évaluations, bulletins, examens, concours, diplômes, orientation, vie universitaire, projets, stages et insertion professionnelle, tout en fournissant aux établissements et aux administrations des outils de gestion, de recherche, de pilotage et d'aide à la décision.**
+
+---
+
+# 150. RÈGLE ABSOLUE POUR LE PROTOTYPE
+
+Aucune fonctionnalité importante ne doit être simplement représentée par un bouton vide.
+
+Lorsqu'un module apparaît dans l'interface, il doit au minimum posséder :
+
+```text
+Données
+Liste
+Détail
+Création
+Modification
+Recherche
+Filtrage
+Workflow
+Statut
+```
+
+Lorsque le module est critique :
+
+```text
++ Dashboard
++ Historique
++ Documents
++ Notifications
++ Export
+```
+
+---
+
+# 151. DÉFINITION DU « COMPLET » POUR LA DÉMONSTRATION
+
+Le prototype sera considéré comme suffisamment complet lorsque l'on pourra démontrer simultanément :
+
+### Gestion
+
+```text
+Utilisateur
+Établissement
+Élève
+Enseignant
+Classe
+```
+
+### Pédagogie
+
+```text
+Cours
+Matières
+Notes
+Présences
+Bulletins
+```
+
+### Examens
+
+```text
+Examen
+Concours
+Candidat
+Dossier
+Pièces
+Centre
+Salle
+Surveillant
+Correcteur
+Copie
+Jury
+Résultat
+Contentieux
+Diplôme
+Archive
+```
+
+### Vie
+
+```text
+Bourse
+Transport
+Logement
+Bibliothèque
+Projet
+Stage
+Emploi
+```
+
+### Gouvernance
+
+```text
+Statistiques
+Recherche
+Filtres
+Cartographie
+Rapports
+```
+
+### Inclusion
+
+```text
+Audio
+Accessibilité
+Langues
+Interface simplifiée
+```
+
+---
+
+# 152. VISION À LONG TERME
+
+Le prototype est volontairement autonome.
+
+Il ne dépend d'aucun système externe.
+
+Mais son architecture doit être suffisamment propre pour qu'un jour :
+
+```text
+DONNÉES FICTIVES
+      ↓
+DONNÉES RÉELLES
+      ↓
+MIGRATION
+      ↓
+SYSTÈME NATIONAL
+```
+
+puisse être réalisée progressivement.
+
+Le prototype doit donc être considéré comme :
+
+> **une simulation complète du futur système, et non comme une simple maquette graphique.**
+
+---
+
+# 153. CONCLUSION
+
+Le projet devient ainsi un **système d'information éducatif complet**.
+
+Il reprend le périmètre fonctionnel observable d'EducMaster et les processus détaillés dans les documents fournis, notamment la chaîne ministère → DEC → DDEPS → établissement → candidat, la gestion des examens, séries, matières, pièces jointes, centres, salles, candidats, notes, moyennes, jurys, contentieux, budget et archives.
+Il reprend également les dimensions de gestion scolaire d'EducMaster : apprenants, enseignants, établissements, classes, examens, emplois du temps, ressources humaines, statistiques et cartographie.
+
+La différence fondamentale est que notre prototype **ne s'arrête pas à la gestion scolaire**.
+
+Il couvre :
+
+```text
+ÉDUCATION
+      ↓
+SCOLARITÉ
+      ↓
+PÉDAGOGIE
+      ↓
+ÉVALUATION
+      ↓
+BULLETIN
+      ↓
+EXAMEN
+      ↓
+CONCOURS
+      ↓
+DIPLÔME
+      ↓
+ORIENTATION
+      ↓
+UNIVERSITÉ
+      ↓
+BOURSE
+      ↓
+TRANSPORT
+      ↓
+LOGEMENT
+      ↓
+PROJET
+      ↓
+RECHERCHE
+      ↓
+STAGE
+      ↓
+EMPLOI
+```
+
+Et au-dessus de tout cela :
+
+```text
+                    GOUVERNANCE
+                         │
+                ┌────────┴────────┐
+                │                 │
+             DONNÉES             IA
+                │                 │
+                └────────┬────────┘
+                         │
+                   AIDE À LA
+                    DÉCISION
+```
+
+**C'est ce périmètre qui doit servir de référence pour le développement du prototype.**
+

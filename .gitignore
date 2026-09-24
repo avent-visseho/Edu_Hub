@@ -1,0 +1,68 @@
+# ---- Python / FastAPI ----
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+env/
+.eggs/
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+coverage.xml
+.tox/
+
+# ---- Node / Next.js ----
+node_modules/
+.next/
+out/
+.turbo/
+*.tsbuildinfo
+.eslintcache
+.pnpm-store/
+
+# ---- Environnement ----
+.env
+.env.*
+!.env.example
+!.env.*.example
+
+# ---- Données locales / stockage ----
+*.sqlite3
+*.db
+/data/
+/storage/
+/media/
+EduHub_api/storage/
+EduHub_api/.data/
+
+# ---- Logs ----
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# ---- IDE / OS ----
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# ---- Outils assistants (non versionnés) ----
+.claude/
+CLAUDE.md
+AGENTS.md
+.cursor/
+.aider*
+.continue/

@@ -25,6 +25,7 @@ import {
   MessageSquare,
   Gavel,
   MapPin,
+  PenLine,
   MonitorPlay,
   ScrollText,
   Search,
@@ -197,6 +198,14 @@ export const NAVIGATION: GroupeNavigation[] = [
         href: '/centres',
         icone: MapPin,
         permission: 'centres:READ',
+      },
+      {
+        libelle: 'Correction des copies',
+        libelleSimple: 'Corriger',
+        pictogramme: '🖊️',
+        href: '/correction',
+        icone: PenLine,
+        permission: 'copies:READ',
       },
       {
         libelle: 'Résultats',

@@ -1145,6 +1145,10 @@ async def corriger_copie(
     copie.corrigee_le = datetime.now(UTC)
 
     if copie.correcteur_id:
+        # La session n'est pas en autoflush : sans ce flush, le comptage
+        # ci-dessous ignorerait la copie que l'on vient de corriger et le
+        # compteur resterait indéfiniment en retard d'une unité.
+        await session.flush()
         correcteur = await session.get(Correcteur, copie.correcteur_id)
         if correcteur is not None:
             correcteur.copies_corrigees = int(

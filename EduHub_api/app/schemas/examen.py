@@ -404,6 +404,10 @@ class NoteExamenLecture(SchemaBase):
     points: float | None = None
     statut: StatutNoteExamen
     validee: bool
+    # La copie est anonymée, la note ne l'est plus : elle est rattachée au
+    # candidat une fois la correction terminée.
+    numero_candidat: str | None = None
+    nom_complet: str | None = None
 
 
 # ------------------------------------------------------------------

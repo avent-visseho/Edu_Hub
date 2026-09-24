@@ -869,12 +869,20 @@ class NoteExamen(Base):
     modifiee_apres_contentieux: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     ancienne_valeur: Mapped[float | None] = mapped_column(Float)
 
-    candidat: Mapped[Candidat] = relationship(back_populates="notes")
+    candidat: Mapped[Candidat] = relationship(back_populates="notes", lazy="selectin")
     epreuve: Mapped[EpreuveExamen] = relationship(lazy="selectin")
 
     __table_args__ = (
         UniqueConstraint("candidat_id", "epreuve_id", name="uq_notes_examen_candidat_epreuve"),
     )
+
+    @property
+    def numero_candidat(self) -> str | None:
+        return self.candidat.numero_candidat if self.candidat else None
+
+    @property
+    def nom_complet(self) -> str | None:
+        return self.candidat.nom_complet if self.candidat else None
 
 
 class Jury(Base):

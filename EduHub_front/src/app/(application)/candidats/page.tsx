@@ -1,6 +1,7 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
+import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
 import { EntetePage } from '@/components/layout/entete-page';
@@ -26,6 +27,7 @@ interface Candidat {
 }
 
 export default function PageCandidats() {
+  const router = useRouter();
   const [sessionId, setSessionId] = useState('');
   const [statut, setStatut] = useState('');
 
@@ -34,14 +36,15 @@ export default function PageCandidats() {
     queryFn: () => api.get<Page<SessionExamen>>('/sessions', { size: 50 }),
   });
 
+  // Les deux filtres sont appliqués par l'API : le total et la pagination
+  // restent donc cohérents avec la sélection.
   const liste = useListe<Candidat>('/candidats', {
     tri: 'nom',
-    filtres: { session_id: sessionId || undefined },
+    filtres: {
+      session_id: sessionId || undefined,
+      statut_dossier: statut || undefined,
+    },
   });
-
-  const items = statut
-    ? liste.items.filter((candidat) => candidat.statut_dossier === statut)
-    : liste.items;
 
   return (
     <>
@@ -53,7 +56,7 @@ export default function PageCandidats() {
       <ListeRessource
         legende="Liste des candidats"
         placeholderRecherche="Rechercher par nom, numéro de candidat ou numéro de table…"
-        items={items}
+        items={liste.items}
         total={liste.total}
         pages={liste.pages}
         page={liste.etat.page}
@@ -64,6 +67,7 @@ export default function PageCandidats() {
         onRecherche={liste.changerRecherche}
         onPage={liste.changerPage}
         cleLigne={(candidat) => candidat.id}
+        onLigneClic={(candidat) => router.push(`/candidats/${candidat.id}`)}
         videTitre="Aucun candidat"
         filtres={
           <div className="grid gap-4 sm:grid-cols-2">

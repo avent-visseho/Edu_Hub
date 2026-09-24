@@ -192,18 +192,32 @@ docker exec eduhub-postgres psql -U eduhub -d eduhub \
    moyennes, taux de réussite par session, alertes du moteur de règles.
 3. **Apprenants** → ouvrir un dossier : parcours, bulletins, examens, diplômes,
    assiduité, bourses, transport, projets, stages, compétences.
-4. **Classes** → choisir une classe → *Générer les bulletins* : moyennes
-   pondérées, rangs et appréciations sont recalculés en direct.
-5. **Bulletins** → ouvrir un bulletin → *Imprimer* : PDF officiel avec QR code.
-6. **Sessions d'examen** → ouvrir une session : répartition des candidats par
+4. **Classes** → choisir une classe : emploi du temps hebdomadaire, assiduité,
+   puis *Générer les bulletins* — moyennes pondérées, rangs et appréciations
+   sont recalculés en direct.
+5. **Classes** → *Faire l'appel* : feuille d'appel d'une séance, présents,
+   retards et absences justifiées ou non ; la synthèse d'assiduité suit.
+6. **Évaluations** → ouvrir une évaluation : saisie des notes élève par élève
+   (absence, non-rendu, dispense, fraude), statistiques en direct, puis la
+   chaîne de validation enseignant → établissement → publication.
+7. **Bulletins** → ouvrir un bulletin → *Imprimer* : PDF officiel avec QR code.
+8. **Sessions d'examen** → ouvrir une session : répartition des candidats par
    centre et par salle, convocations, copies anonymées, délibération avec
    repêchage, publication des résultats, délivrance des diplômes.
-7. **Recherche avancée** : constructeur visuel, puis onglet *Question en
-   français* — « Montre-moi les élèves des CEG ayant au moins 17 de moyenne en
-   mathématiques. »
-8. **Cartographie** : implantation nationale des établissements.
-9. **Transport** : suivi des trajets, prochain arrêt, places disponibles.
-10. **Vérification publique** : coller le code d'un diplôme sur `/verification`.
+9. **Centres de composition** → ouvrir un centre : salles, plages de places,
+   liste d'émargement exportable en CSV.
+10. **Candidats** → ouvrir un dossier : pièces jointes et leur vérification,
+    affectation de composition, notes aux épreuves, décision du jury, actions
+    de workflow autorisées et historique des transitions.
+11. **Contentieux** : recours déposés après publication, et leur instruction.
+12. **Recherche avancée** : constructeur visuel, puis onglet *Question en
+    français* — « Montre-moi les élèves des CEG ayant au moins 17 de moyenne en
+    mathématiques. »
+13. **Cartographie** : implantation nationale des établissements.
+14. **Infrastructures** : bâtiments, salles et équipements, avec leur état et
+    leur niveau d'accessibilité.
+15. **Transport** : suivi des trajets, prochain arrêt, places disponibles.
+16. **Vérification publique** : coller le code d'un diplôme sur `/verification`.
 
 À tout moment, le bouton **Accessibilité** de l'en-tête permet de basculer en
 contraste élevé, grande police, interface simplifiée, lecture vocale ou

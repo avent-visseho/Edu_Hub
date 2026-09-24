@@ -245,6 +245,11 @@ export function Jauge({
 }: {
   valeur: number;
   maximum?: number;
+  /**
+   * Texte affiché à gauche du pourcentage. Une chaîne vide masque toute la
+   * ligne ; l'omettre ne laisse que le pourcentage, ce qui convient dans une
+   * colonne de tableau dont l'en-tête porte déjà l'intitulé.
+   */
   etiquette?: string;
   ton?: 'accent' | 'succes' | 'alerte' | 'danger';
 }) {
@@ -258,10 +263,12 @@ export function Jauge({
 
   return (
     <div className="space-y-1">
-      {etiquette ? (
-        <div className="flex justify-between text-xs">
-          <span className="texte-doux">{etiquette}</span>
-          <span className="font-medium tabular-nums">{formaterNombre(pourcentage, 1)} %</span>
+      {etiquette !== '' ? (
+        <div className="flex justify-between gap-2 text-xs">
+          {etiquette ? <span className="texte-doux">{etiquette}</span> : null}
+          <span className="ml-auto font-medium tabular-nums">
+            {formaterNombre(pourcentage, 1)} %
+          </span>
         </div>
       ) : null}
       <div

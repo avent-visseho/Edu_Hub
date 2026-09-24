@@ -1,8 +1,8 @@
 'use client';
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { FileText, Play } from 'lucide-react';
-import { useParams } from 'next/navigation';
+import { CalendarCheck, FileText, Play } from 'lucide-react';
+import { useParams, useRouter } from 'next/navigation';
 import { useState } from 'react';
 
 import { EntetePage } from '@/components/layout/entete-page';
@@ -90,6 +90,7 @@ interface Enseignant {
 
 export default function PageDetailClasse() {
   const parametres = useParams<{ id: string }>();
+  const router = useRouter();
   const { peut } = useSession();
   const client = useQueryClient();
   const [periodeId, setPeriodeId] = useState('');
@@ -294,6 +295,16 @@ export default function PageDetailClasse() {
         <EnteteCarte
           titre="Assiduité"
           description="Taux de présence par apprenant. Une alerte est levée en dessous de 80 %."
+          action={
+            <Bouton
+              variante="secondaire"
+              taille="sm"
+              icone={<CalendarCheck size={16} aria-hidden />}
+              onClick={() => router.push(`/classes/${parametres.id}/appel`)}
+            >
+              Faire l&apos;appel
+            </Bouton>
+          }
         />
         <Tableau
           legende="Assiduité des apprenants de la classe"
@@ -349,7 +360,6 @@ export default function PageDetailClasse() {
               rendu: (ligne) => (
                 <Jauge
                   valeur={ligne.taux_presence}
-                  etiquette={formaterPourcentage(ligne.taux_presence)}
                   ton={
                     ligne.taux_presence >= 90
                       ? 'succes'

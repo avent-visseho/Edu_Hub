@@ -7,7 +7,7 @@ import { Jauge } from '@/components/ui/donnees';
 import { ListeRessource } from '@/components/ui/liste';
 import { Badge, tonDuStatut } from '@/components/ui/primitives';
 import { useListe } from '@/hooks/useListe';
-import { formaterNombre, formaterNote, formaterPourcentage, humaniser } from '@/lib/utils';
+import { formaterNombre, formaterNote, humaniser } from '@/lib/utils';
 import type { SessionExamen } from '@/types/api';
 
 export default function PageExamens() {
@@ -76,7 +76,6 @@ export default function PageExamens() {
               session.taux_reussite !== null ? (
                 <Jauge
                   valeur={session.taux_reussite}
-                  etiquette={formaterPourcentage(session.taux_reussite)}
                   ton={
                     session.taux_reussite >= 70
                       ? 'succes'

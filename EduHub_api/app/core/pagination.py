@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from math import ceil
-from typing import Annotated, Generic, TypeVar
+from typing import Annotated
 
 from fastapi import Depends, Query
 from pydantic import BaseModel, Field
@@ -11,8 +11,6 @@ from sqlalchemy import Select, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
-
-T = TypeVar("T")
 
 
 class PageParams(BaseModel):
@@ -40,7 +38,7 @@ def page_params(
 PageParamsDep = Annotated[PageParams, Depends(page_params)]
 
 
-class Page(BaseModel, Generic[T]):
+class Page[T](BaseModel):
     """Enveloppe standard d'une réponse paginée."""
 
     items: list[T]

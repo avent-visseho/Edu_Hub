@@ -58,11 +58,3 @@ pnpm-debug.log*
 *.swo
 .DS_Store
 Thumbs.db
-
-# ---- Outils assistants (non versionnés) ----
-.claude/
-CLAUDE.md
-AGENTS.md
-.cursor/
-.aider*
-.continue/

@@ -11,17 +11,15 @@ import {
   Bouton,
   Carte,
   Chargement,
-  CorpsCarte,
   EnteteCarte,
   EtatVide,
   MessageErreur,
-  tonDuStatut,
 } from '@/components/ui/primitives';
 import { ListeRessource } from '@/components/ui/liste';
 import { useListe } from '@/hooks/useListe';
 import { api } from '@/lib/api';
 import { useSession } from '@/lib/session';
-import { formaterDate, formaterMontant, formaterNote, formaterPourcentage, humaniser } from '@/lib/utils';
+import { formaterDate, formaterMontant, formaterNote, formaterPourcentage } from '@/lib/utils';
 
 interface Campagne {
   id: string;

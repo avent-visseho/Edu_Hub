@@ -7,7 +7,6 @@ import { useState } from 'react';
 import { EntetePage } from '@/components/layout/entete-page';
 import {
   Badge,
-  Bouton,
   Carte,
   Champ,
   Chargement,

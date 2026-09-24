@@ -130,6 +130,18 @@ class Evaluation(Base):
         Index("ix_evaluations_classe_periode", "classe_id", "periode_id", "matiere_id"),
     )
 
+    @property
+    def classe_libelle(self) -> str | None:
+        return self.classe.libelle if self.classe else None
+
+    @property
+    def matiere_libelle(self) -> str | None:
+        return self.matiere.libelle if self.matiere else None
+
+    @property
+    def periode_libelle(self) -> str | None:
+        return self.periode.libelle if self.periode else None
+
 
 class Note(Base):
     """Note obtenue par un apprenant à une évaluation."""

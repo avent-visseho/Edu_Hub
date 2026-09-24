@@ -15,7 +15,7 @@ import {
   Selection,
 } from '@/components/ui/primitives';
 import { api } from '@/lib/api';
-import { formaterNombre, humaniser } from '@/lib/utils';
+import { formaterNombre } from '@/lib/utils';
 
 interface PointCarte {
   id: string;

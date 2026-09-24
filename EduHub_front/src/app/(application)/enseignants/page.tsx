@@ -1,5 +1,7 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
+
 import { EntetePage } from '@/components/layout/entete-page';
 import { ListeRessource } from '@/components/ui/liste';
 import { Badge, tonDuStatut } from '@/components/ui/primitives';
@@ -23,6 +25,7 @@ interface Enseignant {
 }
 
 export default function PageEnseignants() {
+  const router = useRouter();
   const liste = useListe<Enseignant>('/enseignants', { tri: 'nom' });
 
   return (
@@ -46,6 +49,7 @@ export default function PageEnseignants() {
         onRecherche={liste.changerRecherche}
         onPage={liste.changerPage}
         cleLigne={(enseignant) => enseignant.id}
+        onLigneClic={(enseignant) => router.push(`/enseignants/${enseignant.id}`)}
         videTitre="Aucun enseignant"
         colonnes={[
           {

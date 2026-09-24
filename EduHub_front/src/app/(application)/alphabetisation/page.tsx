@@ -17,7 +17,7 @@ import {
   MessageErreur,
 } from '@/components/ui/primitives';
 import { api, type Page } from '@/lib/api';
-import { formaterNombre, formaterPourcentage, humaniser } from '@/lib/utils';
+import { formaterPourcentage, humaniser } from '@/lib/utils';
 
 interface CentreAlphabetisation {
   id: string;

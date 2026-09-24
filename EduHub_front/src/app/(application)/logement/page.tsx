@@ -69,7 +69,6 @@ export default function PageLogement() {
   const residence = liste.find((element) => element.id === active);
   const capaciteTotale = liste.reduce((total, element) => total + element.capacite, 0);
   const occupationTotale = liste.reduce((total, element) => total + element.places_occupees, 0);
-  const accessibles = liste.filter((element) => element.accessible_handicap).length;
 
   return (
     <>

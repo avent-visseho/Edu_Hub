@@ -21,8 +21,11 @@ class EvaluationLecture(SchemaBase):
     code: str
     intitule: str
     classe_id: uuid.UUID
+    classe_libelle: str | None = None
     matiere_id: uuid.UUID
+    matiere_libelle: str | None = None
     periode_id: uuid.UUID
+    periode_libelle: str | None = None
     enseignant_id: uuid.UUID | None = None
     type_evaluation: TypeEvaluation
     date_evaluation: date
@@ -41,8 +44,11 @@ class EvaluationCreation(SchemaEntree):
     code: str | None = Field(default=None, max_length=64)
     intitule: str = Field(min_length=1, max_length=255)
     classe_id: uuid.UUID
+    classe_libelle: str | None = None
     matiere_id: uuid.UUID
+    matiere_libelle: str | None = None
     periode_id: uuid.UUID
+    periode_libelle: str | None = None
     enseignant_id: uuid.UUID | None = None
     type_evaluation: TypeEvaluation = TypeEvaluation.DEVOIR
     date_evaluation: date

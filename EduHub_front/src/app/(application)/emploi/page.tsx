@@ -1,13 +1,13 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import { Accessibility, Briefcase, Building2, GraduationCap } from 'lucide-react';
+import { Accessibility, Briefcase, Building2 } from 'lucide-react';
 import { useState } from 'react';
 
 import { EntetePage } from '@/components/layout/entete-page';
 import { Indicateur } from '@/components/ui/donnees';
 import { ListeRessource } from '@/components/ui/liste';
-import { Badge, Selection, tonDuStatut } from '@/components/ui/primitives';
+import { Badge, Selection } from '@/components/ui/primitives';
 import { useListe } from '@/hooks/useListe';
 import { api, type Page } from '@/lib/api';
 import { formaterDate, formaterMontant, formaterNote, humaniser } from '@/lib/utils';

@@ -8,7 +8,6 @@ import {
   MonitorPlay,
   Signal,
   Subtitles,
-  Users,
 } from 'lucide-react';
 import { useState } from 'react';
 

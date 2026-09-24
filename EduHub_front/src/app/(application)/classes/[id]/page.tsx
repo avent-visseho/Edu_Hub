@@ -7,7 +7,8 @@ import { useState } from 'react';
 
 import { EntetePage } from '@/components/layout/entete-page';
 import { GraphiqueBarres } from '@/components/graphiques';
-import { Indicateur, Tableau } from '@/components/ui/donnees';
+import { EmploiDuTemps, type Creneau } from '@/components/ui/emploi-du-temps';
+import { Indicateur, Jauge, Tableau } from '@/components/ui/donnees';
 import {
   Badge,
   Bouton,
@@ -64,6 +65,29 @@ interface Periode {
   numero: number;
 }
 
+interface LigneAssiduite {
+  apprenant_id: string;
+  nom_complet: string;
+  seances: number;
+  presences: number;
+  absences_justifiees: number;
+  absences_injustifiees: number;
+  retards: number;
+  taux_presence: number;
+  alerte: boolean;
+}
+
+interface Matiere {
+  id: string;
+  code: string;
+  libelle: string;
+}
+
+interface Enseignant {
+  id: string;
+  nom_complet: string;
+}
+
 export default function PageDetailClasse() {
   const parametres = useParams<{ id: string }>();
   const { peut } = useSession();
@@ -83,6 +107,26 @@ export default function PageDetailClasse() {
   const apprenants = useQuery({
     queryKey: ['classe-apprenants', parametres.id],
     queryFn: () => api.get<ApprenantClasse[]>(`/classes/${parametres.id}/apprenants`),
+  });
+
+  const creneaux = useQuery({
+    queryKey: ['classe-emploi-du-temps', parametres.id],
+    queryFn: () => api.get<Creneau[]>(`/classes/${parametres.id}/emploi-du-temps`),
+  });
+
+  const matieres = useQuery({
+    queryKey: ['matieres-resume'],
+    queryFn: () => api.get<{ items: Matiere[] }>('/matieres', { size: 100 }),
+  });
+
+  const enseignants = useQuery({
+    queryKey: ['enseignants-resume'],
+    queryFn: () => api.get<{ items: Enseignant[] }>('/enseignants', { size: 300 }),
+  });
+
+  const assiduite = useQuery({
+    queryKey: ['classe-assiduite', parametres.id],
+    queryFn: () => api.get<LigneAssiduite[]>(`/classes/${parametres.id}/assiduite`),
   });
 
   const statistiques = useQuery({
@@ -226,6 +270,110 @@ export default function PageDetailClasse() {
           </CorpsCarte>
         </Carte>
       ) : null}
+
+      <Carte className="mt-4">
+        <EnteteCarte
+          titre="Emploi du temps"
+          description="Grille hebdomadaire des cours, avec l'enseignant affecté à chaque créneau."
+        />
+        <EmploiDuTemps
+          creneaux={creneaux.data ?? []}
+          libelleMatiere={(id) =>
+            matieres.data?.items.find((matiere) => matiere.id === id)?.libelle ?? 'Matière'
+          }
+          libelleEnseignant={(id) =>
+            id
+              ? (enseignants.data?.items.find((enseignant) => enseignant.id === id)
+                  ?.nom_complet ?? null)
+              : null
+          }
+        />
+      </Carte>
+
+      <Carte className="mt-4">
+        <EnteteCarte
+          titre="Assiduité"
+          description="Taux de présence par apprenant. Une alerte est levée en dessous de 80 %."
+        />
+        <Tableau
+          legende="Assiduité des apprenants de la classe"
+          lignes={assiduite.data ?? []}
+          cleLigne={(ligne) => ligne.apprenant_id}
+          vide={<EtatVide titre="Aucun relevé d'assiduité" />}
+          colonnes={[
+            {
+              cle: 'nom',
+              entete: 'Apprenant',
+              rendu: (ligne) => <span className="font-medium">{ligne.nom_complet}</span>,
+            },
+            {
+              cle: 'presences',
+              entete: 'Présences',
+              alignement: 'droite',
+              rendu: (ligne) => `${ligne.presences} / ${ligne.seances}`,
+            },
+            {
+              cle: 'justifiees',
+              entete: 'Absences justifiées',
+              alignement: 'droite',
+              secondaire: true,
+              rendu: (ligne) => ligne.absences_justifiees,
+            },
+            {
+              cle: 'injustifiees',
+              entete: 'Absences injustifiées',
+              alignement: 'droite',
+              rendu: (ligne) => (
+                <span
+                  className={
+                    ligne.absences_injustifiees > 0
+                      ? 'font-semibold text-[rgb(var(--danger))]'
+                      : undefined
+                  }
+                >
+                  {ligne.absences_injustifiees}
+                </span>
+              ),
+            },
+            {
+              cle: 'retards',
+              entete: 'Retards',
+              alignement: 'droite',
+              secondaire: true,
+              rendu: (ligne) => ligne.retards,
+            },
+            {
+              cle: 'taux',
+              entete: 'Taux de présence',
+              largeur: '14rem',
+              rendu: (ligne) => (
+                <Jauge
+                  valeur={ligne.taux_presence}
+                  etiquette={formaterPourcentage(ligne.taux_presence)}
+                  ton={
+                    ligne.taux_presence >= 90
+                      ? 'succes'
+                      : ligne.taux_presence >= 80
+                        ? 'alerte'
+                        : 'danger'
+                  }
+                />
+              ),
+            },
+            {
+              cle: 'alerte',
+              entete: 'Alerte',
+              alignement: 'centre',
+              rendu: (ligne) =>
+                ligne.alerte ? (
+                  <Badge ton="danger">Assiduité</Badge>
+                ) : (
+                  <span className="texte-doux">—</span>
+                ),
+            },
+          ]}
+        />
+      </Carte>
 
       <Carte className="mt-4">
         <EnteteCarte titre="Élèves de la classe" />

@@ -28,7 +28,7 @@ import {
   tonDuStatut,
 } from '@/components/ui/primitives';
 import { api } from '@/lib/api';
-import { formaterDate, formaterNote, formaterPourcentage, humaniser, initiales } from '@/lib/utils';
+import { formaterDate, formaterNote, humaniser, initiales } from '@/lib/utils';
 import type { Apprenant } from '@/types/api';
 
 interface Dossier {

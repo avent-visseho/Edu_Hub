@@ -174,7 +174,9 @@ async function rafraichirSession(): Promise<boolean> {
 }
 
 async function executer(chemin: string, options: OptionsRequete = {}): Promise<Response> {
-  const { corps, parametres, publique, brut: _brut, headers, ...reste } = options;
+  // « brut » est interprété par l'appelant : on l'écarte des options transmises à fetch.
+  const { corps, parametres, publique, brut, headers, ...reste } = options;
+  void brut;
 
   const entetes = new Headers(headers);
   if (corps !== undefined && !(corps instanceof FormData)) {

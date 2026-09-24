@@ -100,7 +100,13 @@ async def arbre_institutionnel(session: SessionDep, contexte: ContexteDep) -> li
     stmt = select(Structure).where(Structure.supprime.is_(False)).order_by(Structure.ordre)
     noeuds = list((await session.execute(stmt)).scalars())
 
-    par_id = {n.id: StructureNoeud.model_validate(n).model_dump() for n in noeuds}
+    # La validation porte sur StructureLecture : passer par StructureNoeud
+    # ferait lire à Pydantic la relation « enfants », non chargée, ce qui échoue
+    # hors contexte greenlet. L'arborescence est reconstruite ici, en mémoire.
+    par_id = {
+        n.id: {**StructureLecture.model_validate(n).model_dump(mode="json"), "enfants": []}
+        for n in noeuds
+    }
     racines: list[dict] = []
     for noeud in noeuds:
         charge = par_id[noeud.id]

@@ -7,7 +7,7 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 from typing import Any
 
-from sqlalchemy import Select, func, or_, select
+from sqlalchemy import Float, Select, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exceptions import ValidationError
@@ -29,6 +29,11 @@ from app.models.personnel import Enseignant
 from app.models.projet import Projet
 from app.models.referentiel import Commune, Departement, TypeEtablissement
 from app.models.scolarite import Classe, Matiere
+from app.models.vie_etudiante import Exemplaire, Livre, Pret
+
+#: `Apprenant.nom_complet` est une propriété Python : côté SQL, le nom complet
+#: se reconstitue par concaténation, avec la même convention que le modèle.
+_NOM_APPRENANT = (Apprenant.prenoms + " " + Apprenant.nom).label("nom_complet")
 
 
 @dataclass(frozen=True, slots=True)
@@ -383,6 +388,84 @@ def _entites() -> dict[str, EntiteRecherchable]:
         champs_libres=(DiplomeDelivre.numero, DiplomeDelivre.titulaire_nom),
     )
 
+    syntheses_assiduite = EntiteRecherchable(
+        cle="syntheses_assiduite",
+        libelle="Synthèses d'assiduité",
+        ressource="presences",
+        base=SyntheseAssiduite,
+        jointures=(
+            (Apprenant, Apprenant.id == SyntheseAssiduite.apprenant_id),
+            (Classe, Classe.id == SyntheseAssiduite.classe_id),
+            (Etablissement, Etablissement.id == Classe.etablissement_id),
+            (Commune, Commune.id == Etablissement.commune_id),
+            (Departement, Departement.id == Commune.departement_id),
+        ),
+        colonnes=(
+            Colonne("id", "Identifiant", SyntheseAssiduite.id),
+            Colonne("apprenant", "Apprenant", _NOM_APPRENANT),
+            Colonne("classe", "Classe", Classe.libelle),
+            Colonne("etablissement", "Établissement", Etablissement.nom),
+            Colonne("departement", "Département", Departement.libelle),
+            Colonne("seances", "Séances", SyntheseAssiduite.seances_totales),
+            Colonne("absences_injustifiees", "Absences", SyntheseAssiduite.absences_injustifiees),
+            Colonne("retards", "Retards", SyntheseAssiduite.retards),
+            Colonne("taux_presence", "Taux de présence", SyntheseAssiduite.taux_presence),
+        ),
+        champs=(
+            DescripteurChamp("apprenant", "Apprenant", _NOM_APPRENANT),
+            DescripteurChamp("classe", "Classe", Classe.libelle),
+            DescripteurChamp("etablissement", "Établissement", Etablissement.nom),
+            DescripteurChamp("departement", "Département", Departement.libelle),
+            DescripteurChamp(
+                "taux_presence", "Taux de présence", SyntheseAssiduite.taux_presence, "nombre"
+            ),
+            DescripteurChamp(
+                "absences_injustifiees",
+                "Absences injustifiées",
+                SyntheseAssiduite.absences_injustifiees,
+                "nombre",
+            ),
+            DescripteurChamp("retards", "Retards", SyntheseAssiduite.retards, "nombre"),
+            DescripteurChamp(
+                "seances", "Séances suivies", SyntheseAssiduite.seances_totales, "nombre"
+            ),
+        ),
+        champs_libres=(_NOM_APPRENANT,),
+    )
+
+    prets = EntiteRecherchable(
+        cle="prets",
+        libelle="Prêts de bibliothèque",
+        ressource="bibliotheque",
+        base=Pret,
+        jointures=(
+            (Exemplaire, Exemplaire.id == Pret.exemplaire_id),
+            (Livre, Livre.id == Exemplaire.livre_id),
+            (Apprenant, Apprenant.id == Pret.apprenant_id),
+        ),
+        colonnes=(
+            Colonne("id", "Identifiant", Pret.id),
+            Colonne("titre", "Ouvrage", Livre.titre),
+            Colonne("auteur", "Auteur", Livre.auteur),
+            Colonne("emprunteur", "Emprunteur", _NOM_APPRENANT),
+            Colonne("date_pret", "Emprunté le", Pret.date_pret),
+            Colonne("date_retour_prevue", "Retour prévu", Pret.date_retour_prevue),
+            Colonne("jours_retard", "Jours de retard", Pret.jours_retard),
+            Colonne("rendu", "Rendu", Pret.rendu),
+        ),
+        champs=(
+            DescripteurChamp("titre", "Ouvrage", Livre.titre),
+            DescripteurChamp("auteur", "Auteur", Livre.auteur),
+            DescripteurChamp("emprunteur", "Emprunteur", _NOM_APPRENANT),
+            DescripteurChamp("jours_retard", "Jours de retard", Pret.jours_retard, "nombre"),
+            DescripteurChamp("penalite", "Pénalité", Pret.penalite, "nombre"),
+            DescripteurChamp("rendu", "Rendu", Pret.rendu, "booleen"),
+            DescripteurChamp("prolonge", "Prolongé", Pret.prolonge, "booleen"),
+            DescripteurChamp("date_retour_prevue", "Retour prévu", Pret.date_retour_prevue, "date"),
+        ),
+        champs_libres=(Livre.titre, Livre.auteur),
+    )
+
     return {
         entite.cle: entite
         for entite in (
@@ -394,6 +477,8 @@ def _entites() -> dict[str, EntiteRecherchable]:
             classes,
             projets,
             diplomes,
+            syntheses_assiduite,
+            prets,
         )
     }
 
@@ -434,7 +519,13 @@ CLE_APPRENANT = {
 
 #: Champs calculés propres à chaque entité, en plus de ceux liés à l'apprenant.
 CHAMPS_CALCULES_PAR_ENTITE: dict[str, set[str]] = {
-    "etablissements": {"taux_reussite", "moyenne_examen", "nombre_salles", "nombre_classes"},
+    "etablissements": {
+        "taux_reussite",
+        "moyenne_examen",
+        "nombre_salles",
+        "nombre_classes",
+        "eleves_par_enseignant",
+    },
 }
 
 
@@ -538,6 +629,26 @@ def _sous_requete_moyenne_examen_etablissement() -> Select:
     )
 
 
+def _sous_requete_eleves_par_enseignant() -> Select:
+    """Nombre d'élèves par enseignant rattaché à l'établissement.
+
+    Le rattachement retenu est l'établissement principal de l'enseignant, seul
+    lien renseigné de bout en bout dans le système.
+    """
+    return (
+        select(
+            Enseignant.etablissement_principal_id.label("cle"),
+            (
+                func.max(Etablissement.effectif_actuel)
+                / func.nullif(func.count(Enseignant.id), 0).cast(Float)
+            ).label("valeur"),
+        )
+        .join(Etablissement, Etablissement.id == Enseignant.etablissement_principal_id)
+        .group_by(Enseignant.etablissement_principal_id)
+        .subquery()
+    )
+
+
 def _sous_requete_comptage(modele, colonne_etablissement) -> Select:
     """Nombre d'enregistrements rattachés à un établissement."""
     return (
@@ -582,6 +693,8 @@ def _resoudre_sous_requete(champ: str, entite: EntiteRecherchable):
             return _sous_requete_comptage(Salle, Salle.etablissement_id), Etablissement.id
         if champ == "nombre_classes":
             return _sous_requete_comptage(Classe, Classe.etablissement_id), Etablissement.id
+        if champ == "eleves_par_enseignant":
+            return _sous_requete_eleves_par_enseignant(), Etablissement.id
 
     return None
 

@@ -213,11 +213,18 @@ docker exec eduhub-postgres psql -U eduhub -d eduhub \
 12. **Recherche avancée** : constructeur visuel, puis onglet *Question en
     français* — « Montre-moi les élèves des CEG ayant au moins 17 de moyenne en
     mathématiques. »
-13. **Cartographie** : implantation nationale des établissements.
-14. **Infrastructures** : bâtiments, salles et équipements, avec leur état et
+13. **Correction des copies** : choisir une épreuve, suivre l'avancement des
+    correcteurs, noter des copies anonymées en première ou en seconde lecture —
+    un écart de trois points déclenche une troisième correction — puis lire les
+    notes définitives, rattachées au candidat une fois la correction faite.
+14. **Gouvernance** : organigramme ministère → direction → direction
+    départementale, règles métier et bouton *Simuler* qui les confronte aux
+    données réelles sans rien modifier, alertes et leur traitement.
+15. **Cartographie** : implantation nationale des établissements.
+16. **Infrastructures** : bâtiments, salles et équipements, avec leur état et
     leur niveau d'accessibilité.
-15. **Transport** : suivi des trajets, prochain arrêt, places disponibles.
-16. **Vérification publique** : coller le code d'un diplôme sur `/verification`.
+17. **Transport** : suivi des trajets, prochain arrêt, places disponibles.
+18. **Vérification publique** : coller le code d'un diplôme sur `/verification`.
 
 À tout moment, le bouton **Accessibilité** de l'en-tête permet de basculer en
 contraste élevé, grande police, interface simplifiée, lecture vocale ou

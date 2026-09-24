@@ -1075,7 +1075,12 @@ async def simuler_regles(
             )
             continue
 
-        if champ not in entite.constructeur.champs:
+        # Un champ calculé (taux de réussite, ratio élèves/enseignant…) n'est pas
+        # une colonne déclarée : il est résolu par sous-requête, et reste donc
+        # parfaitement interrogeable.
+        if champ not in entite.constructeur.champs and not service_recherche.est_champ_calcule(
+            champ, regle.entite_cible
+        ):
             declenchements.append(
                 {
                     "regle": regle.code,

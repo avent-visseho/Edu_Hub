@@ -69,7 +69,7 @@ REGLES: tuple[dict, ...] = (
         "libelle": "Surcharge des salles de classe",
         "domaine": "INFRASTRUCTURE",
         "entite_cible": "classes",
-        "conditions": {"champ": "eleves_par_salle", "operateur": "gt", "valeur": 60},
+        "conditions": {"champ": "effectif", "operateur": "gt", "valeur": 60},
         "consequences": {
             "alerte": "Surcharge",
             "niveau": "ATTENTION",

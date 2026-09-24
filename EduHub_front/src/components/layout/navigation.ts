@@ -18,6 +18,7 @@ import {
   HeartPulse,
   Home,
   Landmark,
+  Network,
   Languages,
   Library,
   Lightbulb,
@@ -340,6 +341,14 @@ export const NAVIGATION: GroupeNavigation[] = [
         href: '/administration/comptes',
         icone: ShieldCheck,
         permission: 'utilisateurs:READ',
+      },
+      {
+        libelle: 'Gouvernance',
+        libelleSimple: 'Organisation',
+        pictogramme: '🏛️',
+        href: '/gouvernance',
+        icone: Network,
+        permission: 'structures:READ',
       },
       {
         libelle: "Journal d'audit",

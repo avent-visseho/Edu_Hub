@@ -103,6 +103,14 @@ interface ProprietesGraphique {
   hauteur?: number;
   /** Suffixe ajouté aux valeurs dans l'infobulle. */
   unite?: string;
+  /** Longueur au-delà de laquelle les libellés d'abscisse sont tronqués. */
+  longueurEtiquette?: number;
+}
+
+/** Raccourcit un libellé d'axe tout en gardant l'information utile. */
+function raccourcir(valeur: unknown, longueur: number): string {
+  const texte = String(valeur ?? '');
+  return texte.length <= longueur ? texte : `${texte.slice(0, longueur - 1)}…`;
 }
 
 export function GraphiqueBarres({
@@ -112,6 +120,7 @@ export function GraphiqueBarres({
   titre,
   hauteur = 280,
   unite,
+  longueurEtiquette = 18,
 }: ProprietesGraphique) {
   const { economieDonnees } = useAccessibilite();
   if (economieDonnees || donnees.length === 0) {
@@ -128,7 +137,11 @@ export function GraphiqueBarres({
             dataKey={cleAbscisse}
             tick={{ fontSize: 11, fill: 'rgb(var(--texte-doux))' }}
             stroke="rgb(var(--bordure))"
-            interval="preserveStartEnd"
+            interval={0}
+            angle={donnees.length > 8 ? -35 : 0}
+            textAnchor={donnees.length > 8 ? 'end' : 'middle'}
+            height={donnees.length > 8 ? 70 : 30}
+            tickFormatter={(valeur) => raccourcir(valeur, longueurEtiquette)}
           />
           <YAxis
             tick={{ fontSize: 11, fill: 'rgb(var(--texte-doux))' }}
@@ -242,9 +255,12 @@ export function GraphiqueSecteurs({
             data={donnees}
             dataKey={cleValeur}
             nameKey={cleLibelle}
-            innerRadius="52%"
-            outerRadius="82%"
+            cx="50%"
+            cy="45%"
+            innerRadius={55}
+            outerRadius={90}
             paddingAngle={2}
+            isAnimationActive={false}
           >
             {donnees.map((_, index) => (
               <Cell key={index} fill={PALETTE[index % PALETTE.length]} />

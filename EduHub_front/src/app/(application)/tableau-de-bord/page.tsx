@@ -191,8 +191,9 @@ export default function PageTableauDeBord() {
               donnees={reussite}
               cleAbscisse="session"
               series={[{ cle: 'taux_reussite', libelle: 'Taux de réussite', couleur: '#284f8b' }]}
-              hauteur={260}
+              hauteur={300}
               unite="%"
+              longueurEtiquette={26}
             />
           </CorpsCarte>
         </Carte>

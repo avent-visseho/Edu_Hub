@@ -15,7 +15,7 @@ from app.core.database import Base
 if TYPE_CHECKING:
     from app.models.apprenant import Apprenant
     from app.models.examen import Candidat, SessionExamen
-    from app.models.referentiel import Diplome as DiplomeReferentiel
+    from app.models.referentiel import Diplome
 
 
 class StatutDiplome(StrEnum):
@@ -95,7 +95,7 @@ class DiplomeDelivre(Base):
     apprenant: Mapped[Apprenant | None] = relationship(lazy="selectin")
     candidat: Mapped[Candidat | None] = relationship(lazy="selectin")
     session: Mapped[SessionExamen | None] = relationship(lazy="selectin")
-    diplome_ref: Mapped[DiplomeReferentiel | None] = relationship(lazy="selectin")
+    diplome_ref: Mapped[Diplome | None] = relationship(lazy="selectin")
 
 
 class Attestation(Base):

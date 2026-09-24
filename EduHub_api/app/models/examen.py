@@ -774,7 +774,9 @@ class Correcteur(Base):
 
     enseignant: Mapped[Enseignant | None] = relationship(lazy="selectin")
     matiere: Mapped[Matiere | None] = relationship(lazy="selectin")
-    copies: Mapped[list[Copie]] = relationship(back_populates="correcteur")
+    copies: Mapped[list[Copie]] = relationship(
+        back_populates="correcteur", foreign_keys="Copie.correcteur_id"
+    )
 
     __table_args__ = (
         UniqueConstraint("session_id", "code_correcteur", name="uq_correcteurs_session_code"),

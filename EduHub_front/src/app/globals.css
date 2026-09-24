@@ -1,0 +1,183 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/**
+ * Jetons de thème.
+ *
+ * Trois préférences cumulables pilotent l'apparence : le thème sombre, le
+ * contraste élevé et la grande police. Chacune est appliquée par un attribut
+ * sur <html>, ce qui permet de la restituer côté serveur comme côté client.
+ */
+:root {
+  --police-interface: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --taille-base: 1rem;
+
+  --fond: 248 250 252;
+  --fond-carte: 255 255 255;
+  --fond-doux: 241 245 249;
+  --bordure: 226 232 240;
+  --texte: 15 30 53;
+  --texte-doux: 71 85 105;
+  --accent: 40 79 139;
+  --accent-contraste: 255 255 255;
+  --succes: 22 161 83;
+  --alerte: 243 157 11;
+  --danger: 185 28 28;
+  --anneau: 57 102 168;
+}
+
+:root[data-theme='sombre'] {
+  --fond: 13 21 37;
+  --fond-carte: 20 32 54;
+  --fond-doux: 26 40 66;
+  --bordure: 45 65 98;
+  --texte: 226 235 248;
+  --texte-doux: 155 175 203;
+  --accent: 149 177 216;
+  --accent-contraste: 12 22 40;
+  --succes: 74 222 141;
+  --alerte: 249 190 34;
+  --danger: 252 165 165;
+  --anneau: 149 177 216;
+}
+
+/* Contraste élevé : noir et blanc francs, bordures épaissies. */
+:root[data-contraste='eleve'] {
+  --fond: 255 255 255;
+  --fond-carte: 255 255 255;
+  --fond-doux: 255 255 255;
+  --bordure: 0 0 0;
+  --texte: 0 0 0;
+  --texte-doux: 0 0 0;
+  --accent: 0 0 139;
+  --accent-contraste: 255 255 255;
+  --succes: 0 100 0;
+  --alerte: 140 70 0;
+  --danger: 160 0 0;
+  --anneau: 0 0 0;
+}
+
+:root[data-theme='sombre'][data-contraste='eleve'] {
+  --fond: 0 0 0;
+  --fond-carte: 0 0 0;
+  --fond-doux: 0 0 0;
+  --bordure: 255 255 255;
+  --texte: 255 255 255;
+  --texte-doux: 255 255 255;
+  --accent: 255 235 59;
+  --accent-contraste: 0 0 0;
+  --succes: 0 230 118;
+  --alerte: 255 214 0;
+  --danger: 255 138 128;
+  --anneau: 255 235 59;
+}
+
+:root[data-police='grande'] {
+  --taille-base: 1.1875rem;
+}
+
+:root[data-police='tres-grande'] {
+  --taille-base: 1.375rem;
+}
+
+@layer base {
+  * {
+    border-color: rgb(var(--bordure));
+  }
+
+  html {
+    font-size: var(--taille-base);
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    background-color: rgb(var(--fond));
+    color: rgb(var(--texte));
+    font-family: var(--police-interface);
+    line-height: 1.6;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* L'anneau de focus ne disparaît jamais : c'est la boussole du clavier. */
+  :focus-visible {
+    outline: 3px solid rgb(var(--anneau));
+    outline-offset: 2px;
+    border-radius: 0.25rem;
+  }
+
+  [data-contraste='eleve'] :focus-visible {
+    outline-width: 4px;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    color: rgb(var(--texte));
+    font-weight: 600;
+    letter-spacing: -0.011em;
+  }
+
+  /* Tableaux : lisibles jusque sur un petit écran. */
+  table {
+    border-collapse: separate;
+    border-spacing: 0;
+  }
+
+  ::selection {
+    background: rgb(var(--accent) / 0.22);
+  }
+
+  /* Respecte le réglage système de réduction des animations. */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+@layer components {
+  .lien-evitement {
+    @apply sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50
+      focus:rounded focus:px-4 focus:py-2 focus:font-medium;
+    background: rgb(var(--accent));
+    color: rgb(var(--accent-contraste));
+  }
+
+  .surface {
+    background-color: rgb(var(--fond-carte));
+    border: 1px solid rgb(var(--bordure));
+  }
+
+  .surface-douce {
+    background-color: rgb(var(--fond-doux));
+  }
+
+  .texte-doux {
+    color: rgb(var(--texte-doux));
+  }
+
+  /* Barre de défilement discrète mais visible en contraste élevé. */
+  .defilement-fin {
+    scrollbar-width: thin;
+    scrollbar-color: rgb(var(--bordure)) transparent;
+  }
+}
+
+/* Impression : on retire les éléments de navigation. */
+@media print {
+  .sans-impression {
+    display: none !important;
+  }
+
+  body {
+    background: white;
+    color: black;
+  }
+}

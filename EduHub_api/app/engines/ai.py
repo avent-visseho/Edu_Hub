@@ -347,6 +347,16 @@ def interpreter(question: str) -> Interpretation:
             interpretation.confiance += 0.15
             break
 
+    # --- Décision d'examen ---
+    if re.search(r"\bnon[ -]?admis", texte) or re.search(r"\b(ajourne|recale)", texte):
+        interpretation.criteres.append(Critere("decision", Operateur.EGAL, "NON_ADMIS"))
+        interpretation.explications.append("Décision détectée : non admis")
+        interpretation.confiance += 0.15
+    elif re.search(r"\b(admis|laureat|recu)s?\b", texte):
+        interpretation.criteres.append(Critere("decision", Operateur.EGAL, "ADMIS"))
+        interpretation.explications.append("Décision détectée : admis")
+        interpretation.confiance += 0.15
+
     # --- Sexe ---
     if re.search(r"\b(fille|filles)\b", texte):
         interpretation.criteres.append(Critere("sexe", Operateur.EGAL, "FEMININ"))

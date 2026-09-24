@@ -60,12 +60,36 @@ router = APIRouter()
 MATIERES_CALCULEES = ("MATH", "FRA", "ANG", "SVT", "PC", "HG", "PHILO")
 
 
+#: Libellés des champs calculés propres à certaines entités.
+LIBELLES_CALCULES: dict[str, str] = {
+    "taux_reussite": "Taux de réussite aux examens (%)",
+    "moyenne_examen": "Moyenne obtenue aux examens",
+    "nombre_salles": "Nombre de salles",
+    "nombre_classes": "Nombre de classes",
+}
+
+
 def _champs_calcules(entite) -> list[dict]:
     """Variables dérivées, calculées à la volée par le moteur de recherche."""
+    operateurs = ["eq", "ne", "gt", "gte", "lt", "lte", "between"]
+
+    propres = service_recherche.CHAMPS_CALCULES_PAR_ENTITE.get(entite.cle, set())
+    if propres:
+        return [
+            {
+                "cle": cle,
+                "libelle": LIBELLES_CALCULES.get(cle, cle),
+                "type": "nombre",
+                "choix": [],
+                "operateurs": operateurs,
+                "calcule": True,
+            }
+            for cle in sorted(propres)
+        ]
+
     if entite.cle not in service_recherche.CLE_APPRENANT:
         return []
 
-    operateurs = ["eq", "ne", "gt", "gte", "lt", "lte", "between"]
     champs = [
         {
             "cle": "moyenne_generale",
@@ -435,15 +459,14 @@ async def recherche_naturelle(
     # Seuls les critères correspondant à des champs connus sont appliqués.
     entite = service_recherche.obtenir_entite(interpretation.entite)
     champs_connus = set(entite.constructeur.champs)
-    retenus = [
-        critere
-        for critere in interpretation.criteres
-        if critere.champ in champs_connus
-        or (
-            service_recherche.est_champ_calcule(critere.champ)
-            and entite.cle in service_recherche.CLE_APPRENANT
-        )
-    ]
+
+    def applicable(champ: str) -> bool:
+        resolu = service_recherche.resoudre_synonyme(entite.cle, champ)
+        if resolu in champs_connus:
+            return True
+        return service_recherche.est_champ_calcule(resolu, entite.cle)
+
+    retenus = [critere for critere in interpretation.criteres if applicable(critere.champ)]
     ignores = [c.champ for c in interpretation.criteres if c not in retenus]
     if ignores:
         reponse.explications.append(

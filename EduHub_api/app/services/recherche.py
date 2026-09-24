@@ -21,9 +21,9 @@ from app.engines.search import (
 )
 from app.models.apprenant import Apprenant
 from app.models.diplome import DiplomeDelivre
-from app.models.etablissement import Etablissement
+from app.models.etablissement import Etablissement, Salle
 from app.models.evaluation import Bulletin, MoyenneMatiere
-from app.models.examen import Candidat, ResultatExamen, SessionExamen
+from app.models.examen import Candidat, DecisionExamen, ResultatExamen, SessionExamen
 from app.models.pedagogie import SyntheseAssiduite
 from app.models.personnel import Enseignant
 from app.models.projet import Projet
@@ -401,6 +401,21 @@ def _entites() -> dict[str, EntiteRecherchable]:
 REGISTRE: dict[str, EntiteRecherchable] = _entites()
 
 
+#: Synonymes acceptés par entité : la question de l'utilisateur ne connaît pas
+#: le nom exact des colonnes, mais le sens qu'elle vise est sans ambiguïté.
+SYNONYMES: dict[str, dict[str, str]] = {
+    "candidats": {"moyenne_generale": "moyenne", "nom_complet": "nom"},
+    "resultats": {"moyenne_generale": "moyenne"},
+    "bulletins": {"moyenne": "moyenne_generale"},
+    "etablissements": {"effectif_etablissement": "effectif", "nombre_eleves": "effectif"},
+}
+
+
+def resoudre_synonyme(entite_cle: str, champ: str) -> str:
+    """Traduit un champ vers son nom réel sur l'entité interrogée."""
+    return SYNONYMES.get(entite_cle, {}).get(champ, champ)
+
+
 def obtenir_entite(cle: str) -> EntiteRecherchable:
     entite = REGISTRE.get(cle)
     if entite is None:
@@ -417,21 +432,38 @@ CLE_APPRENANT = {
     "bulletins": Bulletin.apprenant_id,
 }
 
+#: Champs calculés propres à chaque entité, en plus de ceux liés à l'apprenant.
+CHAMPS_CALCULES_PAR_ENTITE: dict[str, set[str]] = {
+    "etablissements": {"taux_reussite", "moyenne_examen", "nombre_salles", "nombre_classes"},
+}
 
-def est_champ_calcule(champ: str) -> bool:
+
+def est_champ_calcule(champ: str, entite_cle: str | None = None) -> bool:
     """Indique si un champ est résolu par une sous-requête plutôt que par une colonne."""
-    return champ.startswith("moyenne_matiere:") or champ in {
+    lies_a_l_apprenant = champ.startswith("moyenne_matiere:") or champ in {
         "moyenne_generale",
         "taux_absence",
         "taux_presence",
     }
+    if entite_cle is None:
+        return lies_a_l_apprenant or any(
+            champ in champs for champs in CHAMPS_CALCULES_PAR_ENTITE.values()
+        )
+    if entite_cle in CLE_APPRENANT and lies_a_l_apprenant:
+        return True
+    return champ in CHAMPS_CALCULES_PAR_ENTITE.get(entite_cle, set())
+
+
+# ------------------------------------------------------------------
+#  Sous-requêtes rattachées à un apprenant
+# ------------------------------------------------------------------
 
 
 def _sous_requete_moyenne_matiere(code_matiere: str) -> Select:
     """Moyenne d'un apprenant dans une matière donnée, toutes périodes confondues."""
     return (
         select(
-            MoyenneMatiere.apprenant_id.label("apprenant_id"),
+            MoyenneMatiere.apprenant_id.label("cle"),
             func.avg(MoyenneMatiere.moyenne).label("valeur"),
         )
         .join(Matiere, Matiere.id == MoyenneMatiere.matiere_id)
@@ -445,7 +477,7 @@ def _sous_requete_moyenne_generale() -> Select:
     """Moyenne générale d'un apprenant, consolidée sur l'ensemble de ses bulletins."""
     return (
         select(
-            Bulletin.apprenant_id.label("apprenant_id"),
+            Bulletin.apprenant_id.label("cle"),
             func.avg(Bulletin.moyenne_generale).label("valeur"),
         )
         .where(Bulletin.moyenne_generale.isnot(None))
@@ -462,11 +494,58 @@ def _sous_requete_assiduite(inverser: bool) -> Select:
         else func.avg(SyntheseAssiduite.taux_presence)
     )
     return (
-        select(
-            SyntheseAssiduite.apprenant_id.label("apprenant_id"),
-            expression.label("valeur"),
-        )
+        select(SyntheseAssiduite.apprenant_id.label("cle"), expression.label("valeur"))
         .group_by(SyntheseAssiduite.apprenant_id)
+        .subquery()
+    )
+
+
+# ------------------------------------------------------------------
+#  Sous-requêtes rattachées à un établissement
+# ------------------------------------------------------------------
+
+
+def _sous_requete_reussite_etablissement() -> Select:
+    """Taux de réussite d'un établissement, toutes sessions d'examen confondues."""
+    admis = func.count(ResultatExamen.id).filter(ResultatExamen.decision == DecisionExamen.ADMIS)
+    presents = func.count(ResultatExamen.id).filter(
+        ResultatExamen.decision != DecisionExamen.ABSENT
+    )
+    return (
+        select(
+            ResultatExamen.etablissement_id.label("cle"),
+            (100.0 * admis / func.nullif(presents, 0)).label("valeur"),
+        )
+        .where(ResultatExamen.etablissement_id.isnot(None))
+        .group_by(ResultatExamen.etablissement_id)
+        .subquery()
+    )
+
+
+def _sous_requete_moyenne_examen_etablissement() -> Select:
+    """Moyenne obtenue aux examens par les candidats d'un établissement."""
+    return (
+        select(
+            ResultatExamen.etablissement_id.label("cle"),
+            func.avg(ResultatExamen.moyenne).label("valeur"),
+        )
+        .where(
+            ResultatExamen.etablissement_id.isnot(None),
+            ResultatExamen.moyenne.isnot(None),
+        )
+        .group_by(ResultatExamen.etablissement_id)
+        .subquery()
+    )
+
+
+def _sous_requete_comptage(modele, colonne_etablissement) -> Select:
+    """Nombre d'enregistrements rattachés à un établissement."""
+    return (
+        select(
+            colonne_etablissement.label("cle"),
+            func.count(modele.id).label("valeur"),
+        )
+        .group_by(colonne_etablissement)
         .subquery()
     )
 
@@ -483,26 +562,45 @@ _COMPARAISONS = {
 }
 
 
+def _resoudre_sous_requete(champ: str, entite: EntiteRecherchable):
+    """Renvoie la sous-requête et la colonne de jointure d'un champ calculé."""
+    cle_apprenant = CLE_APPRENANT.get(entite.cle)
+    if cle_apprenant is not None:
+        if champ.startswith("moyenne_matiere:"):
+            return _sous_requete_moyenne_matiere(champ.split(":", 1)[1]), cle_apprenant
+        if champ == "moyenne_generale":
+            return _sous_requete_moyenne_generale(), cle_apprenant
+        if champ in {"taux_absence", "taux_presence"}:
+            return _sous_requete_assiduite(champ == "taux_absence"), cle_apprenant
+
+    if entite.cle == "etablissements":
+        if champ == "taux_reussite":
+            return _sous_requete_reussite_etablissement(), Etablissement.id
+        if champ == "moyenne_examen":
+            return _sous_requete_moyenne_examen_etablissement(), Etablissement.id
+        if champ == "nombre_salles":
+            return _sous_requete_comptage(Salle, Salle.etablissement_id), Etablissement.id
+        if champ == "nombre_classes":
+            return _sous_requete_comptage(Classe, Classe.etablissement_id), Etablissement.id
+
+    return None
+
+
 def _critere_special(
     statement: Select, critere: Critere, entite: EntiteRecherchable
 ) -> tuple[Select, Any] | None:
-    """Résout un champ calculé : moyenne par matière, moyenne générale, assiduité.
+    """Résout un champ calculé, absent des tables mais attendu par les utilisateurs.
 
-    Ces champs n'existent dans aucune table : ils sont reconstruits par une
-    sous-requête agrégée, jointe à l'entité interrogée.
+    Moyenne dans une matière, moyenne générale, assiduité, taux de réussite d'un
+    établissement : chacun est reconstruit par une sous-requête agrégée, jointe
+    à l'entité interrogée.
     """
-    cle_jointure = CLE_APPRENANT.get(entite.cle)
-    if cle_jointure is None or not est_champ_calcule(critere.champ):
+    resolution = _resoudre_sous_requete(critere.champ, entite)
+    if resolution is None:
         return None
 
-    if critere.champ.startswith("moyenne_matiere:"):
-        sous_requete = _sous_requete_moyenne_matiere(critere.champ.split(":", 1)[1])
-    elif critere.champ == "moyenne_generale":
-        sous_requete = _sous_requete_moyenne_generale()
-    else:
-        sous_requete = _sous_requete_assiduite(critere.champ == "taux_absence")
-
-    statement = statement.outerjoin(sous_requete, sous_requete.c.apprenant_id == cle_jointure)
+    sous_requete, colonne_jointure = resolution
+    statement = statement.outerjoin(sous_requete, sous_requete.c.cle == colonne_jointure)
 
     fabrique = _COMPARAISONS.get(critere.operateur)
     if fabrique is None:
@@ -539,6 +637,15 @@ async def executer(
 
     constructeur = entite.constructeur
     ordinaires: list[Critere] = []
+    # Les synonymes sont résolus avant tout traitement.
+    criteres = [
+        Critere(
+            champ=resoudre_synonyme(entite.cle, critere.champ),
+            operateur=critere.operateur,
+            valeur=critere.valeur,
+        )
+        for critere in criteres
+    ]
     for critere in criteres:
         special = _critere_special(statement, critere, entite)
         if special is None:

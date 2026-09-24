@@ -44,8 +44,9 @@ class Settings(BaseSettings):
     # ---------- Base de données ----------
     database_url: str = "postgresql+asyncpg://eduhub:eduhub@localhost:5432/eduhub"
     database_echo: bool = False
-    database_pool_size: int = 20
-    database_max_overflow: int = 10
+    # Dimensionné pour cohabiter avec d'autres services sur un même PostgreSQL.
+    database_pool_size: int = 10
+    database_max_overflow: int = 5
 
     # ---------- Redis ----------
     redis_url: str = "redis://localhost:6379/0"

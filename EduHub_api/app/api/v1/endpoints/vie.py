@@ -16,9 +16,11 @@ from app.engines import workflow
 from app.engines.search import DescripteurChamp
 from app.models.apprenant import Apprenant
 from app.models.apprentissage import (
+    CentreAlphabetisation,
     Cours,
     Lecon,
     ModuleCours,
+    ParcoursAlphabetisation,
     ProgressionApprentissage,
     RessourcePedagogique,
 )
@@ -31,10 +33,14 @@ from app.models.orientation import (
 )
 from app.models.projet import (
     CandidatureOffre,
+    Chercheur,
     Entreprise,
+    Laboratoire,
     MembreProjet,
     Offre,
     Projet,
+    ProjetRecherche,
+    Publication,
     Stage,
     StatutCandidature,
 )
@@ -43,7 +49,9 @@ from app.models.vie_etudiante import (
     AideSociale,
     ArretTransport,
     AttributionLogement,
+    CampagneSante,
     CandidatureBourse,
+    CentreSante,
     Chambre,
     Conducteur,
     Exemplaire,
@@ -52,6 +60,7 @@ from app.models.vie_etudiante import (
     Menu,
     Pret,
     ProgrammeBourse,
+    RendezVousSante,
     Residence,
     StatutCandidatureBourse,
     Trajet,
@@ -65,11 +74,16 @@ from app.schemas.vie import (
     AdhesionProjet,
     AideSocialeLecture,
     ArretLecture,
+    CampagneSanteLecture,
     CandidatureBourseCreation,
     CandidatureBourseLecture,
     CandidatureOffreCreation,
     CandidatureOffreLecture,
+    CentreAlphabetisationLecture,
+    CentreSanteEcriture,
+    CentreSanteLecture,
     ChambreLecture,
+    ChercheurLecture,
     CoursEcriture,
     CoursLecture,
     DemandeLogement,
@@ -79,6 +93,7 @@ from app.schemas.vie import (
     EntrepriseLecture,
     FormationEcriture,
     FormationLecture,
+    LaboratoireLecture,
     LigneTransportEcriture,
     LigneTransportLecture,
     LivreEcriture,
@@ -86,6 +101,7 @@ from app.schemas.vie import (
     MenuLecture,
     OffreEcriture,
     OffreLecture,
+    ParcoursAlphabetisationLecture,
     PretCreation,
     PretLecture,
     ProgrammeBourseEcriture,
@@ -93,6 +109,9 @@ from app.schemas.vie import (
     ProgressionLecture,
     ProjetEcriture,
     ProjetLecture,
+    ProjetRechercheLecture,
+    PublicationLecture,
+    RendezVousLecture,
     ResidenceLecture,
     RessourceLecture,
     StageLecture,
@@ -1237,6 +1256,295 @@ router.include_router(
             DescripteurChamp("entreprise_id", "Entreprise", Stage.entreprise_id, "uuid"),
             DescripteurChamp("note_finale", "Note finale", Stage.note_finale, "nombre"),
             DescripteurChamp("valide", "Validé", Stage.valide, "booleen"),
+        ),
+    )
+)
+
+
+# ------------------------------------------------------------------
+#  Santé scolaire
+# ------------------------------------------------------------------
+
+centres_sante = creer_routeur_crud(
+    modele=CentreSante,
+    schema_lecture=CentreSanteLecture,
+    schema_creation=CentreSanteEcriture,
+    schema_maj=CentreSanteEcriture,
+    prefixe="/sante/centres",
+    tag="Santé",
+    ressource="sante",
+    libelle_singulier="centre de santé",
+    libelle_pluriel="centres de santé",
+    champs_recherche=("code", "nom", "services"),
+    tri_defaut="nom",
+    champs_filtrables=(
+        DescripteurChamp("code", "Code", CentreSante.code),
+        DescripteurChamp("nom", "Nom", CentreSante.nom),
+        DescripteurChamp("etablissement_id", "Établissement", CentreSante.etablissement_id, "uuid"),
+        DescripteurChamp("nombre_agents", "Agents", CentreSante.nombre_agents, "nombre"),
+        DescripteurChamp("actif", "Actif", CentreSante.actif, "booleen"),
+    ),
+)
+
+
+@centres_sante.get(
+    "/{identifiant}/rendez-vous",
+    response_model=list[RendezVousLecture],
+    summary="Rendez-vous d'un centre de santé",
+    description="Les données médicales détaillées restent hors du système.",
+)
+async def rendez_vous_centre(
+    identifiant: uuid.UUID,
+    session: SessionDep,
+    contexte: ContexteDep,
+    limite: Annotated[int, Query(ge=1, le=200)] = 50,
+) -> list[RendezVousSante]:
+    contexte.exiger("sante", Action.READ)
+    stmt = (
+        select(RendezVousSante)
+        .where(RendezVousSante.centre_sante_id == identifiant)
+        .order_by(RendezVousSante.date_rdv.desc())
+        .limit(limite)
+    )
+    return list((await session.execute(stmt)).scalars())
+
+
+router.include_router(centres_sante)
+
+
+@router.get(
+    "/sante/campagnes",
+    response_model=list[CampagneSanteLecture],
+    tags=["Santé"],
+    summary="Campagnes de santé scolaire",
+    description="Vaccination, dépistage, hygiène, nutrition et sensibilisation.",
+)
+async def campagnes_sante(session: SessionDep, contexte: ContexteDep) -> list[CampagneSante]:
+    contexte.exiger("sante", Action.READ)
+    stmt = select(CampagneSante).order_by(CampagneSante.date_debut.desc())
+    return list((await session.execute(stmt)).scalars())
+
+
+# ------------------------------------------------------------------
+#  Alphabétisation
+# ------------------------------------------------------------------
+
+centres_alphabetisation = creer_routeur_crud(
+    modele=CentreAlphabetisation,
+    schema_lecture=CentreAlphabetisationLecture,
+    schema_creation=None,
+    schema_maj=None,
+    prefixe="/alphabetisation/centres",
+    tag="Alphabétisation",
+    ressource="apprentissage",
+    libelle_singulier="centre d'alphabétisation",
+    libelle_pluriel="centres d'alphabétisation",
+    champs_recherche=("code", "nom", "responsable"),
+    tri_defaut="nom",
+    champs_filtrables=(
+        DescripteurChamp("code", "Code", CentreAlphabetisation.code),
+        DescripteurChamp("nom", "Nom", CentreAlphabetisation.nom),
+        DescripteurChamp("commune_id", "Commune", CentreAlphabetisation.commune_id, "uuid"),
+        DescripteurChamp(
+            "langue_enseignement", "Langue", CentreAlphabetisation.langue_enseignement, "liste"
+        ),
+        DescripteurChamp(
+            "nombre_apprenants", "Apprenants", CentreAlphabetisation.nombre_apprenants, "nombre"
+        ),
+    ),
+)
+
+
+@centres_alphabetisation.get(
+    "/{identifiant}/parcours",
+    response_model=list[ParcoursAlphabetisationLecture],
+    summary="Parcours des apprenants d'un centre",
+)
+async def parcours_centre(
+    identifiant: uuid.UUID, session: SessionDep, contexte: ContexteDep
+) -> list[ParcoursAlphabetisation]:
+    contexte.exiger("apprentissage", Action.READ)
+    stmt = (
+        select(ParcoursAlphabetisation)
+        .where(ParcoursAlphabetisation.centre_id == identifiant)
+        .order_by(ParcoursAlphabetisation.progression_pourcentage.desc())
+    )
+    return list((await session.execute(stmt)).scalars())
+
+
+router.include_router(centres_alphabetisation)
+
+
+@router.get(
+    "/alphabetisation/statistiques",
+    tags=["Alphabétisation"],
+    summary="Statistiques de l'alphabétisation",
+    description="Répartition par langue nationale et taux de certification.",
+)
+async def statistiques_alphabetisation(session: SessionDep, contexte: ContexteDep) -> dict:
+    contexte.exiger("apprentissage", Action.READ)
+
+    stmt = (
+        select(
+            ParcoursAlphabetisation.langue,
+            func.count(ParcoursAlphabetisation.id),
+            func.avg(ParcoursAlphabetisation.progression_pourcentage),
+            func.count(ParcoursAlphabetisation.id).filter(
+                ParcoursAlphabetisation.certifie.is_(True)
+            ),
+        )
+        .group_by(ParcoursAlphabetisation.langue)
+        .order_by(func.count(ParcoursAlphabetisation.id).desc())
+    )
+
+    par_langue = [
+        {
+            "langue": langue.value,
+            "apprenants": total,
+            "progression_moyenne": round(float(progression), 1) if progression else 0.0,
+            "certifies": certifies,
+        }
+        for langue, total, progression, certifies in (await session.execute(stmt)).all()
+    ]
+
+    centres = int(
+        (
+            await session.execute(select(func.count()).select_from(CentreAlphabetisation))
+        ).scalar_one()
+    )
+    total = sum(ligne["apprenants"] for ligne in par_langue)
+    certifies = sum(ligne["certifies"] for ligne in par_langue)
+
+    return {
+        "centres": centres,
+        "apprenants": total,
+        "certifies": certifies,
+        "taux_certification": round(certifies * 100 / total, 2) if total else 0.0,
+        "par_langue": par_langue,
+    }
+
+
+# ------------------------------------------------------------------
+#  Recherche scientifique
+# ------------------------------------------------------------------
+
+laboratoires = creer_routeur_crud(
+    modele=Laboratoire,
+    schema_lecture=LaboratoireLecture,
+    schema_creation=None,
+    schema_maj=None,
+    prefixe="/recherche-scientifique/laboratoires",
+    tag="Recherche scientifique",
+    ressource="recherche",
+    libelle_singulier="laboratoire",
+    libelle_pluriel="laboratoires",
+    champs_recherche=("code", "nom", "domaines"),
+    tri_defaut="nom",
+    champs_filtrables=(
+        DescripteurChamp("nom", "Nom", Laboratoire.nom),
+        DescripteurChamp("domaines", "Domaines", Laboratoire.domaines),
+        DescripteurChamp("etablissement_id", "Établissement", Laboratoire.etablissement_id, "uuid"),
+        DescripteurChamp(
+            "nombre_chercheurs", "Chercheurs", Laboratoire.nombre_chercheurs, "nombre"
+        ),
+    ),
+)
+
+
+@laboratoires.get(
+    "/{identifiant}/equipe",
+    response_model=list[ChercheurLecture],
+    summary="Chercheurs d'un laboratoire",
+)
+async def equipe_laboratoire(
+    identifiant: uuid.UUID, session: SessionDep, contexte: ContexteDep
+) -> list[Chercheur]:
+    contexte.exiger("recherche", Action.READ)
+    stmt = (
+        select(Chercheur)
+        .where(Chercheur.laboratoire_id == identifiant)
+        .order_by(Chercheur.indice_h.desc())
+    )
+    return list((await session.execute(stmt)).scalars())
+
+
+router.include_router(laboratoires)
+
+router.include_router(
+    creer_routeur_crud(
+        modele=Chercheur,
+        schema_lecture=ChercheurLecture,
+        schema_creation=None,
+        schema_maj=None,
+        prefixe="/recherche-scientifique/chercheurs",
+        tag="Recherche scientifique",
+        ressource="recherche",
+        libelle_singulier="chercheur",
+        libelle_pluriel="chercheurs",
+        champs_recherche=("nom_complet", "specialite", "orcid"),
+        tri_defaut="nom_complet",
+        contrainte_unicite=None,
+        champs_filtrables=(
+            DescripteurChamp("nom_complet", "Nom", Chercheur.nom_complet),
+            DescripteurChamp("grade", "Grade", Chercheur.grade, "liste"),
+            DescripteurChamp("specialite", "Spécialité", Chercheur.specialite),
+            DescripteurChamp("laboratoire_id", "Laboratoire", Chercheur.laboratoire_id, "uuid"),
+            DescripteurChamp("indice_h", "Indice h", Chercheur.indice_h, "nombre"),
+            DescripteurChamp(
+                "nombre_publications", "Publications", Chercheur.nombre_publications, "nombre"
+            ),
+        ),
+    )
+)
+
+router.include_router(
+    creer_routeur_crud(
+        modele=Publication,
+        schema_lecture=PublicationLecture,
+        schema_creation=None,
+        schema_maj=None,
+        prefixe="/recherche-scientifique/publications",
+        tag="Recherche scientifique",
+        ressource="recherche",
+        libelle_singulier="publication",
+        libelle_pluriel="publications",
+        champs_recherche=("titre", "revue", "doi", "mots_cles"),
+        tri_defaut="annee",
+        contrainte_unicite=None,
+        champs_filtrables=(
+            DescripteurChamp("titre", "Titre", Publication.titre),
+            DescripteurChamp("type_publication", "Type", Publication.type_publication, "liste"),
+            DescripteurChamp("revue", "Revue", Publication.revue),
+            DescripteurChamp("annee", "Année", Publication.annee, "nombre"),
+            DescripteurChamp("acces_libre", "Accès libre", Publication.acces_libre, "booleen"),
+            DescripteurChamp(
+                "nombre_citations", "Citations", Publication.nombre_citations, "nombre"
+            ),
+        ),
+    )
+)
+
+router.include_router(
+    creer_routeur_crud(
+        modele=ProjetRecherche,
+        schema_lecture=ProjetRechercheLecture,
+        schema_creation=None,
+        schema_maj=None,
+        prefixe="/recherche-scientifique/projets",
+        tag="Recherche scientifique",
+        ressource="recherche",
+        libelle_singulier="projet de recherche",
+        libelle_pluriel="projets de recherche",
+        champs_recherche=("code", "titre", "domaine", "bailleur"),
+        tri_defaut="titre",
+        champs_filtrables=(
+            DescripteurChamp("titre", "Titre", ProjetRecherche.titre),
+            DescripteurChamp("domaine", "Domaine", ProjetRecherche.domaine, "liste"),
+            DescripteurChamp(
+                "laboratoire_id", "Laboratoire", ProjetRecherche.laboratoire_id, "uuid"
+            ),
+            DescripteurChamp("statut", "Statut", ProjetRecherche.statut, "liste"),
+            DescripteurChamp("financement", "Financement", ProjetRecherche.financement, "nombre"),
         ),
     )
 )

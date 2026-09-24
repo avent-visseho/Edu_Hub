@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import uuid
-from datetime import date, time
+from datetime import date, datetime, time
 
 from pydantic import Field
 
@@ -592,3 +592,138 @@ class StageLecture(SchemaBase):
     note_finale: float | None = None
     appreciation: str | None = None
     valide: bool
+
+
+# ------------------------------------------------------------------
+#  Santé scolaire
+# ------------------------------------------------------------------
+
+
+class CentreSanteLecture(SchemaBase):
+    id: uuid.UUID
+    code: str
+    nom: str
+    etablissement_id: uuid.UUID | None = None
+    commune_id: uuid.UUID | None = None
+    services: str | None = None
+    telephone: str | None = None
+    nombre_agents: int
+    actif: bool
+
+
+class CentreSanteEcriture(SchemaEntree):
+    code: str = Field(min_length=1, max_length=32)
+    nom: str = Field(min_length=1, max_length=255)
+    etablissement_id: uuid.UUID | None = None
+    commune_id: uuid.UUID | None = None
+    services: str | None = Field(default=None, max_length=500)
+    telephone: str | None = None
+    nombre_agents: int = Field(default=0, ge=0)
+    actif: bool = True
+
+
+class CampagneSanteLecture(SchemaBase):
+    id: uuid.UUID
+    code: str
+    intitule: str
+    theme: str | None = None
+    date_debut: date
+    date_fin: date
+    beneficiaires_cibles: int
+    beneficiaires_atteints: int
+
+
+class RendezVousLecture(SchemaBase):
+    id: uuid.UUID
+    centre_sante_id: uuid.UUID
+    apprenant_id: uuid.UUID
+    motif: str
+    date_rdv: datetime
+    statut: str
+    orientation: str | None = None
+
+
+# ------------------------------------------------------------------
+#  Alphabétisation
+# ------------------------------------------------------------------
+
+
+class CentreAlphabetisationLecture(SchemaBase):
+    id: uuid.UUID
+    code: str
+    nom: str
+    commune_id: uuid.UUID | None = None
+    langue_enseignement: Langue
+    responsable: str | None = None
+    telephone: str | None = None
+    nombre_formateurs: int
+    nombre_apprenants: int
+    actif: bool
+
+
+class ParcoursAlphabetisationLecture(SchemaBase):
+    id: uuid.UUID
+    centre_id: uuid.UUID
+    nom_complet: str
+    age: int | None = None
+    langue: Langue
+    niveau_initial: str
+    niveau_atteint: str | None = None
+    progression_pourcentage: float
+    certifie: bool
+
+
+# ------------------------------------------------------------------
+#  Recherche scientifique
+# ------------------------------------------------------------------
+
+
+class LaboratoireLecture(SchemaBase):
+    id: uuid.UUID
+    code: str
+    nom: str
+    etablissement_id: uuid.UUID | None = None
+    domaines: str | None = None
+    directeur_nom: str | None = None
+    annee_creation: int | None = None
+    nombre_chercheurs: int
+    actif: bool
+
+
+class ChercheurLecture(SchemaBase):
+    id: uuid.UUID
+    laboratoire_id: uuid.UUID | None = None
+    nom_complet: str
+    grade: str | None = None
+    specialite: str | None = None
+    orcid: str | None = None
+    indice_h: int
+    nombre_publications: int
+
+
+class PublicationLecture(SchemaBase):
+    id: uuid.UUID
+    titre: str
+    type_publication: str
+    auteur_principal_id: uuid.UUID | None = None
+    revue: str | None = None
+    editeur: str | None = None
+    annee: int
+    doi: str | None = None
+    mots_cles: str | None = None
+    acces_libre: bool
+    nombre_citations: int
+
+
+class ProjetRechercheLecture(SchemaBase):
+    id: uuid.UUID
+    code: str
+    titre: str
+    laboratoire_id: uuid.UUID | None = None
+    domaine: str | None = None
+    resume: str | None = None
+    date_debut: date | None = None
+    date_fin: date | None = None
+    financement: float
+    bailleur: str | None = None
+    statut: StatutProjet

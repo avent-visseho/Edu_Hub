@@ -856,7 +856,9 @@ def _repartir(
         place = cible["occupes"]
 
         compteurs[centre["code"]] = compteurs.get(centre["code"], 0) + 1
-        numero_table = generer_numero_table(centre["code"][-5:], compteurs[centre["code"]])
+        numero_table = generer_numero_table(
+            centre["code"].rsplit("-", 1)[-1], compteurs[centre["code"]]
+        )
 
         candidat["ligne"].update(
             {

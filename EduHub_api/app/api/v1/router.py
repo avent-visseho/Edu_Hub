@@ -8,6 +8,7 @@ from app.api.v1.endpoints import (
     auth,
     etablissements,
     evaluations,
+    examens,
     personnes,
     referentiels,
     scolarite,
@@ -21,3 +22,4 @@ api_router.include_router(etablissements.router)
 api_router.include_router(personnes.router)
 api_router.include_router(scolarite.router)
 api_router.include_router(evaluations.router)
+api_router.include_router(examens.router)

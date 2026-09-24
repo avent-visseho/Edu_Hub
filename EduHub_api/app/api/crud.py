@@ -8,8 +8,10 @@ jour partielle, suppression, le tout sous contrôle de permissions et journalis�
 
 # Ce module construit des signatures de fonctions à partir de types passés en
 # paramètre : les annotations doivent donc rester évaluées à la définition.
+import inspect
 import uuid
 from collections.abc import Callable, Sequence
+from datetime import date
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, Query, status
@@ -61,6 +63,46 @@ def appliquer_recherche(statement: Select, modele: type[Base], champs: Sequence[
     return statement.where(or_(*clauses)) if clauses else statement
 
 
+# Paramètres de pagination déjà consommés par la liste : un champ déclaré qui
+# porterait l'un de ces noms ne peut pas devenir un filtre de requête.
+NOMS_RESERVES = frozenset({"page", "size", "sort_by", "sort_dir", "q"})
+
+_TYPES_FILTRE: dict[str, type] = {
+    "uuid": uuid.UUID,
+    "nombre": float,
+    "booleen": bool,
+    "date": date,
+}
+
+
+def construire_dependance_filtres(
+    champs: Sequence[DescripteurChamp],
+) -> Callable[..., dict[str, Any]]:
+    """Expose chaque champ déclaré comme paramètre de requête d'égalité.
+
+    Le filtrage direct se limite volontairement à l'égalité, seule opération
+    dont la sémantique est évidente dans une URL ; les comparaisons riches
+    passent par `/recherche`, qui valide opérateurs et valeurs. Comme pour le
+    constructeur de requêtes, un champ non déclaré n'est pas filtrable.
+    """
+    parametres = [
+        inspect.Parameter(
+            champ.cle,
+            inspect.Parameter.KEYWORD_ONLY,
+            default=Query(default=None, description=f"Filtrer sur « {champ.libelle} »"),
+            annotation=_TYPES_FILTRE.get(champ.type_valeur, str) | None,
+        )
+        for champ in champs
+        if champ.cle not in NOMS_RESERVES
+    ]
+
+    def dependance(**valeurs: Any) -> dict[str, Any]:
+        return {cle: valeur for cle, valeur in valeurs.items() if valeur is not None}
+
+    dependance.__signature__ = inspect.Signature(parametres)  # type: ignore[attr-defined]
+    return dependance
+
+
 def creer_routeur_crud(
     *,
     modele: type[Base],
@@ -77,7 +119,6 @@ def creer_routeur_crud(
     tri_defaut: str | None = "code",
     contrainte_unicite: str | None = "code",
     precharger: Callable[[Select], Select] | None = None,
-    filtres_supplementaires: Callable[[Select, dict[str, Any]], Select] | None = None,
     lecture_publique: bool = False,
 ) -> APIRouter:
     """Construit un routeur REST complet pour une entité.
@@ -88,12 +129,18 @@ def creer_routeur_crud(
     """
     routeur = APIRouter(prefix=prefixe, tags=[tag])
     constructeur = ConstructeurRequete(ressource, champs_filtrables)
+    dependance_filtres = construire_dependance_filtres(champs_filtrables)
 
     def _base_statement() -> Select:
         statement = select(modele)
         if hasattr(modele, "supprime"):
             statement = statement.where(modele.supprime.is_(False))
         return precharger(statement) if precharger else statement
+
+    def _filtrer(statement: Select, filtres: dict[str, Any]) -> Select:
+        for cle, valeur in filtres.items():
+            statement = statement.where(constructeur.champs[cle].colonne == valeur)
+        return statement
 
     def _trier(statement: Select, params: PageParams) -> Select:
         champ = params.sort_by or tri_defaut
@@ -113,6 +160,7 @@ def creer_routeur_crud(
         session: SessionDep,
         params: PageParamsDep,
         contexte: ContexteDep,
+        filtres: Annotated[dict[str, Any], Depends(dependance_filtres)],
         q: Annotated[str | None, Query(description="Recherche libre")] = None,
     ) -> Page:
         if not lecture_publique:
@@ -120,6 +168,7 @@ def creer_routeur_crud(
         statement = _base_statement()
         if q:
             statement = appliquer_recherche(statement, modele, champs_recherche, q)
+        statement = _filtrer(statement, filtres)
         statement = _trier(statement, params)
         lignes, total = await paginate(session, statement, params)
         return Page.build([schema_lecture.model_validate(ligne) for ligne in lignes], total, params)

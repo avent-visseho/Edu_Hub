@@ -155,6 +155,8 @@ class PresenceLecture(SchemaBase):
     statut: StatutPresence
     minutes_retard: int
     justification: str | None = None
+    nom_complet: str | None = None
+    identifiant_educatif: str | None = None
 
 
 class AppelLigne(SchemaEntree):

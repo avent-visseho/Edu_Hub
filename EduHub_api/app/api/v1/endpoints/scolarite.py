@@ -5,7 +5,7 @@ from datetime import UTC, date, datetime
 from typing import Annotated
 
 from fastapi import APIRouter, Query, status
-from sqlalchemy import func, select
+from sqlalchemy import case, func, select
 from sqlalchemy.orm import selectinload
 
 from app.api.crud import creer_routeur_crud, obtenir_ou_404
@@ -20,6 +20,7 @@ from app.models.pedagogie import (
     CreneauEmploiDuTemps,
     Presence,
     Seance,
+    StatutPresence,
     StatutSeance,
     SyntheseAssiduite,
 )
@@ -471,6 +472,88 @@ async def presences_seance(
     contexte.exiger("presences", Action.READ)
     stmt = select(Presence).where(Presence.seance_id == identifiant)
     return list((await session.execute(stmt)).scalars())
+
+
+@router.get(
+    "/classes/{identifiant}/seances",
+    tags=["Pédagogie"],
+    summary="Séances programmées d'une classe",
+    description="Séances triées de la plus récente à la plus ancienne, avec l'état de l'appel.",
+)
+async def seances_classe(
+    identifiant: uuid.UUID,
+    session: SessionDep,
+    contexte: ContexteDep,
+    depuis: Annotated[date | None, Query()] = None,
+    jusqua: Annotated[date | None, Query()] = None,
+    appel_fait: Annotated[bool | None, Query()] = None,
+    limite: Annotated[int, Query(ge=1, le=200)] = 60,
+) -> list[dict]:
+    contexte.exiger("presences", Action.READ)
+
+    # Comptages de présences agrégés en sous-requête : une seule requête suffit.
+    saisies = (
+        select(
+            Presence.seance_id.label("seance_id"),
+            func.count().label("saisies"),
+            func.sum(case((Presence.statut == StatutPresence.PRESENT, 1), else_=0)).label(
+                "presents"
+            ),
+            func.sum(
+                case(
+                    (
+                        Presence.statut.in_(
+                            (
+                                StatutPresence.ABSENT,
+                                StatutPresence.ABSENCE_JUSTIFIEE,
+                                StatutPresence.ABSENCE_INJUSTIFIEE,
+                            )
+                        ),
+                        1,
+                    ),
+                    else_=0,
+                )
+            ).label("absents"),
+            func.sum(case((Presence.statut == StatutPresence.RETARD, 1), else_=0)).label("retards"),
+        )
+        .group_by(Presence.seance_id)
+        .subquery()
+    )
+
+    stmt = (
+        select(Seance, saisies.c.saisies, saisies.c.presents, saisies.c.absents, saisies.c.retards)
+        .outerjoin(saisies, saisies.c.seance_id == Seance.id)
+        .where(Seance.classe_id == identifiant)
+        .order_by(Seance.date_seance.desc(), Seance.heure_debut.desc())
+        .limit(limite)
+    )
+    if depuis:
+        stmt = stmt.where(Seance.date_seance >= depuis)
+    if jusqua:
+        stmt = stmt.where(Seance.date_seance <= jusqua)
+    if appel_fait is not None:
+        stmt = stmt.where(Seance.appel_fait.is_(appel_fait))
+
+    return [
+        {
+            "id": str(seance.id),
+            "date_seance": seance.date_seance.isoformat(),
+            "heure_debut": seance.heure_debut.strftime("%H:%M"),
+            "heure_fin": seance.heure_fin.strftime("%H:%M"),
+            "matiere_libelle": seance.matiere.libelle if seance.matiere else None,
+            "enseignant_nom": seance.enseignant.nom_complet if seance.enseignant else None,
+            "statut": seance.statut.value,
+            "appel_fait": seance.appel_fait,
+            "contenu_seance": seance.contenu_seance,
+            "saisies": int(saisies_nombre or 0),
+            "presents": int(presents or 0),
+            "absents": int(absents or 0),
+            "retards": int(retards or 0),
+        }
+        for seance, saisies_nombre, presents, absents, retards in (
+            await session.execute(stmt)
+        ).all()
+    ]
 
 
 @router.get(

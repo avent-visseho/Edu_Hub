@@ -229,6 +229,14 @@ class Presence(Base):
         UniqueConstraint("seance_id", "apprenant_id", name="uq_presences_seance_apprenant"),
     )
 
+    @property
+    def nom_complet(self) -> str | None:
+        return self.apprenant.nom_complet if self.apprenant else None
+
+    @property
+    def identifiant_educatif(self) -> str | None:
+        return self.apprenant.identifiant_educatif if self.apprenant else None
+
 
 class SyntheseAssiduite(Base):
     """Synthèse d'assiduité d'un apprenant sur une période."""

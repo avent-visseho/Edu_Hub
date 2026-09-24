@@ -45,6 +45,7 @@ from app.models.examen import (
     StatutNoteExamen,
     StatutSession,
 )
+from app.models.referentiel import TypeDocument
 from app.models.scolarite import Inscription, Matiere
 from app.schemas.base import MessageReponse
 from app.schemas.examen import (
@@ -776,17 +777,16 @@ async def dossier_candidat(
         for note, epreuve, matiere in (await session.execute(stmt)).all()
     ]
 
-    pieces_requises = list(
-        (
-            await session.execute(
-                select(PieceRequise).where(PieceRequise.session_id == candidat.session_id)
-            )
-        ).scalars()
+    stmt = (
+        select(PieceRequise, TypeDocument)
+        .join(TypeDocument, TypeDocument.id == PieceRequise.type_document_id)
+        .where(PieceRequise.session_id == candidat.session_id)
     )
+    pieces_requises = (await session.execute(stmt)).all()
     fournies = {document.type_document_id for document in candidat.documents}
     manquantes = [
-        str(piece.type_document_id)
-        for piece in pieces_requises
+        {"id": str(piece.type_document_id), "libelle": type_document.libelle}
+        for piece, type_document in pieces_requises
         if piece.obligatoire
         and piece.type_document_id not in fournies
         # Une pièce ciblant un autre type de candidature ne concerne pas ce candidat.

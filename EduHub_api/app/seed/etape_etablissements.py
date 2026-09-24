@@ -135,7 +135,10 @@ async def _etablissements(ctx: ContexteSeed) -> None:
         capacite = ctx.entier(120, 1800)
         nombre_salles = max(4, capacite // ctx.entier(35, 60))
         accessibilite = ctx.rng.choices(list(NiveauAccessibilite), weights=[45, 30, 18, 7])[0]
-        est_centre = type_code in {"CEG", "LYCEE", "LT", "CS"} and ctx.probabilite(0.45)
+        # Chaque département doit disposer d'au moins un centre de composition.
+        eligible_centre = type_code in {"CEG", "LYCEE", "LT", "CS"}
+        deja_centre = ctx.cache("centres_potentiels").get(code_departement)
+        est_centre = eligible_centre and (not deja_centre or ctx.probabilite(0.45))
         sexe_directeur = ctx.sexe(0.35)
         nom_directeur, prenoms_directeur = ctx.identite(sexe_directeur)
 

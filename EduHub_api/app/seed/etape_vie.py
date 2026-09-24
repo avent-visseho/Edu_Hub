@@ -215,6 +215,9 @@ async def _orientation(ctx: ContexteSeed) -> None:
         moyenne = membre.get("moyenne_generale") or round(ctx.rng.uniform(9, 17), 2)
         choisies = ctx.echantillon(formations, ctx.entier(2, 5))
         affectee = choisies[0] if moyenne >= 10 and ctx.probabilite(0.72) else None
+        if affectee is not None:
+            # Le compteur de places doit refléter les affectations produites.
+            affectee["places_pourvues"] += 1
 
         dossiers.append(
             {

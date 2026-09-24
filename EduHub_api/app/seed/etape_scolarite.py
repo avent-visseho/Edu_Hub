@@ -49,6 +49,7 @@ async def generer(ctx: ContexteSeed) -> None:
     await _classes_et_inscriptions(ctx)
     await _emploi_du_temps(ctx)
     await _assiduite(ctx)
+    await consolider_effectifs(ctx)
     logger.info("%d classes générées avec leurs inscriptions.", len(ctx.cache("classe_info")))
 
 
@@ -340,3 +341,32 @@ def _libelle_niveau(code: str) -> str:
         if code_niveau == code:
             return libelle
     return code
+
+
+async def consolider_effectifs(ctx: ContexteSeed) -> None:
+    """Met à jour les compteurs dénormalisés des établissements.
+
+    Les effectifs servent aux tableaux de bord et aux requêtes du type
+    « établissements de plus de 1 000 élèves » : ils doivent refléter les
+    inscriptions réellement enregistrées.
+    """
+    from sqlalchemy import func, select, update
+
+    from app.models.etablissement import Etablissement
+
+    sous_requete = (
+        select(
+            Inscription.etablissement_id.label("etablissement_id"),
+            func.count(Inscription.id).label("effectif"),
+        )
+        .where(Inscription.statut == StatutInscription.INSCRIT)
+        .group_by(Inscription.etablissement_id)
+        .subquery()
+    )
+
+    await ctx.session.execute(
+        update(Etablissement)
+        .where(Etablissement.id == sous_requete.c.etablissement_id)
+        .values(effectif_actuel=sous_requete.c.effectif)
+    )
+    logger.info("Effectifs des établissements consolidés.")

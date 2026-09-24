@@ -9,7 +9,9 @@ from app.api.v1.endpoints import (
     etablissements,
     evaluations,
     examens,
+    gouvernance,
     personnes,
+    public,
     referentiels,
     scolarite,
 )
@@ -17,9 +19,11 @@ from app.api.v1.endpoints import (
 api_router = APIRouter()
 
 api_router.include_router(auth.router)
+api_router.include_router(public.router)
 api_router.include_router(referentiels.router)
 api_router.include_router(etablissements.router)
 api_router.include_router(personnes.router)
 api_router.include_router(scolarite.router)
 api_router.include_router(evaluations.router)
 api_router.include_router(examens.router)
+api_router.include_router(gouvernance.router)

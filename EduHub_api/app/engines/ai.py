@@ -104,11 +104,14 @@ MATIERES: dict[str, str] = {
 
 _COMPARATEURS: tuple[tuple[str, Operateur], ...] = (
     ("au moins", Operateur.SUPERIEUR_EGAL),
-    ("supérieure ou egale", Operateur.SUPERIEUR_EGAL),
+    ("superieure ou egale", Operateur.SUPERIEUR_EGAL),
     ("superieur ou egal", Operateur.SUPERIEUR_EGAL),
+    ("au moins egal", Operateur.SUPERIEUR_EGAL),
     ("plus grand ou egal", Operateur.SUPERIEUR_EGAL),
+    ("pas moins de", Operateur.SUPERIEUR_EGAL),
     ("au plus", Operateur.INFERIEUR_EGAL),
     ("inferieur ou egal", Operateur.INFERIEUR_EGAL),
+    ("inferieure ou egale", Operateur.INFERIEUR_EGAL),
     ("moins de", Operateur.INFERIEUR),
     ("inferieur a", Operateur.INFERIEUR),
     ("inferieure a", Operateur.INFERIEUR),
@@ -260,8 +263,10 @@ def _sujet_le_plus_proche(texte: str, debut: int, fin: int) -> tuple[str | None,
             if meilleur is None or distance < meilleur[0]:
                 meilleur = (distance, sujet)
 
-    contexte = texte[max(0, debut - 50) : min(len(texte), fin + 25)]
-    if meilleur is None or meilleur[0] > 90:
+    # Le sujet doit rester dans la même proposition : environ 90 caractères
+    # après le nombre, 60 avant, compte tenu des pondérations appliquées.
+    contexte = texte[max(0, debut - 70) : min(len(texte), fin + 40)]
+    if meilleur is None or meilleur[0] > 180:
         return None, contexte
     return meilleur[1], contexte
 

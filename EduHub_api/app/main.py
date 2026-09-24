@@ -8,7 +8,6 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
-from fastapi.responses import ORJSONResponse
 
 from app.api.v1.router import api_router
 from app.core.config import settings
@@ -41,7 +40,6 @@ def create_app() -> FastAPI:
         docs_url="/docs",
         redoc_url="/redoc",
         openapi_url="/openapi.json",
-        default_response_class=ORJSONResponse,
         openapi_tags=TAGS_METADATA,
         lifespan=lifespan,
     )

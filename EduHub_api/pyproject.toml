@@ -25,7 +25,6 @@ dependencies = [
     "python-slugify>=8.0.4",
     "Faker>=33.0.0",
     "httpx>=0.28.0",
-    "orjson>=3.10.0",
 ]
 
 [project.optional-dependencies]

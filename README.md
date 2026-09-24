@@ -82,35 +82,62 @@ SUPER_ADMIN
 
 ## Démarrage rapide
 
-### Avec Docker (recommandé)
+### 1. Infrastructure
 
 ```bash
-make up          # démarre postgres, redis, minio, api, front
-make migrate     # applique les migrations
-make seed        # génère le Bénin fictif complet
+cp .env.example .env
+make infra          # postgres, redis et minio
 ```
 
-- API : http://localhost:8000 — documentation : http://localhost:8000/docs
-- Front : http://localhost:3000
-- MinIO : http://localhost:9001
+Les ports sont décalés pour cohabiter avec d'autres projets :
+PostgreSQL **5442**, Redis **6389**, MinIO **9010** (console **9011**).
 
-### En local
+### 2. Backend
 
 ```bash
-# Backend
 cd EduHub_api
 uv venv && source .venv/bin/activate
 uv pip install -e ".[dev]"
 cp .env.example .env
-alembic upgrade head
-python -m app.seed
-uvicorn app.main:app --reload
 
-# Frontend
+alembic upgrade head          # crée les 152 tables
+python -m app.seed --echelle small
+uvicorn app.main:app --reload --port 8000
+```
+
+- API : http://localhost:8000
+- Documentation interactive : http://localhost:8000/docs
+
+### 3. Frontend
+
+```bash
 cd EduHub_front
 npm install
 cp .env.example .env.local
 npm run dev
+```
+
+- Application : http://localhost:3000
+
+### Volumes de données
+
+`python -m app.seed --echelle <taille>` :
+
+| Échelle | Établissements | Apprenants | Enseignants | Durée indicative |
+|---------|----------------|------------|-------------|------------------|
+| `tiny` | 12 | 400 | 60 | ~30 s |
+| `small` | 60 | 2 500 | 300 | ~2 min |
+| `medium` | 250 | 12 000 | 1 400 | ~10 min |
+| `large` | 1 000 | 50 000 | 5 500 | ~45 min |
+
+Pour repartir de zéro : `make reseed` (détruit la base, migre, régénère).
+
+### Tout via Docker
+
+```bash
+make up             # postgres, redis, minio, api, front
+make migrate
+make seed
 ```
 
 ---
@@ -136,15 +163,51 @@ Après `make seed`, tous les comptes partagent le mot de passe `EduHub2026!`.
 | Rôle | Identifiant |
 |------|-------------|
 | Super administrateur | `super.admin@eduhub.bj` |
-| Ministère (MEMP) | `admin.memp@eduhub.bj` |
-| Direction des examens | `admin.dec@eduhub.bj` |
+| Compte de démonstration | `demo@education.local` |
+| Ministère — enseignement primaire | `admin.memp@eduhub.bj` |
+| Ministère — secondaire et technique | `admin.mesftp@eduhub.bj` |
+| Ministère — enseignement supérieur | `admin.mesrs@eduhub.bj` |
+| Direction des examens (MEMP) | `admin.dec.memp@eduhub.bj` |
+| Direction des examens (MESFTP) | `admin.dec.mesftp@eduhub.bj` |
+| Office du baccalauréat | `admin.dob@eduhub.bj` |
+| Administrateur des examens | `examens.dec.memp@eduhub.bj` |
 | Direction départementale | `admin.ddeps.atlantique@eduhub.bj` |
-| Établissement | `admin.ceg1.calavi@eduhub.bj` |
-| Enseignant | `enseignant.demo@eduhub.bj` |
-| Apprenant | `eleve.demo@eduhub.bj` |
-| Parent | `parent.demo@eduhub.bj` |
-| Candidat libre | `candidat.demo@eduhub.bj` |
-| Démonstration | `demo@education.local` |
+
+Un compte est également créé pour chaque établissement
+(`admin.<code-etablissement>@eduhub.bj`) et pour chaque enseignant. Les
+identifiants exacts figurent dans la table `utilisateurs` après le seed :
+
+```bash
+docker exec eduhub-postgres psql -U eduhub -d eduhub \
+  -c "SELECT email FROM utilisateurs ORDER BY email LIMIT 40"
+```
+
+---
+
+## Parcours de démonstration
+
+1. **Connexion** en super administrateur — la page de connexion propose les
+   comptes en un clic.
+2. **Tableau de bord national** : effectifs, parité, inclusion, distribution des
+   moyennes, taux de réussite par session, alertes du moteur de règles.
+3. **Apprenants** → ouvrir un dossier : parcours, bulletins, examens, diplômes,
+   assiduité, bourses, transport, projets, stages, compétences.
+4. **Classes** → choisir une classe → *Générer les bulletins* : moyennes
+   pondérées, rangs et appréciations sont recalculés en direct.
+5. **Bulletins** → ouvrir un bulletin → *Imprimer* : PDF officiel avec QR code.
+6. **Sessions d'examen** → ouvrir une session : répartition des candidats par
+   centre et par salle, convocations, copies anonymées, délibération avec
+   repêchage, publication des résultats, délivrance des diplômes.
+7. **Recherche avancée** : constructeur visuel, puis onglet *Question en
+   français* — « Montre-moi les élèves des CEG ayant au moins 17 de moyenne en
+   mathématiques. »
+8. **Cartographie** : implantation nationale des établissements.
+9. **Transport** : suivi des trajets, prochain arrêt, places disponibles.
+10. **Vérification publique** : coller le code d'un diplôme sur `/verification`.
+
+À tout moment, le bouton **Accessibilité** de l'en-tête permet de basculer en
+contraste élevé, grande police, interface simplifiée, lecture vocale ou
+économie de données.
 
 ---
 

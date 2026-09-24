@@ -44,7 +44,7 @@ class ConflictError(EduHubError):
 
 
 class ValidationError(EduHubError):
-    status_code = status.HTTP_422_UNPROCESSABLE_ENTITY
+    status_code = status.HTTP_422_UNPROCESSABLE_CONTENT
     code = "donnees_invalides"
     message = "Les données fournies sont invalides."
 
@@ -68,7 +68,7 @@ class WorkflowError(EduHubError):
 
 
 class BusinessRuleError(EduHubError):
-    status_code = status.HTTP_422_UNPROCESSABLE_ENTITY
+    status_code = status.HTTP_422_UNPROCESSABLE_CONTENT
     code = "regle_metier"
     message = "Une règle métier empêche cette opération."
 

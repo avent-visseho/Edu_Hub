@@ -7,7 +7,7 @@ import { useState } from 'react';
 import { EntetePage } from '@/components/layout/entete-page';
 import { Indicateur } from '@/components/ui/donnees';
 import { ListeRessource } from '@/components/ui/liste';
-import { Badge, Selection } from '@/components/ui/primitives';
+import { Badge, Selection, tonDuStatut } from '@/components/ui/primitives';
 import { useListe } from '@/hooks/useListe';
 import { api, type Page } from '@/lib/api';
 import { formaterDate, formaterMontant, formaterNote, humaniser } from '@/lib/utils';
@@ -57,7 +57,18 @@ interface Stage {
   valide: boolean;
 }
 
-type Onglet = 'offres' | 'entreprises' | 'stages';
+interface Candidature {
+  id: string;
+  statut: string;
+  date_candidature: string | null;
+  date_entretien: string | null;
+  date_reponse: string | null;
+  commentaire_recruteur: string | null;
+  candidat_nom: string | null;
+  offre_intitule: string | null;
+}
+
+type Onglet = 'offres' | 'entreprises' | 'stages' | 'candidatures';
 
 export default function PageEmploi() {
   const [onglet, setOnglet] = useState<Onglet>('offres');
@@ -82,6 +93,11 @@ export default function PageEmploi() {
     active: onglet === 'entreprises',
   });
   const stages = useListe<Stage>('/stages', { tri: 'date_debut', active: onglet === 'stages' });
+  const candidatures = useListe<Candidature>('/candidatures-offre', {
+    tri: 'date_candidature',
+    sens: 'desc',
+    active: onglet === 'candidatures',
+  });
 
   const total = entreprises.data?.items ?? [];
   const partenaires = total.filter((entreprise) => entreprise.partenaire_officiel).length;
@@ -122,6 +138,7 @@ export default function PageEmploi() {
             { cle: 'offres', libelle: 'Offres' },
             { cle: 'entreprises', libelle: 'Entreprises' },
             { cle: 'stages', libelle: 'Stages' },
+            { cle: 'candidatures', libelle: 'Candidatures' },
           ] as const
         ).map((element) => (
           <button
@@ -359,6 +376,77 @@ export default function PageEmploi() {
           ]}
         />
       )}
+
+      {onglet === 'candidatures' ? (
+        <ListeRessource
+          legende="Candidatures déposées sur les offres"
+          placeholderRecherche="Rechercher une candidature…"
+          items={candidatures.items}
+          total={candidatures.total}
+          pages={candidatures.pages}
+          page={candidatures.etat.page}
+          taille={candidatures.etat.taille}
+          chargement={candidatures.isLoading}
+          erreur={candidatures.error}
+          recherche={candidatures.etat.recherche}
+          onRecherche={candidatures.changerRecherche}
+          onPage={candidatures.changerPage}
+          cleLigne={(candidature) => candidature.id}
+          videTitre="Aucune candidature"
+          colonnes={[
+            {
+              cle: 'candidat',
+              entete: 'Candidat',
+              rendu: (candidature) => (
+                <span className="block truncate font-medium">
+                  {candidature.candidat_nom ?? '—'}
+                </span>
+              ),
+            },
+            {
+              cle: 'offre',
+              entete: 'Offre',
+              rendu: (candidature) => (
+                <span className="block max-w-[22rem] truncate">
+                  {candidature.offre_intitule ?? '—'}
+                </span>
+              ),
+            },
+            {
+              cle: 'depot',
+              entete: 'Déposée le',
+              alignement: 'droite',
+              secondaire: true,
+              rendu: (candidature) =>
+                candidature.date_candidature ? formaterDate(candidature.date_candidature) : '—',
+            },
+            {
+              cle: 'entretien',
+              entete: 'Entretien',
+              alignement: 'droite',
+              secondaire: true,
+              rendu: (candidature) =>
+                candidature.date_entretien ? formaterDate(candidature.date_entretien) : '—',
+            },
+            {
+              cle: 'statut',
+              entete: 'Suite donnée',
+              rendu: (candidature) => (
+                <span className="min-w-0">
+                  <Badge ton={tonDuStatut(candidature.statut)}>
+                    {humaniser(candidature.statut)}
+                  </Badge>
+                  {candidature.commentaire_recruteur ? (
+                    <span className="mt-1 block truncate text-xs texte-doux">
+                      {candidature.commentaire_recruteur}
+                    </span>
+                  ) : null}
+                </span>
+              ),
+            },
+          ]}
+        />
+      ) : null}
     </>
   );
 }

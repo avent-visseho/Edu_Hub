@@ -161,6 +161,8 @@ class AideSocialeLecture(SchemaBase):
     date_demande: date
     date_attribution: date | None = None
     statut: StatutCandidatureBourse
+    beneficiaire_nom: str | None = None
+    identifiant_educatif: str | None = None
 
 
 # ------------------------------------------------------------------
@@ -255,6 +257,8 @@ class AbonnementLecture(SchemaBase):
     montant: float
     statut_paiement: StatutPaiement
     actif: bool
+    abonne_nom: str | None = None
+    ligne_libelle: str | None = None
 
 
 class AbonnementCreation(SchemaEntree):
@@ -358,6 +362,11 @@ class PretLecture(SchemaBase):
     jours_retard: int
     penalite: float
     rendu: bool
+    # Libellés joints : un prêt se lit par son ouvrage et son emprunteur.
+    ouvrage_titre: str | None = None
+    ouvrage_auteur: str | None = None
+    code_barre: str | None = None
+    emprunteur_nom: str | None = None
 
 
 class PretCreation(SchemaEntree):
@@ -576,6 +585,8 @@ class CandidatureOffreLecture(SchemaBase):
     date_entretien: date | None = None
     date_reponse: date | None = None
     commentaire_recruteur: str | None = None
+    candidat_nom: str | None = None
+    offre_intitule: str | None = None
 
 
 class StageLecture(SchemaBase):

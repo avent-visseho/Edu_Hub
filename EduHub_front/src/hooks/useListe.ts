@@ -24,6 +24,8 @@ export function useListe<T>(
   options: {
     taille?: number;
     tri?: string;
+    /** Sens de tri initial ; l'en-tête de colonne le bascule ensuite. */
+    sens?: 'asc' | 'desc';
     filtres?: Record<string, string | number | boolean | null | undefined>;
     active?: boolean;
   } = {},
@@ -33,7 +35,7 @@ export function useListe<T>(
     taille: options.taille ?? 25,
     recherche: '',
     tri: options.tri ?? null,
-    sens: 'asc',
+    sens: options.sens ?? 'asc',
   });
 
   const filtres = options.filtres ?? {};

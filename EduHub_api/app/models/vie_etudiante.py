@@ -182,6 +182,14 @@ class AideSociale(Base):
 
     apprenant: Mapped[Apprenant] = relationship(lazy="selectin")
 
+    @property
+    def beneficiaire_nom(self) -> str | None:
+        return self.apprenant.nom_complet if self.apprenant else None
+
+    @property
+    def identifiant_educatif(self) -> str | None:
+        return self.apprenant.identifiant_educatif if self.apprenant else None
+
 
 # ------------------------------------------------------------------
 #  Transport
@@ -370,6 +378,14 @@ class AbonnementTransport(Base):
 
     apprenant: Mapped[Apprenant] = relationship(lazy="selectin")
     ligne: Mapped[LigneTransport] = relationship(lazy="selectin")
+
+    @property
+    def abonne_nom(self) -> str | None:
+        return self.apprenant.nom_complet if self.apprenant else None
+
+    @property
+    def ligne_libelle(self) -> str | None:
+        return self.ligne.libelle if self.ligne else None
 
 
 # ------------------------------------------------------------------
@@ -646,3 +662,19 @@ class Pret(Base):
     apprenant: Mapped[Apprenant | None] = relationship(lazy="selectin")
 
     __table_args__ = (Index("ix_prets_retard", "rendu", "date_retour_prevue"),)
+
+    @property
+    def emprunteur_nom(self) -> str | None:
+        return self.apprenant.nom_complet if self.apprenant else None
+
+    @property
+    def ouvrage_titre(self) -> str | None:
+        return self.exemplaire.livre.titre if self.exemplaire and self.exemplaire.livre else None
+
+    @property
+    def ouvrage_auteur(self) -> str | None:
+        return self.exemplaire.livre.auteur if self.exemplaire and self.exemplaire.livre else None
+
+    @property
+    def code_barre(self) -> str | None:
+        return self.exemplaire.code_barre if self.exemplaire else None

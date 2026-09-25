@@ -382,6 +382,14 @@ class CandidatureOffre(Base):
         UniqueConstraint("offre_id", "apprenant_id", name="uq_candidatures_offre_apprenant"),
     )
 
+    @property
+    def candidat_nom(self) -> str | None:
+        return self.apprenant.nom_complet if self.apprenant else None
+
+    @property
+    def offre_intitule(self) -> str | None:
+        return self.offre.intitule if self.offre else None
+
 
 class Stage(Base):
     """Stage effectué par un apprenant, de la convention à l'attestation."""

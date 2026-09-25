@@ -1,11 +1,11 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import { Bus, Clock, MapPin, Users } from 'lucide-react';
+import { Bus, Clock, CreditCard, MapPin, Truck, Users } from 'lucide-react';
 import { useState } from 'react';
 
 import { EntetePage } from '@/components/layout/entete-page';
-import { Jauge } from '@/components/ui/donnees';
+import { Jauge, Tableau } from '@/components/ui/donnees';
 import {
   Badge,
   Carte,
@@ -16,8 +16,35 @@ import {
   MessageErreur,
   tonDuStatut,
 } from '@/components/ui/primitives';
+import { ListeRessource } from '@/components/ui/liste';
+import { useListe } from '@/hooks/useListe';
 import { api, type Page } from '@/lib/api';
-import { formaterMontant, humaniser } from '@/lib/utils';
+import { formaterDate, formaterMontant, humaniser } from '@/lib/utils';
+
+interface Vehicule {
+  id: string;
+  immatriculation: string;
+  code: string;
+  type_vehicule: string;
+  marque: string | null;
+  modele: string | null;
+  places: number;
+  places_pmr: number;
+  statut: string;
+  climatise: boolean;
+}
+
+interface Abonnement {
+  id: string;
+  numero_carte: string;
+  date_debut: string;
+  date_fin: string;
+  montant: number;
+  statut_paiement: string;
+  actif: boolean;
+  abonne_nom: string | null;
+  ligne_libelle: string | null;
+}
 
 interface Ligne {
   id: string;
@@ -74,6 +101,13 @@ export default function PageTransport() {
     enabled: Boolean(ligneActive),
     queryFn: () => api.get<Arret[]>(`/transport/lignes/${ligneActive}/arrets`),
   });
+
+  const vehicules = useQuery({
+    queryKey: ['vehicules'],
+    queryFn: () => api.get<Page<Vehicule>>('/transport/vehicules', { size: 50, sort_by: 'code' }),
+  });
+
+  const abonnements = useListe<Abonnement>('/transport/abonnements', { tri: 'numero_carte' });
 
   const trajets = useQuery({
     queryKey: ['trajets', ligneActive],
@@ -260,8 +294,152 @@ export default function PageTransport() {
               <EtatVide titre="Aucun arrêt déclaré" icone={<Users size={32} aria-hidden />} />
             )}
           </Carte>
+
+          {/* Parc de véhicules */}
+          <Carte>
+            <EnteteCarte
+              titre={
+                <span className="flex items-center gap-2">
+                  <Truck size={19} aria-hidden /> Parc de véhicules
+                </span>
+              }
+              description={`${vehicules.data?.total ?? 0} véhicule(s), dont les places réservées aux personnes à mobilité réduite.`}
+            />
+            <Tableau
+              legende="Véhicules affectés au transport scolaire"
+              lignes={vehicules.data?.items ?? []}
+              cleLigne={(vehicule) => vehicule.id}
+              vide={<EtatVide titre="Aucun véhicule déclaré" />}
+              colonnes={[
+                {
+                  cle: 'immatriculation',
+                  entete: 'Véhicule',
+                  rendu: (vehicule) => (
+                    <span className="min-w-0">
+                      <span className="block font-medium">{vehicule.immatriculation}</span>
+                      <span className="block text-xs texte-doux">
+                        {[vehicule.marque, vehicule.modele].filter(Boolean).join(' ') ||
+                          vehicule.code}
+                      </span>
+                    </span>
+                  ),
+                },
+                {
+                  cle: 'type',
+                  entete: 'Type',
+                  secondaire: true,
+                  rendu: (vehicule) => humaniser(vehicule.type_vehicule),
+                },
+                {
+                  cle: 'places',
+                  entete: 'Places',
+                  alignement: 'droite',
+                  rendu: (vehicule) => (
+                    <span className="min-w-0">
+                      <span className="block">{vehicule.places}</span>
+                      <span className="block text-xs texte-doux">
+                        dont {vehicule.places_pmr} PMR
+                      </span>
+                    </span>
+                  ),
+                },
+                {
+                  cle: 'statut',
+                  entete: 'État',
+                  rendu: (vehicule) => (
+                    <span className="flex flex-wrap gap-1.5">
+                      <Badge ton={tonDuStatut(vehicule.statut)}>
+                        {humaniser(vehicule.statut)}
+                      </Badge>
+                      {vehicule.climatise ? <Badge ton="neutre">Climatisé</Badge> : null}
+                    </span>
+                  ),
+                },
+              ]}
+            />
+          </Carte>
         </div>
       </div>
+
+      {/* Abonnements */}
+      <Carte className="mt-4">
+        <EnteteCarte
+          titre={
+            <span className="flex items-center gap-2">
+              <CreditCard size={19} aria-hidden /> Abonnements
+            </span>
+          }
+          description="Cartes de transport des apprenants, par ligne desservie."
+        />
+        <ListeRessource
+          legende="Abonnements au transport scolaire"
+          placeholderRecherche="Rechercher par numéro de carte…"
+          items={abonnements.items}
+          total={abonnements.total}
+          pages={abonnements.pages}
+          page={abonnements.etat.page}
+          taille={abonnements.etat.taille}
+          chargement={abonnements.isLoading}
+          erreur={abonnements.error}
+          recherche={abonnements.etat.recherche}
+          onRecherche={abonnements.changerRecherche}
+          onPage={abonnements.changerPage}
+          cleLigne={(abonnement) => abonnement.id}
+          videTitre="Aucun abonnement"
+          colonnes={[
+            {
+              cle: 'abonne',
+              entete: 'Abonné',
+              rendu: (abonnement) => (
+                <span className="min-w-0">
+                  <span className="block truncate font-medium">
+                    {abonnement.abonne_nom ?? '—'}
+                  </span>
+                  <span className="block font-mono text-xs texte-doux">
+                    {abonnement.numero_carte}
+                  </span>
+                </span>
+              ),
+            },
+            {
+              cle: 'ligne',
+              entete: 'Ligne',
+              rendu: (abonnement) => (
+                <span className="block max-w-[22rem] truncate">
+                  {abonnement.ligne_libelle ?? '—'}
+                </span>
+              ),
+            },
+            {
+              cle: 'validite',
+              entete: 'Validité',
+              secondaire: true,
+              rendu: (abonnement) =>
+                `${formaterDate(abonnement.date_debut)} → ${formaterDate(abonnement.date_fin)}`,
+            },
+            {
+              cle: 'montant',
+              entete: 'Montant',
+              alignement: 'droite',
+              rendu: (abonnement) => formaterMontant(abonnement.montant),
+            },
+            {
+              cle: 'statut',
+              entete: 'État',
+              rendu: (abonnement) => (
+                <span className="flex flex-wrap gap-1.5">
+                  <Badge ton={tonDuStatut(abonnement.statut_paiement)}>
+                    {humaniser(abonnement.statut_paiement)}
+                  </Badge>
+                  <Badge ton={abonnement.actif ? 'succes' : 'neutre'}>
+                    {abonnement.actif ? 'Actif' : 'Expiré'}
+                  </Badge>
+                </span>
+              ),
+            },
+          ]}
+        />
+      </Carte>
     </>
   );
 }

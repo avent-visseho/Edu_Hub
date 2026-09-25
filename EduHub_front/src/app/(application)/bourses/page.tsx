@@ -3,18 +3,34 @@
 import { useQuery } from '@tanstack/react-query';
 
 import { EntetePage } from '@/components/layout/entete-page';
-import { Jauge } from '@/components/ui/donnees';
+import { Jauge, Tableau } from '@/components/ui/donnees';
 import { ListeRessource } from '@/components/ui/liste';
 import {
   Badge,
   Carte,
   CorpsCarte,
+  Chargement,
   EnteteCarte,
+  EtatVide,
   tonDuStatut,
 } from '@/components/ui/primitives';
 import { useListe } from '@/hooks/useListe';
 import { api, type Page } from '@/lib/api';
 import { formaterDate, formaterMontant, formaterNote, humaniser } from '@/lib/utils';
+
+interface AideSociale {
+  id: string;
+  numero: string;
+  type_aide: string;
+  libelle: string;
+  montant: number;
+  en_nature: boolean;
+  date_demande: string;
+  date_attribution: string | null;
+  statut: string;
+  beneficiaire_nom: string | null;
+  identifiant_educatif: string | null;
+}
 
 interface Programme {
   id: string;
@@ -47,6 +63,11 @@ export default function PageBourses() {
   });
 
   const liste = useListe<Candidature>('/candidatures-bourse', { tri: 'numero' });
+
+  const aides = useQuery({
+    queryKey: ['aides-sociales'],
+    queryFn: () => api.get<Page<AideSociale>>('/aides-sociales', { size: 100, sort_by: 'numero' }),
+  });
 
   return (
     <>
@@ -155,6 +176,82 @@ export default function PageBourses() {
           },
         ]}
       />
+
+      <Carte className="mt-4">
+        <EnteteCarte
+          titre="Aides sociales ponctuelles"
+          description="Dispositifs d'appoint — fournitures, restauration, transport, logement, santé — attribués hors programme de bourse."
+        />
+        {aides.isLoading ? (
+          <CorpsCarte>
+            <Chargement libelle="Chargement des aides sociales…" />
+          </CorpsCarte>
+        ) : (
+          <Tableau
+            legende="Aides sociales attribuées"
+            lignes={aides.data?.items ?? []}
+            cleLigne={(aide) => aide.id}
+            vide={<EtatVide titre="Aucune aide sociale" />}
+            colonnes={[
+              {
+                cle: 'beneficiaire',
+                entete: 'Bénéficiaire',
+                rendu: (aide) => (
+                  <span className="min-w-0">
+                    <span className="block truncate font-medium">
+                      {aide.beneficiaire_nom ?? '—'}
+                    </span>
+                    <span className="block font-mono text-xs texte-doux">
+                      {aide.identifiant_educatif ?? aide.numero}
+                    </span>
+                  </span>
+                ),
+              },
+              {
+                cle: 'libelle',
+                entete: 'Aide',
+                rendu: (aide) => (
+                  <span className="min-w-0">
+                    <span className="block truncate">{aide.libelle}</span>
+                    <span className="block text-xs texte-doux">{humaniser(aide.type_aide)}</span>
+                  </span>
+                ),
+              },
+              {
+                cle: 'montant',
+                entete: 'Montant',
+                alignement: 'droite',
+                rendu: (aide) =>
+                  aide.en_nature ? (
+                    <span className="texte-doux">En nature</span>
+                  ) : (
+                    formaterMontant(aide.montant)
+                  ),
+              },
+              {
+                cle: 'dates',
+                entete: 'Demande / attribution',
+                secondaire: true,
+                rendu: (aide) => (
+                  <span className="min-w-0">
+                    <span className="block">{formaterDate(aide.date_demande)}</span>
+                    <span className="block text-xs texte-doux">
+                      {aide.date_attribution ? formaterDate(aide.date_attribution) : 'Non attribuée'}
+                    </span>
+                  </span>
+                ),
+              },
+              {
+                cle: 'statut',
+                entete: 'Statut',
+                rendu: (aide) => (
+                  <Badge ton={tonDuStatut(aide.statut)}>{humaniser(aide.statut)}</Badge>
+                ),
+              },
+            ]}
+          />
+        )}
+      </Carte>
     </>
   );
 }

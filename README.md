@@ -197,39 +197,42 @@ docker exec eduhub-postgres psql -U eduhub -d eduhub \
    sont recalculés en direct.
 5. **Classes** → *Faire l'appel* : feuille d'appel d'une séance, présents,
    retards et absences justifiées ou non ; la synthèse d'assiduité suit.
-6. **Évaluations** → ouvrir une évaluation : saisie des notes élève par élève
+6. **Inscriptions** : répartition des dossiers par étape, puis ouvrir une
+   inscription pour appliquer une transition — seules les actions autorisées
+   depuis l'étape courante sont proposées, et chacune est historisée.
+7. **Évaluations** → ouvrir une évaluation : saisie des notes élève par élève
    (absence, non-rendu, dispense, fraude), statistiques en direct, puis la
    chaîne de validation enseignant → établissement → publication.
-7. **Bulletins** → ouvrir un bulletin → *Imprimer* : PDF officiel avec QR code.
-8. **Sessions d'examen** → ouvrir une session : répartition des candidats par
+8. **Bulletins** → ouvrir un bulletin → *Imprimer* : PDF officiel avec QR code.
+9. **Sessions d'examen** → ouvrir une session : répartition des candidats par
    centre et par salle, convocations, copies anonymées, délibération avec
    repêchage, publication des résultats, délivrance des diplômes.
-9. **Centres de composition** → ouvrir un centre : salles, plages de places,
+10. **Centres de composition** → ouvrir un centre : salles, plages de places,
    liste d'émargement exportable en CSV.
-10. **Candidats** → ouvrir un dossier : pièces jointes et leur vérification,
+11. **Candidats** → ouvrir un dossier : pièces jointes et leur vérification,
     affectation de composition, notes aux épreuves, décision du jury, actions
     de workflow autorisées et historique des transitions.
-11. **Contentieux** : recours déposés après publication, et leur instruction.
-12. **Recherche avancée** : constructeur visuel, puis onglet *Question en
+12. **Contentieux** : recours déposés après publication, et leur instruction.
+13. **Recherche avancée** : constructeur visuel, puis onglet *Question en
     français* — « Montre-moi les élèves des CEG ayant au moins 17 de moyenne en
     mathématiques. »
-13. **Correction des copies** : choisir une épreuve, suivre l'avancement des
+14. **Correction des copies** : choisir une épreuve, suivre l'avancement des
     correcteurs, noter des copies anonymées en première ou en seconde lecture —
     un écart de trois points déclenche une troisième correction — puis lire les
     notes définitives, rattachées au candidat une fois la correction faite.
-14. **Jurys et surveillance** : composition des jurys de délibération, ajout
+15. **Jurys et surveillance** : composition des jurys de délibération, ajout
     d'un membre, et agents affectés aux centres par rôle.
-15. **Gouvernance** : organigramme ministère → direction → direction
+16. **Gouvernance** : organigramme ministère → direction → direction
     départementale, règles métier et bouton *Simuler* qui les confronte aux
     données réelles sans rien modifier, alertes et leur traitement.
-16. **Cartographie** : implantation nationale des établissements.
-17. **Infrastructures** : bâtiments, salles et équipements, avec leur état et
+17. **Cartographie** : implantation nationale des établissements.
+18. **Infrastructures** : bâtiments, salles et équipements, avec leur état et
     leur niveau d'accessibilité.
-18. **Transport** : suivi des trajets, prochain arrêt, places disponibles.
-19. **Référentiels** : les nomenclatures partagées par tout le système. Tenter
+19. **Transport** : suivi des trajets, prochain arrêt, places disponibles.
+20. **Référentiels** : les nomenclatures partagées par tout le système. Tenter
     de retirer un type de salle utilisé par 890 salles est refusé, avec le
     décompte exact des enregistrements concernés.
-20. **Vérification publique** : coller le code d'un diplôme sur `/verification`.
+21. **Vérification publique** : coller le code d'un diplôme sur `/verification`.
 
 À tout moment, le bouton **Accessibilité** de l'en-tête permet de basculer en
 contraste élevé, grande police, interface simplifiée, lecture vocale ou

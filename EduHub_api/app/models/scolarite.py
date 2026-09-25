@@ -298,6 +298,26 @@ class Inscription(Base):
         Index("ix_inscriptions_etab_annee", "etablissement_id", "annee_id"),
     )
 
+    @property
+    def apprenant_nom(self) -> str | None:
+        return self.apprenant.nom_complet if self.apprenant else None
+
+    @property
+    def identifiant_educatif(self) -> str | None:
+        return self.apprenant.identifiant_educatif if self.apprenant else None
+
+    @property
+    def etablissement_nom(self) -> str | None:
+        return self.etablissement.nom if self.etablissement else None
+
+    @property
+    def classe_libelle(self) -> str | None:
+        return self.classe.libelle if self.classe else None
+
+    @property
+    def annee_libelle(self) -> str | None:
+        return self.annee.libelle if self.annee else None
+
 
 class Transfert(Base):
     """Demande de transfert d'un apprenant entre deux établissements."""

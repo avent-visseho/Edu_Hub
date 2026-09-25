@@ -107,6 +107,14 @@ class InscriptionLecture(SchemaBase):
     moyenne_annuelle: float | None = None
     rang_annuel: int | None = None
     decision: DecisionFinAnnee
+    motif_rejet: str | None = None
+    # Libellés joints : une liste d'inscriptions n'a pas à recharger quatre
+    # référentiels pour afficher un nom d'élève et une classe.
+    apprenant_nom: str | None = None
+    identifiant_educatif: str | None = None
+    etablissement_nom: str | None = None
+    classe_libelle: str | None = None
+    annee_libelle: str | None = None
 
 
 class InscriptionCreation(SchemaEntree):

@@ -10,6 +10,7 @@ import {
   Building,
   ClipboardCheck,
   ClipboardList,
+  ClipboardPen,
   Compass,
   FileSearch,
   FileText,
@@ -140,6 +141,14 @@ export const NAVIGATION: GroupeNavigation[] = [
         href: '/classes',
         icone: BookOpen,
         permission: 'classes:READ',
+      },
+      {
+        libelle: 'Inscriptions',
+        libelleSimple: 'Inscrire',
+        pictogramme: '📋',
+        href: '/inscriptions',
+        icone: ClipboardPen,
+        permission: 'inscriptions:READ',
       },
       {
         libelle: 'Évaluations',

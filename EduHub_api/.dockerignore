@@ -1,0 +1,32 @@
+# Le contexte de construction est EduHub_api/ en entier. Sans ce fichier, les
+# 280 Mo du .venv et l'historique Git seraient envoyés au démon Docker à chaque
+# construction, pour rien : l'image ne copie que pyproject.toml, le fichier de
+# contraintes, app/ et alembic/.
+
+.git
+.gitignore
+.venv
+venv
+__pycache__
+*.pyc
+*.pyo
+.pytest_cache
+.ruff_cache
+.mypy_cache
+.coverage
+htmlcov
+
+# Secrets : fournis à l'exécution par env_file, jamais cuits dans l'image.
+.env
+.env.*
+**/.env
+**/.env.*
+
+tests
+storage
+*.md
+
+# Du dossier de déploiement, seul le fichier de contraintes entre dans l'image.
+# Surtout pas .env.production, qui contient la clé de signature des jetons.
+deploy_ment/*
+!deploy_ment/contraintes.txt

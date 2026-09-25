@@ -1,0 +1,66 @@
+# EduHub — versions figées pour la production
+#
+# Fichier généré : ne le modifiez pas à la main, relancez
+#   python deploy_ment/figer-dependances.py
+#
+# pyproject.toml déclare des minimums (« >= »), ce qui est juste pour
+# développer mais dangereux pour déployer : deux constructions à six mois
+# d'intervalle n'installeraient pas les mêmes versions. Le cas s'est présenté
+# ici — une installation libre résout SQLAlchemy 2.1, alors que le code a été
+# écrit et vérifié sur la 2.0.
+#
+# Ce fichier ne fait que contraindre : il n'installe rien de lui-même, c'est
+# toujours pyproject.toml qui décide de la liste des paquets.
+
+alembic==1.20.0
+annotated-doc==0.0.5
+annotated-types==0.8.0
+anyio==4.15.1
+asyncpg==0.31.0
+bcrypt==4.0.1
+boto3==1.43.101
+botocore==1.43.101
+certifi==2026.7.22
+charset-normalizer==3.5.1
+click==8.5.0
+dnspython==2.8.0
+email-validator==2.3.0
+Faker==40.39.0
+fastapi==0.141.1
+greenlet==3.5.6
+h11==0.16.0
+httpcore==1.0.9
+httptools==0.8.0
+httpx==0.28.1
+idna==3.20
+jmespath==1.1.0
+Mako==1.4.3
+MarkupSafe==3.0.3
+passlib==1.7.4
+pillow==12.3.0
+psycopg==3.3.6
+psycopg-binary==3.3.6
+pydantic==2.13.5
+pydantic_core==2.46.5
+pydantic-settings==2.15.0
+PyJWT==2.15.0
+python-dateutil==2.9.0.post0
+python-dotenv==1.2.3
+python-multipart==0.0.32
+python-slugify==9.1.1
+PyYAML==6.0.3
+qrcode==8.2
+redis==8.1.0
+reportlab==5.0.1
+s3transfer==0.19.2
+six==1.17.0
+SQLAlchemy==2.0.54
+starlette==1.7.0
+text-unidecode==1.3
+typing_extensions==4.16.0
+typing-inspection==0.4.4
+urllib3==2.8.0
+uvicorn==0.53.0
+uvloop==0.22.1
+watchfiles==1.3.0
+websockets==17.1

@@ -1,0 +1,94 @@
+# EduHub — pile de production
+#
+# Le serveur héberge déjà une douzaine de conteneurs : tout est nommé, isolé
+# sur son propre réseau, et seul le port de l'API est publié. La base n'expose
+# aucun port vers l'hôte — elle n'est joignable que depuis ce réseau.
+#
+# Ni Redis ni Celery : l'application n'en utilise aucun. Ni PostGIS : les
+# coordonnées sont de simples flottants.
+
+# Le nom du projet est « eduhub-prod » et non « eduhub » : la pile de
+# développement, à la racine du dépôt, s'appelle déjà « eduhub » et déclare elle
+# aussi un service « api ». Sans cette distinction, un « down » lancé par
+# mégarde avec ce fichier arrêterait les conteneurs de développement.
+name: eduhub-prod
+
+services:
+  api:
+    build:
+      context: ..
+      dockerfile: deploy_ment/Dockerfile
+    image: eduhub-api:courant
+    container_name: eduhub-api
+    restart: unless-stopped
+    ports:
+      # 8000 est pris par swiftlink et 8080 par lokahome : EDUHUB_PORT vaut 8100
+      # par défaut. Le jour où un nom de domaine et un nginx seront en place,
+      # restreignez la publication à la boucle locale : "127.0.0.1:${EDUHUB_PORT:-8100}:8000".
+      - "${EDUHUB_PORT:-8100}:8000"
+    env_file:
+      - .env.production
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      # Repli de stockage local : les pièces déposées survivent aux
+      # redéploiements et aux reconstructions d'image.
+      - eduhub_storage:/app/storage
+    networks:
+      - eduhub
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  db:
+    image: postgres:16-alpine
+    container_name: eduhub-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${EDUHUB_DB_USER:-eduhub}
+      POSTGRES_PASSWORD: ${EDUHUB_DB_PASSWORD:?EDUHUB_DB_PASSWORD est obligatoire}
+      POSTGRES_DB: ${EDUHUB_DB_NAME:-eduhub}
+      # Tri français via ICU, et non via la locale système : l'image Alpine
+      # n'embarque aucune locale, si bien qu'un LANG=fr_FR.utf8 serait accepté
+      # puis ignoré (« no usable system locales were found ») et les listes
+      # seraient triées octet par octet — « Zébulon » avant « Éric ».
+      # Ces arguments ne sont lus qu'à la création du volume : changer la
+      # collation ensuite suppose de recréer la base.
+      POSTGRES_INITDB_ARGS: >-
+        --encoding=UTF8
+        --locale-provider=icu
+        --icu-locale=fr-FR
+        --locale=C.UTF-8
+    volumes:
+      - eduhub_postgres:/var/lib/postgresql/data
+    healthcheck:
+      test:
+        ["CMD-SHELL", "pg_isready -U ${EDUHUB_DB_USER:-eduhub} -d ${EDUHUB_DB_NAME:-eduhub}"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 20s
+    networks:
+      - eduhub
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  # Nommés explicitement : sans cela, Compose préfixe avec le nom du projet et
+  # produit « eduhub_eduhub_postgres ». Les noms ci-dessous sont ceux qu'on
+  # manipule pour sauvegarder ou repartir de zéro.
+  eduhub_postgres:
+    name: eduhub_postgres
+  eduhub_storage:
+    name: eduhub_storage
+
+networks:
+  eduhub:
+    name: eduhub
+    driver: bridge

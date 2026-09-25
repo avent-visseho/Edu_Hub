@@ -1,7 +1,7 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
-import { Accessibility, DoorOpen, Download, MapPin, Users } from 'lucide-react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Accessibility, DoorOpen, Download, MapPin, Plus, Trash2, Users } from 'lucide-react';
 import { useParams, useRouter } from 'next/navigation';
 import { useState } from 'react';
 
@@ -11,14 +11,16 @@ import {
   Badge,
   Bouton,
   Carte,
+  Champ,
   Chargement,
   CorpsCarte,
   EnteteCarte,
   EtatVide,
+  Interrupteur,
   MessageErreur,
   Selection,
 } from '@/components/ui/primitives';
-import { api, type Page } from '@/lib/api';
+import { api, ErreurApi, type Page } from '@/lib/api';
 import { useSession } from '@/lib/session';
 import { formaterDate, formaterNombre, humaniser } from '@/lib/utils';
 
@@ -69,7 +71,17 @@ export default function PageCentre() {
   const parametres = useParams<{ id: string }>();
   const router = useRouter();
   const { peut } = useSession();
+  const fileAttente = useQueryClient();
   const [salleId, setSalleId] = useState('');
+  const [nouvelleSalle, setNouvelleSalle] = useState({
+    code: '',
+    nom: '',
+    batiment: '',
+    capacite: '30',
+    accessible_handicap: false,
+    salle_amenagee: false,
+  });
+  const [journal, setJournal] = useState<string | null>(null);
 
   const centre = useQuery({
     queryKey: ['centre', parametres.id],
@@ -91,6 +103,47 @@ export default function PageCentre() {
         size: 200,
         sort_by: 'numero_place',
       }),
+  });
+
+  function signaler(erreurBrute: unknown, defaut: string) {
+    setJournal(erreurBrute instanceof ErreurApi ? erreurBrute.message : defaut);
+  }
+
+  const ajouterSalle = useMutation({
+    mutationFn: () =>
+      api.post<SalleComposition>('/salles-composition', {
+        centre_id: parametres.id,
+        code: nouvelleSalle.code.trim().toUpperCase(),
+        nom: nouvelleSalle.nom.trim(),
+        batiment: nouvelleSalle.batiment.trim() || null,
+        capacite: Number(nouvelleSalle.capacite) || 30,
+        accessible_handicap: nouvelleSalle.accessible_handicap,
+        salle_amenagee: nouvelleSalle.salle_amenagee,
+      }),
+    onSuccess: (salle) => {
+      setJournal(`Salle « ${salle.nom} » ouverte dans ce centre.`);
+      setNouvelleSalle({
+        code: '',
+        nom: '',
+        batiment: '',
+        capacite: '30',
+        accessible_handicap: false,
+        salle_amenagee: false,
+      });
+      void fileAttente.invalidateQueries({ queryKey: ['salles-centre', parametres.id] });
+      void fileAttente.invalidateQueries({ queryKey: ['centre', parametres.id] });
+    },
+    onError: (e) => signaler(e, "La salle n'a pas pu être ouverte."),
+  });
+
+  const retirerSalle = useMutation({
+    mutationFn: (salle: SalleComposition) => api.delete(`/salles-composition/${salle.id}`),
+    onSuccess: () => {
+      setJournal('Salle retirée du centre.');
+      void fileAttente.invalidateQueries({ queryKey: ['salles-centre', parametres.id] });
+      void fileAttente.invalidateQueries({ queryKey: ['centre', parametres.id] });
+    },
+    onError: (e) => signaler(e, "La salle n'a pas pu être retirée."),
   });
 
   if (centre.isLoading) return <Chargement libelle="Ouverture du centre de composition…" />;
@@ -257,6 +310,29 @@ export default function PageCentre() {
                     `${formaterNombre(salle.nombre_candidats)} / ${formaterNombre(salle.capacite)}`,
                 },
                 {
+                  cle: 'retrait',
+                  entete: 'Retirer',
+                  alignement: 'droite',
+                  rendu: (salle) =>
+                    salle.nombre_candidats > 0 ? (
+                      <span className="texte-doux">Occupée</span>
+                    ) : (
+                      <Bouton
+                        taille="sm"
+                        variante="fantome"
+                        aria-label={`Retirer ${salle.nom}`}
+                        disabled={!peut('centres', 'DELETE') || retirerSalle.isPending}
+                        onClick={(evenement) => {
+                          evenement.stopPropagation();
+                          retirerSalle.mutate(salle);
+                        }}
+                        icone={<Trash2 size={15} aria-hidden />}
+                      >
+                        Retirer
+                      </Bouton>
+                    ),
+                },
+                {
                   cle: 'amenagement',
                   entete: 'Aménagement',
                   rendu: (salle) => (
@@ -276,6 +352,92 @@ export default function PageCentre() {
               ]}
             />
           )}
+
+          {peut('centres', 'CREATE') ? (
+            <CorpsCarte className="border-t">
+              <h3 className="mb-3 flex items-center gap-2 font-medium">
+                <Plus size={17} aria-hidden /> Ouvrir une salle
+              </h3>
+              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                <Champ
+                  etiquette="Code"
+                  required
+                  value={nouvelleSalle.code}
+                  onChange={(evenement) =>
+                    setNouvelleSalle((precedent) => ({ ...precedent, code: evenement.target.value }))
+                  }
+                />
+                <Champ
+                  etiquette="Nom"
+                  required
+                  value={nouvelleSalle.nom}
+                  onChange={(evenement) =>
+                    setNouvelleSalle((precedent) => ({ ...precedent, nom: evenement.target.value }))
+                  }
+                />
+                <Champ
+                  etiquette="Bâtiment"
+                  value={nouvelleSalle.batiment}
+                  onChange={(evenement) =>
+                    setNouvelleSalle((precedent) => ({
+                      ...precedent,
+                      batiment: evenement.target.value,
+                    }))
+                  }
+                />
+                <Champ
+                  etiquette="Capacité"
+                  type="number"
+                  min={1}
+                  max={500}
+                  value={nouvelleSalle.capacite}
+                  onChange={(evenement) =>
+                    setNouvelleSalle((precedent) => ({
+                      ...precedent,
+                      capacite: evenement.target.value,
+                    }))
+                  }
+                />
+              </div>
+              <div className="mt-3 grid gap-2 sm:grid-cols-2 xl:max-w-2xl">
+                <Interrupteur
+                  etiquette="Accessible"
+                  description="Accès de plain-pied ou par rampe."
+                  actif={nouvelleSalle.accessible_handicap}
+                  onChange={() =>
+                    setNouvelleSalle((precedent) => ({
+                      ...precedent,
+                      accessible_handicap: !precedent.accessible_handicap,
+                    }))
+                  }
+                />
+                <Interrupteur
+                  etiquette="Salle aménagée"
+                  description="Réservée aux candidats bénéficiant d'un aménagement d'épreuve."
+                  actif={nouvelleSalle.salle_amenagee}
+                  onChange={() =>
+                    setNouvelleSalle((precedent) => ({
+                      ...precedent,
+                      salle_amenagee: !precedent.salle_amenagee,
+                    }))
+                  }
+                />
+              </div>
+              <Bouton
+                className="mt-3"
+                disabled={!nouvelleSalle.code.trim() || !nouvelleSalle.nom.trim()}
+                chargement={ajouterSalle.isPending}
+                onClick={() => ajouterSalle.mutate()}
+              >
+                Ouvrir la salle
+              </Bouton>
+              {journal ? (
+                <p role="status" className="mt-2 text-sm texte-doux">
+                  {journal}
+                </p>
+              ) : null}
+            </CorpsCarte>
+          ) : null}
         </Carte>
       </div>
 

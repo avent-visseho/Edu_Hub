@@ -160,6 +160,119 @@ const GROUPES: Array<{ titre: string; referentiels: Referentiel[] }> = [
 
 const TOUS = GROUPES.flatMap((groupe) => groupe.referentiels);
 
+interface Arrondissement {
+  id: string;
+  code: string;
+  libelle: string;
+  commune_id: string;
+  actif: boolean;
+}
+
+interface Village {
+  id: string;
+  code: string;
+  libelle: string;
+  arrondissement_id: string;
+  quartier_ville: boolean;
+}
+
+/**
+ * Découpage d'une commune.
+ *
+ * Arrondissements et villages ne sont pas de simples nomenclatures : ils
+ * forment un arbre que l'on parcourt de proche en proche, sans jamais charger
+ * les 390 villages du pays d'un coup.
+ */
+function DecoupageCommune({ commune }: { commune: Element }) {
+  const [arrondissementId, setArrondissementId] = useState<string | null>(null);
+
+  const arrondissements = useQuery({
+    queryKey: ['arrondissements', commune.id],
+    queryFn: () => api.get<Arrondissement[]>(`/communes/${commune.id}/arrondissements`),
+  });
+
+  const villages = useQuery({
+    queryKey: ['villages', arrondissementId],
+    queryFn: () =>
+      api.get<Page<Village>>('/villages', { arrondissement_id: arrondissementId, size: 100 }),
+    enabled: Boolean(arrondissementId),
+  });
+
+  return (
+    <Carte className="mt-4">
+      <EnteteCarte
+        titre={`Découpage de ${commune.libelle}`}
+        description="Arrondissements de la commune, puis villages et quartiers de l'arrondissement choisi."
+      />
+      <CorpsCarte className="grid gap-4 xl:grid-cols-2">
+        <div>
+          <h3 className="mb-2 text-sm font-medium">
+            Arrondissements — {(arrondissements.data ?? []).length}
+          </h3>
+          {arrondissements.isLoading ? (
+            <Chargement libelle="Chargement des arrondissements…" />
+          ) : (arrondissements.data ?? []).length === 0 ? (
+            <p className="text-sm texte-doux">Aucun arrondissement déclaré.</p>
+          ) : (
+            <ul className="surface-douce max-h-64 overflow-y-auto rounded-lg">
+              {(arrondissements.data ?? []).map((arrondissement) => (
+                <li key={arrondissement.id}>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setArrondissementId(
+                        arrondissement.id === arrondissementId ? null : arrondissement.id,
+                      )
+                    }
+                    aria-current={arrondissement.id === arrondissementId ? 'true' : undefined}
+                    className={cn(
+                      'flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-sm hover:bg-[rgb(var(--fond-doux))]',
+                      arrondissement.id === arrondissementId &&
+                        'bg-[rgb(var(--accent))]/12 font-medium text-[rgb(var(--accent))]',
+                    )}
+                  >
+                    <span className="truncate">{arrondissement.libelle}</span>
+                    <span className="shrink-0 font-mono text-xs texte-doux">
+                      {arrondissement.code}
+                    </span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+
+        <div>
+          <h3 className="mb-2 text-sm font-medium">
+            Villages et quartiers{villages.data ? ` — ${villages.data.total}` : ''}
+          </h3>
+          {!arrondissementId ? (
+            <p className="text-sm texte-doux">
+              Choisissez un arrondissement pour voir son découpage.
+            </p>
+          ) : villages.isLoading ? (
+            <Chargement libelle="Chargement des villages…" />
+          ) : (villages.data?.items ?? []).length === 0 ? (
+            <p className="text-sm texte-doux">Aucun village déclaré pour cet arrondissement.</p>
+          ) : (
+            <ul className="surface-douce max-h-64 space-y-0.5 overflow-y-auto rounded-lg p-2">
+              {(villages.data?.items ?? []).map((village) => (
+                <li
+                  key={village.id}
+                  className="flex items-center justify-between gap-2 px-1 text-sm"
+                >
+                  <span className="truncate">{village.libelle}</span>
+                  {village.quartier_ville ? <Badge ton="info">Quartier</Badge> : null}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </CorpsCarte>
+    </Carte>
+  );
+}
+
 export default function PageReferentiels() {
   const fileAttente = useQueryClient();
   const { peut } = useSession();
@@ -169,6 +282,7 @@ export default function PageReferentiels() {
   const [recherche, setRecherche] = useState('');
   const [nouveau, setNouveau] = useState({ code: '', libelle: '', description: '', actif: true });
   const [aConfirmer, setAConfirmer] = useState<string | null>(null);
+  const [commune, setCommune] = useState<Element | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [erreur, setErreur] = useState<string | null>(null);
 
@@ -193,6 +307,7 @@ export default function PageReferentiels() {
     setMessage(null);
     setErreur(null);
     setAConfirmer(null);
+    setCommune(null);
   }, [cle, recherche]);
 
   // La confirmation retombe d'elle-même : un bouton resté armé finirait par
@@ -435,6 +550,11 @@ export default function PageReferentiels() {
                   legende={`Éléments du référentiel « ${referentiel.libelle} »`}
                   lignes={elements}
                   cleLigne={(element) => element.id}
+                  onLigneClic={
+                    cle === 'communes'
+                      ? (element) => setCommune(element.id === commune?.id ? null : element)
+                      : undefined
+                  }
                   vide={<EtatVide titre="Aucun élément" />}
                   colonnes={colonnes}
                 />
@@ -509,7 +629,11 @@ export default function PageReferentiels() {
                 </Bouton>
               </CorpsCarte>
             </Carte>
-          ) : peutEcrire ? (
+          ) : null}
+
+          {cle === 'communes' && commune ? <DecoupageCommune commune={commune} /> : null}
+
+          {creationPossible ? null : peutEcrire ? (
             <p className="mt-3 text-sm texte-doux">
               « {referentiel.libelle} » porte des attributs propres : la création se fait par
               import ou par l&apos;API, cet écran en assure la consultation et l&apos;activation.

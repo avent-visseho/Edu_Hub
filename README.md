@@ -218,8 +218,9 @@ docker exec eduhub-postgres psql -U eduhub -d eduhub \
 10. **Sessions d'examen** → ouvrir une session : répartition des candidats par
    centre et par salle, convocations, copies anonymées, délibération avec
    repêchage, publication des résultats, délivrance des diplômes.
-11. **Centres de composition** → ouvrir un centre : salles, plages de places,
-   liste d'émargement exportable en CSV.
+11. **Centres de composition** → ouvrir un centre : salles — que l'on ouvre et
+    retire tant qu'aucun candidat n'y est affecté — plages de places, et liste
+    d'émargement exportable en CSV.
 12. **Candidats** : *Inscrire une classe entière* présente d'un geste tous ses
     élèves à une session ; ouvrir un dossier : pièces jointes et leur vérification,
     affectation de composition, notes aux épreuves, décision du jury, actions
@@ -247,7 +248,8 @@ docker exec eduhub-postgres psql -U eduhub -d eduhub \
     données réelles sans rien modifier, alertes et leur traitement.
 19. **Cartographie** : implantation nationale des établissements.
 20. **Infrastructures** : bâtiments, salles et équipements, avec leur état et
-    leur niveau d'accessibilité.
+    leur niveau d'accessibilité. La fiche d'un établissement porte ses
+    documents : dépôt versionné, validation, téléchargement.
 21. **Transport** : suivi des trajets, prochain arrêt, places disponibles, parc
     de véhicules et abonnements des apprenants.
 22. **Bibliothèque** : catalogue et prêts — *Enregistrer le retour* calcule le
@@ -258,7 +260,8 @@ docker exec eduhub-postgres psql -U eduhub -d eduhub \
     ses rendez-vous, sans aucune donnée médicale individuelle.
 23. **Référentiels** : les nomenclatures partagées par tout le système. Tenter
     de retirer un type de salle utilisé par 890 salles est refusé, avec le
-    décompte exact des enregistrements concernés.
+    décompte exact des enregistrements concernés. Ouvrir une commune déplie ses
+    arrondissements, puis les villages et quartiers de chacun.
 24. **Comptes et rôles** → ouvrir un compte : rôles exercés et leur portée,
     attribution d'un rôle dans un périmètre, permissions effectives recalculées
     à chaque changement, réinitialisation du mot de passe.

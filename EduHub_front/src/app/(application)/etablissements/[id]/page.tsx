@@ -5,6 +5,7 @@ import { Building2, DoorOpen, Users, UserSquare2 } from 'lucide-react';
 import { useParams, useRouter } from 'next/navigation';
 
 import { EntetePage } from '@/components/layout/entete-page';
+import { DocumentsEntite } from '@/components/ui/documents-entite';
 import { Indicateur, ListeDescriptive, Tableau } from '@/components/ui/donnees';
 import {
   Badge,
@@ -255,6 +256,15 @@ export default function PageDetailEtablissement() {
           ]}
         />
       </Carte>
+
+      <div className="mt-4">
+        <DocumentsEntite
+          entiteType="etablissements"
+          entiteId={parametres.id}
+          titre="Documents de l'établissement"
+          description="Arrêté d'ouverture, plan de masse, conventions, rapports d'inspection — conservés avec leur version et leur état de validation."
+        />
+      </div>
     </>
   );
 }

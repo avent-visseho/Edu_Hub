@@ -1,5 +1,6 @@
 'use client';
 
+import { useQuery } from '@tanstack/react-query';
 import { ArrowRight, Lock, Mail } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -7,7 +8,7 @@ import { useEffect, useState } from 'react';
 
 import { BarreAccessibilite } from '@/components/layout/barre-accessibilite';
 import { Bouton, Champ } from '@/components/ui/primitives';
-import { ErreurApi } from '@/lib/api';
+import { api, ErreurApi } from '@/lib/api';
 import { useSession } from '@/lib/session';
 
 /** Comptes de démonstration, pour entrer dans la plateforme sans préparation. */
@@ -21,9 +22,25 @@ const COMPTES_DEMO = [
 
 const MOT_DE_PASSE_DEMO = 'EduHub2026!';
 
+interface OptionsAccessibilite {
+  affichage: Array<{ cle: string; libelle: string }>;
+  audio: Array<{ cle: string; libelle: string }>;
+  navigation: Array<{ cle: string; libelle: string }>;
+  langues: string[];
+}
+
 export default function PageConnexion() {
   const { connexion, connecte, chargement } = useSession();
   const router = useRouter();
+
+  // Point d'entrée public : ce que le service offre en matière d'accessibilité
+  // se lit avant même d'avoir un compte.
+  const accessibilite = useQuery({
+    queryKey: ['options-accessibilite'],
+    queryFn: () => api.get<OptionsAccessibilite>('/public/accessibilite', undefined, {
+      publique: true,
+    }),
+  });
 
   const [email, setEmail] = useState('');
   const [motDePasse, setMotDePasse] = useState('');
@@ -167,6 +184,35 @@ export default function PageConnexion() {
               ))}
             </ul>
           </section>
+
+          {accessibilite.data ? (
+            <section className="mt-8" aria-labelledby="accessibilite-offerte">
+              <h2 id="accessibilite-offerte" className="mb-2 text-sm font-semibold">
+                Accessibilité du service
+              </h2>
+              <p className="mb-2 text-sm texte-doux">
+                Ces réglages sont disponibles sans compte, depuis le bouton
+                «&nbsp;Accessibilité&nbsp;» de l&apos;en-tête.
+              </p>
+              <ul className="flex flex-wrap gap-1.5">
+                {[
+                  ...accessibilite.data.affichage,
+                  ...accessibilite.data.audio,
+                  ...accessibilite.data.navigation,
+                ].map((option) => (
+                  <li
+                    key={option.cle}
+                    className="surface-douce rounded-full px-3 py-1 text-xs"
+                  >
+                    {option.libelle}
+                  </li>
+                ))}
+              </ul>
+              <p className="mt-2 text-xs texte-doux">
+                Langues prises en charge : {accessibilite.data.langues.join(', ')}.
+              </p>
+            </section>
+          ) : null}
 
           <nav className="mt-8 flex flex-wrap gap-4 text-sm" aria-label="Services publics">
             <Link href="/resultats-publics" className="inline-flex items-center gap-1.5 hover:underline">

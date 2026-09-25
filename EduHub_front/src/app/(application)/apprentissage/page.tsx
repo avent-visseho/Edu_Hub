@@ -12,19 +12,34 @@ import {
 import { useState } from 'react';
 
 import { EntetePage } from '@/components/layout/entete-page';
-import { Indicateur } from '@/components/ui/donnees';
+import { Indicateur, Jauge } from '@/components/ui/donnees';
 import { ListeRessource } from '@/components/ui/liste';
 import {
   Badge,
   Carte,
+  Chargement,
   CorpsCarte,
   EnteteCarte,
   EtatVide,
   MessageErreur,
 } from '@/components/ui/primitives';
+import {
+  SelecteurApprenant,
+  type ApprenantChoisi,
+} from '@/components/ui/selecteur-apprenant';
 import { useListe } from '@/hooks/useListe';
 import { api } from '@/lib/api';
-import { formaterNombre, humaniser } from '@/lib/utils';
+import { formaterNombre, formaterNote, humaniser } from '@/lib/utils';
+
+interface Progression {
+  lecons_terminees: number;
+  lecons_totales: number;
+  pourcentage: number;
+  temps_passe_minutes: number;
+  termine: boolean;
+  note_finale: number | null;
+  certificat_delivre: boolean;
+}
 
 interface Cours {
   id: string;
@@ -88,6 +103,7 @@ interface PlanCours {
 export default function PageApprentissage() {
   const [onglet, setOnglet] = useState<'cours' | 'ressources'>('cours');
   const [coursId, setCoursId] = useState<string | null>(null);
+  const [apprenant, setApprenant] = useState<ApprenantChoisi | null>(null);
 
   const cours = useListe<Cours>('/cours', { tri: 'titre', active: onglet === 'cours' });
   const ressources = useListe<Ressource>('/ressources', {
@@ -99,6 +115,13 @@ export default function PageApprentissage() {
     queryKey: ['plan-cours', coursId],
     enabled: Boolean(coursId),
     queryFn: () => api.get<PlanCours>(`/cours/${coursId}/plan`),
+  });
+
+  const progression = useQuery({
+    queryKey: ['progression-cours', coursId, apprenant?.id],
+    enabled: Boolean(coursId) && Boolean(apprenant),
+    queryFn: () =>
+      api.get<Progression>(`/cours/${coursId}/progression/${apprenant!.id}`),
   });
 
   const accessibles = cours.items.filter((element) => element.version_audio).length;
@@ -376,6 +399,67 @@ export default function PageApprentissage() {
           ]}
         />
       )}
+
+      {coursId && onglet === 'cours' ? (
+        <Carte className="mt-4">
+          <EnteteCarte
+            titre="Suivi d'un apprenant sur ce cours"
+            description="Leçons terminées, temps passé et certificat, pour l'apprenant désigné."
+          />
+          <CorpsCarte className="grid gap-4 xl:grid-cols-[minmax(0,20rem)_minmax(0,1fr)]">
+            <SelecteurApprenant
+              etiquette="Apprenant suivi"
+              choisi={apprenant}
+              onChoisir={setApprenant}
+            />
+            {!apprenant ? (
+              <p className="self-center text-sm texte-doux">
+                Choisissez un apprenant pour afficher sa progression.
+              </p>
+            ) : progression.isLoading ? (
+              <Chargement libelle="Chargement de la progression…" />
+            ) : progression.data ? (
+              <div className="space-y-3">
+                <Jauge
+                  valeur={progression.data.pourcentage}
+                  etiquette={`${progression.data.lecons_terminees} / ${progression.data.lecons_totales} leçon(s)`}
+                  ton={progression.data.termine ? 'succes' : 'accent'}
+                />
+                <dl className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm sm:grid-cols-4">
+                  {[
+                    {
+                      terme: 'Temps passé',
+                      valeur: `${formaterNombre(progression.data.temps_passe_minutes)} min`,
+                    },
+                    {
+                      terme: 'Note finale',
+                      valeur:
+                        progression.data.note_finale != null
+                          ? formaterNote(progression.data.note_finale)
+                          : '—',
+                    },
+                    {
+                      terme: 'Cours terminé',
+                      valeur: progression.data.termine ? 'Oui' : 'Non',
+                    },
+                    {
+                      terme: 'Certificat',
+                      valeur: progression.data.certificat_delivre ? 'Délivré' : 'Non délivré',
+                    },
+                  ].map((entree) => (
+                    <div key={entree.terme} className="min-w-0">
+                      <dt className="text-xs font-medium uppercase tracking-wide texte-doux">
+                        {entree.terme}
+                      </dt>
+                      <dd className="mt-0.5 font-medium">{entree.valeur}</dd>
+                    </div>
+                  ))}
+                </dl>
+              </div>
+            ) : null}
+          </CorpsCarte>
+        </Carte>
+      ) : null}
     </>
   );
 }

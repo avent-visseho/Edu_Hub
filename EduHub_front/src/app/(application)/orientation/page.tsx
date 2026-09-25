@@ -1,7 +1,7 @@
 'use client';
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Compass, GraduationCap, Play } from 'lucide-react';
+import { Compass, FilePlus2, GraduationCap, Play, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 
 import { EntetePage } from '@/components/layout/entete-page';
@@ -10,14 +10,21 @@ import {
   Badge,
   Bouton,
   Carte,
+  Champ,
   Chargement,
+  CorpsCarte,
   EnteteCarte,
   EtatVide,
   MessageErreur,
+  Selection,
 } from '@/components/ui/primitives';
 import { ListeRessource } from '@/components/ui/liste';
 import { useListe } from '@/hooks/useListe';
-import { api } from '@/lib/api';
+import {
+  SelecteurApprenant,
+  type ApprenantChoisi,
+} from '@/components/ui/selecteur-apprenant';
+import { api, ErreurApi } from '@/lib/api';
 import { useSession } from '@/lib/session';
 import { formaterDate, formaterMontant, formaterNote, formaterPourcentage } from '@/lib/utils';
 
@@ -49,6 +56,13 @@ interface Formation {
 export default function PageOrientation() {
   const { peut } = useSession();
   const client = useQueryClient();
+  const [dossier, setDossier] = useState<{
+    campagne_id: string;
+    moyenne: string;
+    voeux: string[];
+  }>({ campagne_id: '', moyenne: '', voeux: [] });
+  const [candidat, setCandidat] = useState<ApprenantChoisi | null>(null);
+  const [journalDossier, setJournalDossier] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
 
   const campagnes = useQuery({
@@ -57,6 +71,37 @@ export default function PageOrientation() {
   });
 
   const formations = useListe<Formation>('/formations', { tri: 'intitule' });
+
+  const campagneChoisie = (campagnes.data ?? []).find(
+    (campagne) => campagne.id === dossier.campagne_id,
+  );
+
+  const deposerDossier = useMutation({
+    mutationFn: () =>
+      api.post<{ id: string }>('/orientation/dossiers', {
+        campagne_id: dossier.campagne_id,
+        apprenant_id: candidat!.id,
+        moyenne_bac: dossier.moyenne ? Number(dossier.moyenne) : null,
+        voeux: dossier.voeux
+          .filter(Boolean)
+          .map((formation_id, index) => ({ formation_id, rang: index + 1 })),
+      }),
+    onSuccess: () => {
+      setJournalDossier(
+        `Dossier déposé pour ${candidat!.nom_complet} avec ${dossier.voeux.filter(Boolean).length} vœu(x).`,
+      );
+      setCandidat(null);
+      setDossier((precedent) => ({ ...precedent, moyenne: '', voeux: [] }));
+      void client.invalidateQueries({ queryKey: ['campagnes-orientation'] });
+    },
+    onError: (erreurBrute: unknown) => {
+      setJournalDossier(
+        erreurBrute instanceof ErreurApi
+          ? erreurBrute.message
+          : "Le dossier n'a pas pu être déposé.",
+      );
+    },
+  });
 
   const affectation = useMutation({
     mutationFn: (campagneId: string) =>
@@ -274,6 +319,138 @@ export default function PageOrientation() {
           },
         ]}
       />
+
+      {peut('orientation', 'CREATE') ? (
+        <Carte className="mt-4">
+          <EnteteCarte
+            titre={
+              <span className="flex items-center gap-2">
+                <FilePlus2 size={19} aria-hidden /> Déposer un dossier d&apos;orientation
+              </span>
+            }
+            description={
+              campagneChoisie
+                ? `${campagneChoisie.nombre_voeux_max} vœu(x) au plus pour cette campagne, classés par ordre de préférence.`
+                : "Choisissez une campagne : elle fixe le nombre de vœux autorisés."
+            }
+          />
+          <CorpsCarte>
+            <div className="grid gap-3 sm:grid-cols-3">
+              <Selection
+                etiquette="Campagne"
+                value={dossier.campagne_id}
+                onChange={(evenement) =>
+                  setDossier((precedent) => ({
+                    ...precedent,
+                    campagne_id: evenement.target.value,
+                    voeux: [],
+                  }))
+                }
+                options={[
+                  { valeur: '', libelle: 'Choisir une campagne…' },
+                  ...(campagnes.data ?? []).map((campagne) => ({
+                    valeur: campagne.id,
+                    libelle: campagne.libelle,
+                  })),
+                ]}
+              />
+              <SelecteurApprenant
+                etiquette="Candidat"
+                choisi={candidat}
+                onChoisir={setCandidat}
+              />
+              <Champ
+                etiquette="Moyenne du baccalauréat"
+                type="number"
+                min={0}
+                max={20}
+                step="0.01"
+                value={dossier.moyenne}
+                onChange={(evenement) =>
+                  setDossier((precedent) => ({ ...precedent, moyenne: evenement.target.value }))
+                }
+              />
+            </div>
+
+            {campagneChoisie ? (
+              <div className="mt-4">
+                <h3 className="mb-2 font-medium">Vœux, par ordre de préférence</h3>
+                <ul className="space-y-2">
+                  {dossier.voeux.map((voeu, index) => (
+                    <li key={`${voeu}-${index}`} className="flex items-end gap-2">
+                      <span
+                        aria-hidden
+                        className="grid h-11 w-9 shrink-0 place-items-center rounded-lg surface-douce text-sm font-semibold"
+                      >
+                        {index + 1}
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <Selection
+                          etiquette={`Vœu numéro ${index + 1}`}
+                          etiquetteMasquee
+                          value={voeu}
+                          onChange={(evenement) =>
+                            setDossier((precedent) => ({
+                              ...precedent,
+                              voeux: precedent.voeux.map((autre, rang) =>
+                                rang === index ? evenement.target.value : autre,
+                              ),
+                            }))
+                          }
+                          options={[
+                            { valeur: '', libelle: 'Choisir une formation…' },
+                            ...formations.items.map((formation) => ({
+                              valeur: formation.id,
+                              libelle: formation.intitule,
+                            })),
+                          ]}
+                        />
+                      </span>
+                      <Bouton
+                        variante="fantome"
+                        aria-label={`Retirer le vœu numéro ${index + 1}`}
+                        onClick={() =>
+                          setDossier((precedent) => ({
+                            ...precedent,
+                            voeux: precedent.voeux.filter((_, rang) => rang !== index),
+                          }))
+                        }
+                        icone={<Trash2 size={17} aria-hidden />}
+                      />
+                    </li>
+                  ))}
+                </ul>
+                <Bouton
+                  className="mt-2"
+                  variante="secondaire"
+                  disabled={dossier.voeux.length >= campagneChoisie.nombre_voeux_max}
+                  onClick={() =>
+                    setDossier((precedent) => ({ ...precedent, voeux: [...precedent.voeux, ''] }))
+                  }
+                >
+                  Ajouter un vœu
+                </Bouton>
+              </div>
+            ) : null}
+
+            <Bouton
+              className="mt-3"
+              disabled={
+                !dossier.campagne_id || !candidat || dossier.voeux.filter(Boolean).length === 0
+              }
+              chargement={deposerDossier.isPending}
+              onClick={() => deposerDossier.mutate()}
+            >
+              Déposer le dossier
+            </Bouton>
+            {journalDossier ? (
+              <p role="status" className="mt-2 text-sm texte-doux">
+                {journalDossier}
+              </p>
+            ) : null}
+          </CorpsCarte>
+        </Carte>
+      ) : null}
     </>
   );
 }

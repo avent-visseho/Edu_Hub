@@ -82,7 +82,7 @@ export function Indicateur({
 export interface ColonneTableau<T> {
   cle: string;
   entete: ReactNode;
-  rendu: (ligne: T) => ReactNode;
+  rendu: (ligne: T, index: number) => ReactNode;
   /** Alignement du contenu ; les nombres sont alignés à droite. */
   alignement?: 'gauche' | 'centre' | 'droite';
   /** Colonne masquée sur petit écran. */
@@ -166,7 +166,7 @@ export function Tableau<T>({
                     colonne.secondaire && 'hidden md:table-cell',
                   )}
                 >
-                  {colonne.rendu(ligne)}
+                  {colonne.rendu(ligne, index)}
                 </td>
               ))}
             </tr>

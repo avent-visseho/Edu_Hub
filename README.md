@@ -216,8 +216,9 @@ docker exec eduhub-postgres psql -U eduhub -d eduhub \
    produit le PDF officiel avec QR code. La fiche d'une classe exporte ses
    bulletins en CSV et montre les conseils de classe tenus.
 10. **Sessions d'examen** → ouvrir une session : répartition des candidats par
-   centre et par salle, convocations, copies anonymées, délibération avec
-   repêchage, publication des résultats, délivrance des diplômes.
+    centre et par salle, convocations, copies anonymées, délibération avec
+    repêchage, puis — décision distincte — publication des résultats, et
+    délivrance des diplômes. Le palmarès des établissements clôt la fiche.
 11. **Centres de composition** → ouvrir un centre : salles — que l'on ouvre et
     retire tant qu'aucun candidat n'y est affecté — plages de places, et liste
     d'émargement exportable en CSV.

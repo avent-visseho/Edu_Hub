@@ -9,6 +9,7 @@ import {
   FileSignature,
   Gavel,
   MapPin,
+  Megaphone,
   Scale,
   ShieldCheck,
   Users,
@@ -25,6 +26,7 @@ import {
   Chargement,
   CorpsCarte,
   EnteteCarte,
+  EtatVide,
   MessageErreur,
   tonDuStatut,
 } from '@/components/ui/primitives';
@@ -38,6 +40,18 @@ import {
   humaniser,
 } from '@/lib/utils';
 import type { TableauBordSession } from '@/types/api';
+
+interface LignePalmares {
+  etablissement_id: string;
+  code: string;
+  nom: string;
+  candidats: number;
+  admis: number;
+  non_admis: number;
+  taux_reussite: number;
+  moyenne: number | null;
+  meilleure_moyenne: number | null;
+}
 
 interface BudgetSession {
   id: string;
@@ -83,10 +97,21 @@ export default function PagePilotageSession() {
     mutationFn: actionSession('deliberer', {
       repechage_maximum: 0.5,
       appliquer_note_eliminatoire: true,
-      publier: true,
+      // La publication est une décision à part : délibérer arrête les résultats,
+      // les rendre publics engage l'administration.
+      publier: false,
     }),
   });
+  const publication = useMutation({ mutationFn: actionSession('publier-resultats') });
   const diplomes = useMutation({ mutationFn: actionSession('diplomes') });
+
+  const palmares = useQuery({
+    queryKey: ['palmares-session', parametres.id],
+    queryFn: () =>
+      api.get<LignePalmares[]>(`/sessions/${parametres.id}/resultats-etablissements`, {
+        limite: 20,
+      }),
+  });
 
   if (tableau.isLoading) return <Chargement libelle="Ouverture du pilotage de session…" />;
   if (tableau.isError) return <MessageErreur erreur={tableau.error} />;
@@ -97,10 +122,10 @@ export default function PagePilotageSession() {
     statut: humaniser(statut),
     effectif,
   }));
-  const enCours = [repartition, convocations, copies, deliberation, diplomes].some(
+  const enCours = [repartition, convocations, copies, deliberation, publication, diplomes].some(
     (mutation) => mutation.isPending,
   );
-  const erreur = [repartition, convocations, copies, deliberation, diplomes].find(
+  const erreur = [repartition, convocations, copies, deliberation, publication, diplomes].find(
     (mutation) => mutation.isError,
   );
 
@@ -138,7 +163,7 @@ export default function PagePilotageSession() {
       <Carte className="mb-4">
         <EnteteCarte
           titre="Chaîne de traitement"
-          description="Chaque étape s'appuie sur la précédente : répartition, convocations, copies, délibération, diplômes."
+          description="Chaque étape s'appuie sur la précédente : répartition, convocations, copies, délibération, publication, diplômes."
         />
         <CorpsCarte>
           <div className="flex flex-wrap gap-2">
@@ -176,7 +201,16 @@ export default function PagePilotageSession() {
               onClick={() => deliberation.mutate()}
               icone={<Gavel size={17} aria-hidden />}
             >
-              4. Délibérer et publier
+              4. Délibérer
+            </Bouton>
+            <Bouton
+              variante="secondaire"
+              disabled={enCours || !peut('resultats', 'PUBLISH')}
+              chargement={publication.isPending}
+              onClick={() => publication.mutate()}
+              icone={<Megaphone size={17} aria-hidden />}
+            >
+              5. Publier les résultats
             </Bouton>
             <Bouton
               variante="secondaire"
@@ -185,7 +219,7 @@ export default function PagePilotageSession() {
               onClick={() => diplomes.mutate()}
               icone={<Award size={17} aria-hidden />}
             >
-              5. Délivrer les diplômes
+              6. Délivrer les diplômes
             </Bouton>
           </div>
         </CorpsCarte>
@@ -386,6 +420,97 @@ export default function PagePilotageSession() {
           />
         </Carte>
       </div>
+
+      <Carte className="mt-4">
+        <EnteteCarte
+          titre="Palmarès des établissements"
+          description="Les vingt établissements les mieux classés pour cette session, par moyenne obtenue."
+        />
+        {palmares.isLoading ? (
+          <CorpsCarte>
+            <Chargement libelle="Chargement du palmarès…" />
+          </CorpsCarte>
+        ) : (
+          <Tableau
+            legende="Palmarès des établissements pour cette session"
+            lignes={palmares.data ?? []}
+            cleLigne={(ligne) => ligne.etablissement_id}
+            vide={
+              <EtatVide
+                titre="Aucun résultat"
+                description="Le palmarès s'établit une fois la session délibérée."
+              />
+            }
+            colonnes={[
+              {
+                cle: 'rang',
+                entete: 'Rang',
+                alignement: 'droite',
+                largeur: '5rem',
+                rendu: (_ligne, index) => index + 1,
+              },
+              {
+                cle: 'etablissement',
+                entete: 'Établissement',
+                rendu: (ligne) => (
+                  <span className="block max-w-[24rem]">
+                    <span className="block truncate font-medium">{ligne.nom}</span>
+                    <span className="block font-mono text-xs texte-doux">{ligne.code}</span>
+                  </span>
+                ),
+              },
+              {
+                cle: 'candidats',
+                entete: 'Candidats',
+                alignement: 'droite',
+                secondaire: true,
+                rendu: (ligne) => formaterNombre(ligne.candidats),
+              },
+              {
+                cle: 'admis',
+                entete: 'Admis',
+                alignement: 'droite',
+                rendu: (ligne) => formaterNombre(ligne.admis),
+              },
+              {
+                cle: 'moyenne',
+                entete: 'Moyenne',
+                alignement: 'droite',
+                secondaire: true,
+                rendu: (ligne) => (
+                  <span className="min-w-0">
+                    <span className="block">
+                      {ligne.moyenne != null ? formaterNote(ligne.moyenne) : '—'}
+                    </span>
+                    <span className="block text-xs texte-doux">
+                      {ligne.meilleure_moyenne != null
+                        ? `au mieux ${formaterNote(ligne.meilleure_moyenne)}`
+                        : ''}
+                    </span>
+                  </span>
+                ),
+              },
+              {
+                cle: 'reussite',
+                entete: 'Taux de réussite',
+                largeur: '14rem',
+                rendu: (ligne) => (
+                  <Jauge
+                    valeur={ligne.taux_reussite}
+                    ton={
+                      ligne.taux_reussite >= 60
+                        ? 'succes'
+                        : ligne.taux_reussite >= 45
+                          ? 'alerte'
+                          : 'danger'
+                    }
+                  />
+                ),
+              },
+            ]}
+          />
+        )}
+      </Carte>
     </>
   );
 }

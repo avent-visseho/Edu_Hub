@@ -26,6 +26,7 @@ import {
   MessageSquare,
   Gavel,
   MapPin,
+  Scale,
   PenLine,
   MonitorPlay,
   ScrollText,
@@ -207,6 +208,14 @@ export const NAVIGATION: GroupeNavigation[] = [
         href: '/correction',
         icone: PenLine,
         permission: 'copies:READ',
+      },
+      {
+        libelle: 'Jurys et surveillance',
+        libelleSimple: 'Jurys',
+        pictogramme: '⚖️',
+        href: '/jurys',
+        icone: Scale,
+        permission: 'jurys:READ',
       },
       {
         libelle: 'Résultats',

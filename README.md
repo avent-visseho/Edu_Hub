@@ -217,14 +217,16 @@ docker exec eduhub-postgres psql -U eduhub -d eduhub \
     correcteurs, noter des copies anonymées en première ou en seconde lecture —
     un écart de trois points déclenche une troisième correction — puis lire les
     notes définitives, rattachées au candidat une fois la correction faite.
-14. **Gouvernance** : organigramme ministère → direction → direction
+14. **Jurys et surveillance** : composition des jurys de délibération, ajout
+    d'un membre, et agents affectés aux centres par rôle.
+15. **Gouvernance** : organigramme ministère → direction → direction
     départementale, règles métier et bouton *Simuler* qui les confronte aux
     données réelles sans rien modifier, alertes et leur traitement.
-15. **Cartographie** : implantation nationale des établissements.
-16. **Infrastructures** : bâtiments, salles et équipements, avec leur état et
+16. **Cartographie** : implantation nationale des établissements.
+17. **Infrastructures** : bâtiments, salles et équipements, avec leur état et
     leur niveau d'accessibilité.
-17. **Transport** : suivi des trajets, prochain arrêt, places disponibles.
-18. **Vérification publique** : coller le code d'un diplôme sur `/verification`.
+18. **Transport** : suivi des trajets, prochain arrêt, places disponibles.
+19. **Vérification publique** : coller le code d'un diplôme sur `/verification`.
 
 À tout moment, le bouton **Accessibilité** de l'en-tête permet de basculer en
 contraste élevé, grande police, interface simplifiée, lecture vocale ou

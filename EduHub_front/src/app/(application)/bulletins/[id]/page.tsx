@@ -1,8 +1,9 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
-import { Printer, Volume2 } from 'lucide-react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { CheckCircle2, Printer, Volume2 } from 'lucide-react';
 import { useParams } from 'next/navigation';
+import { useState } from 'react';
 
 import { EntetePage } from '@/components/layout/entete-page';
 import { ListeDescriptive, Tableau } from '@/components/ui/donnees';
@@ -17,17 +18,36 @@ import {
   tonDuStatut,
 } from '@/components/ui/primitives';
 import { useAccessibilite } from '@/lib/accessibilite';
-import { api } from '@/lib/api';
+import { api, ErreurApi } from '@/lib/api';
+import { useSession } from '@/lib/session';
 import { formaterNote, humaniser } from '@/lib/utils';
 import type { BulletinDetail } from '@/types/api';
 
 export default function PageBulletin() {
   const parametres = useParams<{ id: string }>();
   const { lectureVocale, lire } = useAccessibilite();
+  const { peut } = useSession();
+  const fileAttente = useQueryClient();
+  const [journal, setJournal] = useState<string | null>(null);
 
   const bulletin = useQuery({
     queryKey: ['bulletin', parametres.id],
     queryFn: () => api.get<BulletinDetail>(`/bulletins/${parametres.id}/detail`),
+  });
+
+  const publier = useMutation({
+    mutationFn: () => api.post<BulletinDetail>(`/bulletins/${parametres.id}/publier`),
+    onSuccess: () => {
+      setJournal('Bulletin publié : il est désormais visible par la famille.');
+      void fileAttente.invalidateQueries({ queryKey: ['bulletin', parametres.id] });
+    },
+    onError: (erreurBrute: unknown) => {
+      setJournal(
+        erreurBrute instanceof ErreurApi
+          ? erreurBrute.message
+          : "Le bulletin n'a pas pu être publié.",
+      );
+    },
   });
 
   if (bulletin.isLoading) return <Chargement libelle="Ouverture du bulletin…" />;
@@ -58,6 +78,10 @@ export default function PageBulletin() {
             <span>{donnees.classe_libelle}</span>
             <span aria-hidden>·</span>
             <span>{donnees.periode_libelle}</span>
+            <span aria-hidden>·</span>
+            <Badge ton={donnees.publie ? 'succes' : 'alerte'}>
+              {donnees.publie ? 'Publié' : 'Non publié'}
+            </Badge>
             {donnees.annee_libelle ? (
               <>
                 <span aria-hidden>·</span>
@@ -68,6 +92,16 @@ export default function PageBulletin() {
         }
         actions={
           <>
+            {peut('bulletins', 'PUBLISH') && !donnees.publie ? (
+              <Bouton
+                variante="secondaire"
+                onClick={() => publier.mutate()}
+                chargement={publier.isPending}
+                icone={<CheckCircle2 size={17} aria-hidden />}
+              >
+                Publier
+              </Bouton>
+            ) : null}
             {lectureVocale ? (
               <Bouton
                 variante="secondaire"
@@ -86,6 +120,12 @@ export default function PageBulletin() {
           </>
         }
       />
+
+      {journal ? (
+        <p role="status" className="mb-4 surface rounded-lg border px-4 py-3 text-sm">
+          {journal}
+        </p>
+      ) : null}
 
       <div className="grid gap-4 xl:grid-cols-[1fr_20rem]">
         <Carte>

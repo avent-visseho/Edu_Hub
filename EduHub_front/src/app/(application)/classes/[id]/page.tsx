@@ -1,7 +1,7 @@
 'use client';
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { CalendarCheck, FileText, Play } from 'lucide-react';
+import { CalendarCheck, Download, FileText, Gavel, Play } from 'lucide-react';
 import { useParams, useRouter } from 'next/navigation';
 import { useState } from 'react';
 
@@ -21,9 +21,9 @@ import {
   Selection,
   tonDuStatut,
 } from '@/components/ui/primitives';
-import { api } from '@/lib/api';
+import { api, type Page } from '@/lib/api';
 import { useSession } from '@/lib/session';
-import { formaterNote, formaterPourcentage, humaniser } from '@/lib/utils';
+import { formaterDate, formaterNote, formaterPourcentage, humaniser } from '@/lib/utils';
 
 interface ApprenantClasse {
   id: string;
@@ -77,6 +77,18 @@ interface LigneAssiduite {
   alerte: boolean;
 }
 
+interface ConseilClasse {
+  id: string;
+  date_conseil: string;
+  president_nom: string | null;
+  moyenne_classe: number | null;
+  taux_reussite: number | null;
+  observations: string | null;
+  cloture: boolean;
+  classe_libelle: string | null;
+  periode_libelle: string | null;
+}
+
 interface Matiere {
   id: string;
   code: string;
@@ -125,6 +137,17 @@ export default function PageDetailClasse() {
     queryFn: () => api.get<{ items: Enseignant[] }>('/enseignants', { size: 300 }),
   });
 
+  const conseils = useQuery({
+    queryKey: ['conseils-classe', parametres.id],
+    queryFn: () =>
+      api.get<Page<ConseilClasse>>('/conseils-classe', {
+        classe_id: parametres.id,
+        size: 20,
+        sort_by: 'date_conseil',
+        sort_dir: 'desc',
+      }),
+  });
+
   const assiduite = useQuery({
     queryKey: ['classe-assiduite', parametres.id],
     queryFn: () => api.get<LigneAssiduite[]>(`/classes/${parametres.id}/assiduite`),
@@ -144,7 +167,9 @@ export default function PageDetailClasse() {
     mutationFn: () =>
       api.post<{ bulletins_generes: number; moyenne_classe: number | null }>(
         '/bulletins/generer',
-        { classe_id: parametres.id, periode_id: periodeActive, publier: true },
+        // Les bulletins sont produits non publiés : la publication est un acte
+        // distinct, tenu après le conseil de classe.
+        { classe_id: parametres.id, periode_id: periodeActive, publier: false },
       ),
     onSuccess: () => {
       void client.invalidateQueries({ queryKey: ['classe-statistiques'] });
@@ -176,6 +201,23 @@ export default function PageDetailClasse() {
               }))}
               className="h-11"
             />
+            {peut('bulletins', 'EXPORT') ? (
+              <Bouton
+                variante="secondaire"
+                icone={<Download size={17} aria-hidden />}
+                onClick={() =>
+                  void api
+                    .telecharger(
+                      `/bulletins/classe/${parametres.id}/export`,
+                      `bulletins-${stats?.classe_libelle ?? 'classe'}.csv`,
+                      periodeActive ? { periode_id: periodeActive } : undefined,
+                    )
+                    .catch(() => undefined)
+                }
+              >
+                Exporter les bulletins
+              </Bouton>
+            ) : null}
             {peut('bulletins', 'CREATE') ? (
               <Bouton
                 onClick={() => generation.mutate()}
@@ -288,6 +330,81 @@ export default function PageDetailClasse() {
                   ?.nom_complet ?? null)
               : null
           }
+        />
+      </Carte>
+
+      <Carte className="mt-4">
+        <EnteteCarte
+          titre={
+            <span className="flex items-center gap-2">
+              <Gavel size={19} aria-hidden /> Conseils de classe
+            </span>
+          }
+          description="Une séance par période : moyenne de classe arrêtée, taux de réussite et observations."
+        />
+        <Tableau
+          legende="Conseils de classe tenus pour cette classe"
+          lignes={conseils.data?.items ?? []}
+          cleLigne={(conseil) => conseil.id}
+          vide={
+            <EtatVide
+              titre="Aucun conseil de classe"
+              description="Les conseils sont tenus après la génération des bulletins de la période."
+            />
+          }
+          colonnes={[
+            {
+              cle: 'periode',
+              entete: 'Période',
+              rendu: (conseil) => (
+                <span className="min-w-0">
+                  <span className="block font-medium">{conseil.periode_libelle ?? '—'}</span>
+                  <span className="block text-xs texte-doux">
+                    {formaterDate(conseil.date_conseil)}
+                  </span>
+                </span>
+              ),
+            },
+            {
+              cle: 'president',
+              entete: 'Président',
+              secondaire: true,
+              rendu: (conseil) => conseil.president_nom ?? 'Non désigné',
+            },
+            {
+              cle: 'moyenne',
+              entete: 'Moyenne de classe',
+              alignement: 'droite',
+              rendu: (conseil) =>
+                conseil.moyenne_classe != null ? formaterNote(conseil.moyenne_classe) : '—',
+            },
+            {
+              cle: 'reussite',
+              entete: 'Taux de réussite',
+              largeur: '14rem',
+              rendu: (conseil) => (
+                <Jauge
+                  valeur={conseil.taux_reussite ?? 0}
+                  ton={
+                    (conseil.taux_reussite ?? 0) >= 60
+                      ? 'succes'
+                      : (conseil.taux_reussite ?? 0) >= 40
+                        ? 'alerte'
+                        : 'danger'
+                  }
+                />
+              ),
+            },
+            {
+              cle: 'cloture',
+              entete: 'État',
+              rendu: (conseil) => (
+                <Badge ton={conseil.cloture ? 'succes' : 'alerte'}>
+                  {conseil.cloture ? 'Clôturé' : 'En cours'}
+                </Badge>
+              ),
+            },
+          ]}
         />
       </Carte>
 

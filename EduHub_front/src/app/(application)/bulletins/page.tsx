@@ -1,17 +1,23 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
+import { useState } from 'react';
 
 import { EntetePage } from '@/components/layout/entete-page';
 import { ListeRessource } from '@/components/ui/liste';
-import { Badge, tonDuStatut } from '@/components/ui/primitives';
+import { Badge, Selection, tonDuStatut } from '@/components/ui/primitives';
 import { useListe } from '@/hooks/useListe';
 import { formaterNote, humaniser } from '@/lib/utils';
 import type { Bulletin } from '@/types/api';
 
 export default function PageBulletins() {
   const router = useRouter();
-  const liste = useListe<Bulletin>('/bulletins', { tri: 'numero' });
+  const [publie, setPublie] = useState('');
+
+  const liste = useListe<Bulletin>('/bulletins', {
+    tri: 'numero',
+    filtres: { publie: publie || undefined },
+  });
 
   return (
     <>
@@ -37,6 +43,19 @@ export default function PageBulletins() {
         onLigneClic={(bulletin) => router.push(`/bulletins/${bulletin.id}`)}
         videTitre="Aucun bulletin"
         videDescription="Générez les bulletins depuis la fiche d'une classe."
+        filtres={
+          <Selection
+            etiquette="Publication"
+            aide="Un bulletin n'est visible par la famille qu'une fois publié."
+            value={publie}
+            onChange={(evenement) => setPublie(evenement.target.value)}
+            options={[
+              { valeur: '', libelle: 'Tous les bulletins' },
+              { valeur: 'true', libelle: 'Publiés' },
+              { valeur: 'false', libelle: 'En attente de publication' },
+            ]}
+          />
+        }
         colonnes={[
           {
             cle: 'numero',

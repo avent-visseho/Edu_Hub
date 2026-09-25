@@ -323,10 +323,20 @@ class ConseilClasse(Base):
     decisions: Mapped[list[DecisionConseilApprenant]] = relationship(
         back_populates="conseil", cascade="all, delete-orphan"
     )
+    classe: Mapped[Classe] = relationship(lazy="selectin")
+    periode: Mapped[Periode] = relationship(lazy="selectin")
 
     __table_args__ = (
         UniqueConstraint("classe_id", "periode_id", name="uq_conseils_classe_periode"),
     )
+
+    @property
+    def classe_libelle(self) -> str | None:
+        return self.classe.libelle if self.classe else None
+
+    @property
+    def periode_libelle(self) -> str | None:
+        return self.periode.libelle if self.periode else None
 
 
 class DecisionConseilApprenant(Base):

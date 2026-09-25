@@ -184,6 +184,9 @@ class ConseilClasseLecture(SchemaBase):
     taux_reussite: float | None = None
     observations: str | None = None
     cloture: bool
+    # Libellés joints : la liste des conseils se lit sans recharger les classes.
+    classe_libelle: str | None = None
+    periode_libelle: str | None = None
 
 
 class StatistiquesClasse(SchemaBase):

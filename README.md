@@ -203,7 +203,10 @@ docker exec eduhub-postgres psql -U eduhub -d eduhub \
 7. **Évaluations** → ouvrir une évaluation : saisie des notes élève par élève
    (absence, non-rendu, dispense, fraude), statistiques en direct, puis la
    chaîne de validation enseignant → établissement → publication.
-8. **Bulletins** → ouvrir un bulletin → *Imprimer* : PDF officiel avec QR code.
+8. **Bulletins** : les bulletins générés attendent leur publication — le filtre
+   *En attente de publication* les isole, la fiche les publie, et *Imprimer*
+   produit le PDF officiel avec QR code. La fiche d'une classe exporte ses
+   bulletins en CSV et montre les conseils de classe tenus.
 9. **Sessions d'examen** → ouvrir une session : répartition des candidats par
    centre et par salle, convocations, copies anonymées, délibération avec
    repêchage, publication des résultats, délivrance des diplômes.

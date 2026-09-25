@@ -66,7 +66,7 @@ for p in 80 443; do
 done
 
 titre "Résolution DNS du sous-domaine"
-DOMAINE="${EDUHUB_DOMAINE:-eduhub.ezafri.com}"
+DOMAINE="${EDUHUB_DOMAINE:-api.ezafri.com}"
 adresse=$(getent ahostsv4 "${DOMAINE}" 2>/dev/null | awk 'NR==1 {print $1}' || true)
 publique=$(curl -fsS --max-time 10 https://api.ipify.org 2>/dev/null || true)
 if [ -z "${adresse}" ]; then

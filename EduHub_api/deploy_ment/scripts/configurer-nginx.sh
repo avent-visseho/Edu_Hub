@@ -12,11 +12,11 @@
 # servaient déjà quelque chose sur le port 80, cas que le script détecte et
 # signale avant d'agir.
 #
-#   EDUHUB_DOMAINE=eduhub.ezafri.com EDUHUB_PORT=8100 bash configurer-nginx.sh
+#   EDUHUB_DOMAINE=api.ezafri.com EDUHUB_PORT=8100 bash configurer-nginx.sh
 # ===========================================================================
 set -euo pipefail
 
-DOMAINE="${EDUHUB_DOMAINE:-eduhub.ezafri.com}"
+DOMAINE="${EDUHUB_DOMAINE:-api.ezafri.com}"
 PORT="${EDUHUB_PORT:-8100}"
 COURRIEL="${EDUHUB_COURRIEL:-}"
 

@@ -3,7 +3,7 @@
 Ce dossier contient tout ce qu'il faut pour faire tourner l'API sur un serveur :
 une image Docker, une pile à deux services, un modèle de configuration et trois
 scripts. Rien d'autre n'est requis — ni Redis, ni Celery, ni MinIO, ni PostGIS.
-L'API est publiée en HTTPS sur **`eduhub.ezafri.com`**, derrière nginx.
+L'API est publiée en HTTPS sur **`api.ezafri.com`**, derrière nginx.
 
 ```
 deploy_ment/
@@ -110,22 +110,30 @@ Le seul geste qu'aucun script ne peut faire à votre place, c'est
 **l'enregistrement DNS**. Chez Hostinger, dans la zone d'`ezafri.com` :
 
 ```
-eduhub.ezafri.com   A   185.194.217.12
+api.ezafri.com   A   185.194.217.12
 ```
 
-Attention, il ne s'agit pas d'en créer un mais d'en **remplacer** un :
-`eduhub.ezafri.com` résout aujourd'hui vers `93.127.179.116` et `77.37.53.51`,
-c'est-à-dire ailleurs que sur votre serveur. C'est le comportement typique d'un
-enregistrement générique `*.ezafri.com` pointant vers les serveurs de parking du
-registrar : tous les sous-domaines répondent, mais aucun ne mène chez vous. Il
-faut donc un enregistrement `A` explicite, qui prendra le pas sur le générique.
+`api.ezafri.com` ne résout aujourd'hui vers rien : l'enregistrement est donc à
+**créer**, et rien ne s'y oppose. Il n'existe pas d'enregistrement générique
+`*.ezafri.com` — un sous-domaine tiré au hasard ne résout vers rien — si bien
+que la création n'entre en conflit avec quoi que ce soit.
 
-**Si vous destinez `eduhub.ezafri.com` au front sur Vercel**, alors l'API a
-besoin de son propre nom — `api.ezafri.com`, par exemple. Un nom ne peut pas
-pointer à la fois vers Vercel et vers ce serveur. Renseignez le nom retenu dans
-`EDUHUB_DOMAINE`.
+`eduhub.ezafri.com`, en revanche, **a déjà un enregistrement**, qui pointe vers
+l'hébergement Hostinger (`77.37.53.105`, `91.108.98.97` au moment d'écrire).
+C'est celui-là qu'il faudra remplacer par le `CNAME` de Vercel quand vous
+brancherez le front. Les deux noms sont indépendants : un nom ne peut pas
+pointer à la fois vers Vercel et vers ce serveur, d'où la séparation.
 
-Let's Encrypt validant le domaine en appelant `http://eduhub.ezafri.com/`, le
+| Nom | Pointe vers | Enregistrement | État |
+| --- | --- | --- | --- |
+| `api.ezafri.com` | ce serveur (l'API) | `A` → `185.194.217.12` | à créer |
+| `eduhub.ezafri.com` | Vercel (le front) | `CNAME` fourni par Vercel | à remplacer |
+
+La zone d'`ezafri.com` est servie par les serveurs de noms d'Hostinger
+(`ns1.dns-parking.com`, `ns2.dns-parking.com`) : c'est donc dans le panneau DNS
+d'Hostinger que les deux enregistrements se règlent.
+
+Let's Encrypt validant le domaine en appelant `http://api.ezafri.com/`, le
 certificat serait délivré pour le serveur de parking — ou, plus probablement,
 échouerait. Et chaque échec consomme un essai sur le quota.
 `verifier-serveur.sh` compare la résolution à l'adresse réelle du serveur et
@@ -145,7 +153,7 @@ SERVEUR=root@185.194.217.12 ./deploy_ment/scripts/deployer.sh verifier
 
 Ce script ne modifie rien. Il signale : la version de Docker, si le port 8100
 est libre, qui occupe les ports 80 et 443 (ici nginx, ce qui est le cas
-attendu), si `eduhub.ezafri.com` résout bien vers ce serveur, la liste des
+attendu), si `api.ezafri.com` résout bien vers ce serveur, la liste des
 ports déjà pris, le nombre de conteneurs en service, la mémoire et le disque
 disponibles, et l'état du pare-feu.
 
@@ -317,7 +325,7 @@ que `deployer.sh` le passe systématiquement.
 
 ---
 
-## 6. Publier en HTTPS sur eduhub.ezafri.com
+## 6. Publier l'API en HTTPS sur api.ezafri.com
 
 Une seule commande, à lancer une seule fois :
 
@@ -327,7 +335,7 @@ SERVEUR=root@185.194.217.12 ./deploy_ment/scripts/deployer.sh https
 
 Elle exécute `configurer-nginx.sh` sur le serveur, qui :
 
-1. **vérifie le DNS** — `eduhub.ezafri.com` doit résoudre vers ce serveur. Sinon
+1. **vérifie le DNS** — `api.ezafri.com` doit résoudre vers ce serveur. Sinon
    il s'arrête en donnant l'enregistrement à créer, plutôt que de laisser
    certbot échouer et consommer un essai sur son quota ;
 2. **vérifie que l'API répond** sur `127.0.0.1:8100` ;
@@ -353,13 +361,13 @@ Chez le registrar d'`ezafri.com`, remplacez la résolution générique par un
 enregistrement explicite :
 
 ```
-eduhub.ezafri.com   A   185.194.217.12
+api.ezafri.com   A   185.194.217.12
 ```
 
 Puis, en attendant la propagation :
 
 ```bash
-dig +short eduhub.ezafri.com
+dig +short api.ezafri.com
 # doit renvoyer 185.194.217.12, et rien d'autre
 ```
 
@@ -373,7 +381,7 @@ en HTTP et en HTTPS. Le script s'y insère plutôt que de s'y substituer :
 
 - il n'installe rien si nginx est présent ;
 - le fichier d'EduHub est **un site de plus**, déclaré sans `default_server` :
-  il ne répond que pour `eduhub.ezafri.com` et laisse les autres sites répondre
+  il ne répond que pour `api.ezafri.com` et laisse les autres sites répondre
   pour les leurs ;
 - aucun fichier existant n'est modifié, et le script annonce combien de sites
   sont déjà configurés avant d'agir ;
@@ -403,11 +411,11 @@ vu par le navigateur, sans rien à changer dans le code.
 ### Vérifier
 
 ```bash
-curl https://eduhub.ezafri.com/health
+curl https://api.ezafri.com/health
 # {"status":"ok"}
 ```
 
-Et dans un navigateur : `https://eduhub.ezafri.com/docs`
+Et dans un navigateur : `https://api.ezafri.com/docs`
 
 ---
 
@@ -432,7 +440,7 @@ rien et l'exposerait pour rien.
 Le front n'en lit qu'une, dans `src/lib/api.ts` :
 
 ```
-NEXT_PUBLIC_API_URL = https://<le-nom-de-l-api>/api/v1
+NEXT_PUBLIC_API_URL = https://api.ezafri.com/api/v1
 ```
 
 C'est tout. (`NEXT_PUBLIC_NOM_PLATEFORME` figure dans `.env.example` mais n'est
@@ -459,12 +467,16 @@ aucune application Next.js.
 
 ### Côté API : autoriser l'origine
 
-Ajoutez l'URL Vercel à `EDUHUB_CORS_ORIGINS` dans `deploy_ment/.env.production`,
-puis redéployez :
+Ajoutez les origines du front à `EDUHUB_CORS_ORIGINS` dans
+`deploy_ment/.env.production`, puis redéployez :
 
 ```
-EDUHUB_CORS_ORIGINS=http://localhost:3000,https://eduhub.vercel.app
+EDUHUB_CORS_ORIGINS=http://localhost:3000,https://eduhub.ezafri.com,https://eduhub.vercel.app
 ```
+
+Les deux origines du front sont utiles : `eduhub.ezafri.com` une fois le
+sous-domaine branché, et l'URL `.vercel.app` que Vercel attribue de toute façon
+et par laquelle vous accéderez au site avant cela.
 
 ```bash
 SERVEUR=root@185.194.217.12 ./deploy_ment/scripts/deployer.sh deployer
@@ -511,9 +523,9 @@ l'étape 4, et que ce n'est pas un bogue.
 | erreur CORS dans la console du navigateur | l'origine du front n'est pas dans `EDUHUB_CORS_ORIGINS`, ou elle y figure avec une barre oblique finale |
 | `Mixed Content ... has been blocked` | le front appelle l'API en `http://` : `NEXT_PUBLIC_API_URL` doit commencer par `https://`, ce qui suppose l'étape 3 de la section 7 |
 | Vercel : `No Next.js version detected` | le **Root Directory** du projet n'est pas `EduHub_front` |
-| `curl https://eduhub.ezafri.com` : connexion refusée | nginx n'est pas configuré : `deployer.sh https` |
+| `curl https://api.ezafri.com` : connexion refusée | nginx n'est pas configuré : `deployer.sh https` |
 | certbot : `Timeout during connect` | le DNS ne pointe pas encore vers le serveur, ou le port 80 est fermé |
-| `https` s'arrête sur un écart d'adresse | `eduhub.ezafri.com` résout encore vers les serveurs de parking du registrar : l'enregistrement `A` explicite n'est pas propagé (section 6) |
+| `https` s'arrête sur un écart d'adresse | `api.ezafri.com` ne résout pas encore vers `185.194.217.12` : l'enregistrement `A` n'est pas créé ou pas propagé (section 6) |
 | la construction échoue sur `No matching distribution ... --only-binary` | une version figée n'a pas de roue pour Linux/CPython 3.12. Ajustez la version dans le `.venv`, puis regénérez `contraintes.txt` (section 1.2) |
 | `Target database is not up to date` | migrations non appliquées : `deployer.sh migrer` |
 | le seed échoue sur une contrainte d'unicité | la base est déjà peuplée : videz-la d'abord (section 5) |

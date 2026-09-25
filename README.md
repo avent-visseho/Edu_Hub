@@ -213,9 +213,11 @@ docker exec eduhub-postgres psql -U eduhub -d eduhub \
     affectation de composition, notes aux épreuves, décision du jury, actions
     de workflow autorisées et historique des transitions.
 12. **Contentieux** : recours déposés après publication, et leur instruction.
-13. **Recherche avancée** : constructeur visuel, puis onglet *Question en
-    français* — « Montre-moi les élèves des CEG ayant au moins 17 de moyenne en
-    mathématiques. »
+13. **Recherche avancée** : constructeur visuel, onglet *Question en français*
+    — « Montre-moi les élèves des CEG ayant au moins 17 de moyenne en
+    mathématiques. » — puis *Requêtes enregistrées*, où les sept exemples de la
+    spécification s'exécutent en un clic. Toute requête construite peut être
+    enregistrée, et tout résultat exporté en CSV.
 14. **Correction des copies** : choisir une épreuve, suivre l'avancement des
     correcteurs, noter des copies anonymées en première ou en seconde lecture —
     un écart de trois points déclenche une troisième correction — puis lire les

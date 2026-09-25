@@ -1,7 +1,18 @@
 'use client';
 
-import { useMutation, useQuery } from '@tanstack/react-query';
-import { Download, MessageSquare, Plus, Search, Sparkles, Trash2, Wand2 } from 'lucide-react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  BookmarkPlus,
+  Bookmark,
+  Download,
+  MessageSquare,
+  Play,
+  Plus,
+  Search,
+  Sparkles,
+  Trash2,
+  Wand2,
+} from 'lucide-react';
 import { useMemo, useState } from 'react';
 
 import { EntetePage } from '@/components/layout/entete-page';
@@ -15,11 +26,13 @@ import {
   CorpsCarte,
   EnteteCarte,
   EtatVide,
+  Interrupteur,
   MessageErreur,
   Selection,
 } from '@/components/ui/primitives';
-import { api } from '@/lib/api';
-import { formaterNombre } from '@/lib/utils';
+import { api, ErreurApi, type Page } from '@/lib/api';
+import { formaterNombre, humaniser } from '@/lib/utils';
+import { useSession } from '@/lib/session';
 import type { EntiteRecherche, ReponseNaturelle, ResultatRecherche } from '@/types/api';
 
 /** Libellés français des opérateurs exposés par l'API. */
@@ -40,6 +53,18 @@ const OPERATEURS: Record<string, string> = {
   not_null: 'est renseigné',
 };
 
+interface RequeteEnregistree {
+  id: string;
+  code: string;
+  libelle: string;
+  description: string | null;
+  entite_cible: string;
+  filtres: { criteres?: Array<{ champ: string; operateur: string; valeur?: unknown }>; conjonction?: string };
+  partagee: boolean;
+  requete_naturelle: string | null;
+  nombre_executions: number;
+}
+
 interface CritereSaisi {
   id: string;
   champ: string;
@@ -48,7 +73,9 @@ interface CritereSaisi {
 }
 
 export default function PageRecherche() {
-  const [onglet, setOnglet] = useState<'constructeur' | 'naturel'>('constructeur');
+  const [onglet, setOnglet] = useState<'constructeur' | 'naturel' | 'enregistrees'>(
+    'constructeur',
+  );
 
   return (
     <>
@@ -66,6 +93,7 @@ export default function PageRecherche() {
           [
             { cle: 'constructeur', libelle: 'Constructeur de requêtes', icone: Wand2 },
             { cle: 'naturel', libelle: 'Question en français', icone: MessageSquare },
+            { cle: 'enregistrees', libelle: 'Requêtes enregistrées', icone: Bookmark },
           ] as const
         ).map((element) => {
           const Icone = element.icone;
@@ -90,7 +118,13 @@ export default function PageRecherche() {
         })}
       </div>
 
-      {onglet === 'constructeur' ? <Constructeur /> : <RechercheNaturelle />}
+      {onglet === 'constructeur' ? (
+        <Constructeur />
+      ) : onglet === 'naturel' ? (
+        <RechercheNaturelle />
+      ) : (
+        <RequetesEnregistrees />
+      )}
     </>
   );
 }
@@ -100,6 +134,16 @@ export default function PageRecherche() {
 // ------------------------------------------------------------------
 
 function Constructeur() {
+  const fileAttente = useQueryClient();
+  const { peut } = useSession();
+  const [enregistrement, setEnregistrement] = useState({
+    ouvert: false,
+    code: '',
+    libelle: '',
+    partagee: true,
+  });
+  const [journal, setJournal] = useState<string | null>(null);
+
   const entites = useQuery({
     queryKey: ['entites-recherche'],
     queryFn: () => api.get<EntiteRecherche[]>('/recherche/entites'),
@@ -115,21 +159,49 @@ function Constructeur() {
     [entites.data, entiteCle],
   );
 
+  /** Charge utile de la requête, partagée par l'exécution et par l'export. */
+  function charge(numeroPage: number) {
+    return {
+      entite: entiteCle,
+      conjonction,
+      criteres: criteres
+        .filter((critere) => critere.champ && critere.operateur)
+        .map((critere) => ({
+          champ: critere.champ,
+          operateur: critere.operateur,
+          valeur: normaliserValeur(critere.valeur, critere.operateur),
+        })),
+      page: numeroPage,
+      taille: 25,
+    };
+  }
+
   const recherche = useMutation({
     mutationFn: (numeroPage: number) =>
-      api.post<ResultatRecherche>('/recherche/avancee', {
-        entite: entiteCle,
-        conjonction,
-        criteres: criteres
-          .filter((critere) => critere.champ && critere.operateur)
-          .map((critere) => ({
-            champ: critere.champ,
-            operateur: critere.operateur,
-            valeur: normaliserValeur(critere.valeur, critere.operateur),
-          })),
-        page: numeroPage,
-        taille: 25,
+      api.post<ResultatRecherche>('/recherche/avancee', charge(numeroPage)),
+  });
+
+  const enregistrer = useMutation({
+    mutationFn: () =>
+      api.post<RequeteEnregistree>('/requetes-enregistrees', {
+        code: enregistrement.code.trim().toUpperCase().replace(/\s+/g, '_'),
+        libelle: enregistrement.libelle.trim(),
+        entite_cible: entiteCle,
+        filtres: { criteres: charge(1).criteres, conjonction },
+        partagee: enregistrement.partagee,
       }),
+    onSuccess: (requete) => {
+      setJournal(`Requête « ${requete.libelle} » enregistrée.`);
+      setEnregistrement({ ouvert: false, code: '', libelle: '', partagee: true });
+      void fileAttente.invalidateQueries({ queryKey: ['requetes-enregistrees'] });
+    },
+    onError: (erreurBrute: unknown) => {
+      setJournal(
+        erreurBrute instanceof ErreurApi
+          ? erreurBrute.message
+          : "La requête n'a pas pu être enregistrée.",
+      );
+    },
   });
 
   function ajouterCritere() {
@@ -168,9 +240,23 @@ function Constructeur() {
           titre="Construire la requête"
           description="Choisissez ce que vous cherchez, puis empilez les conditions."
           action={
-            <Bouton onClick={() => executer(1)} chargement={recherche.isPending}>
-              <Search size={17} aria-hidden /> Exécuter
-            </Bouton>
+            <span className="flex flex-wrap items-center gap-2">
+              {peut('recherche_avancee', 'CREATE') ? (
+                <Bouton
+                  variante="secondaire"
+                  disabled={criteres.length === 0}
+                  icone={<BookmarkPlus size={17} aria-hidden />}
+                  onClick={() =>
+                    setEnregistrement((precedent) => ({ ...precedent, ouvert: !precedent.ouvert }))
+                  }
+                >
+                  Enregistrer
+                </Bouton>
+              ) : null}
+              <Bouton onClick={() => executer(1)} chargement={recherche.isPending}>
+                <Search size={17} aria-hidden /> Exécuter
+              </Bouton>
+            </span>
           }
         />
         <CorpsCarte className="space-y-4">
@@ -294,6 +380,64 @@ function Constructeur() {
               Ajouter une condition
             </Bouton>
           </div>
+
+          {enregistrement.ouvert ? (
+            <div className="surface-douce rounded-lg p-4">
+              <h3 className="mb-3 font-medium">Enregistrer cette requête</h3>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <Champ
+                  etiquette="Code"
+                  required
+                  placeholder="ELEVES_EN_DIFFICULTE"
+                  value={enregistrement.code}
+                  onChange={(evenement) =>
+                    setEnregistrement((precedent) => ({
+                      ...precedent,
+                      code: evenement.target.value,
+                    }))
+                  }
+                />
+                <Champ
+                  etiquette="Libellé"
+                  required
+                  value={enregistrement.libelle}
+                  onChange={(evenement) =>
+                    setEnregistrement((precedent) => ({
+                      ...precedent,
+                      libelle: evenement.target.value,
+                    }))
+                  }
+                />
+              </div>
+              <div className="mt-3 max-w-md">
+                <Interrupteur
+                  etiquette="Partagée"
+                  description="Visible par les autres personnes habilitées à la recherche avancée."
+                  actif={enregistrement.partagee}
+                  onChange={() =>
+                    setEnregistrement((precedent) => ({
+                      ...precedent,
+                      partagee: !precedent.partagee,
+                    }))
+                  }
+                />
+              </div>
+              <Bouton
+                className="mt-3"
+                disabled={!enregistrement.code.trim() || !enregistrement.libelle.trim()}
+                chargement={enregistrer.isPending}
+                onClick={() => enregistrer.mutate()}
+              >
+                Enregistrer
+              </Bouton>
+            </div>
+          ) : null}
+
+          {journal ? (
+            <p role="status" className="text-sm texte-doux">
+              {journal}
+            </p>
+          ) : null}
         </CorpsCarte>
       </Carte>
 
@@ -309,7 +453,12 @@ function Constructeur() {
                 variante="secondaire"
                 onClick={() =>
                   void api
-                    .telecharger(`/recherche/avancee/export?format_export=csv`, `${resultat.entite}.csv`)
+                    .telecharger(
+                      '/recherche/avancee/export',
+                      `${resultat.entite}.csv`,
+                      { format_export: 'csv' },
+                      charge(1),
+                    )
                     .catch(() => undefined)
                 }
                 icone={<Download size={17} aria-hidden />}
@@ -442,6 +591,190 @@ function RechercheNaturelle() {
 
 // ------------------------------------------------------------------
 //  Restitution commune
+// ------------------------------------------------------------------
+
+// ------------------------------------------------------------------
+//  Requêtes enregistrées
+// ------------------------------------------------------------------
+
+function RequetesEnregistrees() {
+  const fileAttente = useQueryClient();
+  const { peut } = useSession();
+  const [page, setPage] = useState(1);
+  const [ouverte, setOuverte] = useState<RequeteEnregistree | null>(null);
+  const [journal, setJournal] = useState<string | null>(null);
+
+  const requetes = useQuery({
+    queryKey: ['requetes-enregistrees'],
+    queryFn: () => api.get<Page<RequeteEnregistree>>('/requetes-enregistrees', { size: 100 }),
+  });
+
+  const executer = useMutation({
+    mutationFn: (variables: { requete: RequeteEnregistree; page: number }) =>
+      api.post<ResultatRecherche>(
+        `/requetes-enregistrees/${variables.requete.id}/executer`,
+        undefined,
+        { parametres: { page: variables.page, taille: 25 } },
+      ),
+    onSuccess: (_, variables) => {
+      setJournal(null);
+      setOuverte(variables.requete);
+      setPage(variables.page);
+      void fileAttente.invalidateQueries({ queryKey: ['requetes-enregistrees'] });
+    },
+    onError: (erreurBrute: unknown) => {
+      setJournal(
+        erreurBrute instanceof ErreurApi
+          ? erreurBrute.message
+          : "La requête n'a pas pu être exécutée.",
+      );
+    },
+  });
+
+  const supprimer = useMutation({
+    mutationFn: (requete: RequeteEnregistree) => api.delete(`/requetes-enregistrees/${requete.id}`),
+    onSuccess: () => {
+      setOuverte(null);
+      setJournal('Requête supprimée.');
+      void fileAttente.invalidateQueries({ queryKey: ['requetes-enregistrees'] });
+    },
+    onError: (erreurBrute: unknown) => {
+      setJournal(
+        erreurBrute instanceof ErreurApi
+          ? erreurBrute.message
+          : "La requête n'a pas pu être supprimée.",
+      );
+    },
+  });
+
+  if (requetes.isLoading) return <Chargement libelle="Chargement des requêtes enregistrées…" />;
+  if (requetes.isError) return <MessageErreur erreur={requetes.error} />;
+
+  const liste = requetes.data?.items ?? [];
+
+  return (
+    <div className="space-y-4">
+      {journal ? (
+        <p role="status" className="surface rounded-lg border px-4 py-3 text-sm">
+          {journal}
+        </p>
+      ) : null}
+
+      <Carte>
+        <EnteteCarte
+          titre="Requêtes enregistrées"
+          description="Interrogations récurrentes, conservées avec leurs conditions. Les exemples de la spécification sont fournis d'origine."
+          action={<Badge ton="neutre">{formaterNombre(liste.length)} requête(s)</Badge>}
+        />
+        <Tableau
+          legende="Requêtes enregistrées du constructeur"
+          lignes={liste}
+          cleLigne={(requete) => requete.id}
+          vide={
+            <EtatVide
+              titre="Aucune requête enregistrée"
+              description="Construisez une requête puis utilisez « Enregistrer » pour la retrouver ici."
+            />
+          }
+          colonnes={[
+            {
+              cle: 'libelle',
+              entete: 'Requête',
+              largeur: '34%',
+              rendu: (requete) => (
+                <span className="block max-w-[28rem]">
+                  <span className="block font-medium">{requete.libelle}</span>
+                  <span className="block font-mono text-xs texte-doux">{requete.code}</span>
+                  {requete.requete_naturelle ? (
+                    <span className="block truncate text-xs texte-doux">
+                      « {requete.requete_naturelle} »
+                    </span>
+                  ) : null}
+                </span>
+              ),
+            },
+            {
+              cle: 'entite',
+              entete: 'Entité',
+              secondaire: true,
+              rendu: (requete) => humaniser(requete.entite_cible),
+            },
+            {
+              cle: 'conditions',
+              entete: 'Conditions',
+              alignement: 'droite',
+              secondaire: true,
+              rendu: (requete) => (requete.filtres?.criteres ?? []).length,
+            },
+            {
+              cle: 'executions',
+              entete: 'Exécutions',
+              alignement: 'droite',
+              rendu: (requete) => formaterNombre(requete.nombre_executions),
+            },
+            {
+              cle: 'partagee',
+              entete: 'Portée',
+              rendu: (requete) => (
+                <Badge ton={requete.partagee ? 'info' : 'neutre'}>
+                  {requete.partagee ? 'Partagée' : 'Personnelle'}
+                </Badge>
+              ),
+            },
+            {
+              cle: 'actions',
+              entete: 'Actions',
+              alignement: 'droite',
+              largeur: '14rem',
+              rendu: (requete) => (
+                <span className="flex items-center justify-end gap-2">
+                  <Bouton
+                    taille="sm"
+                    variante="secondaire"
+                    icone={<Play size={15} aria-hidden />}
+                    chargement={executer.isPending && executer.variables?.requete.id === requete.id}
+                    onClick={() => executer.mutate({ requete, page: 1 })}
+                  >
+                    Exécuter
+                  </Bouton>
+                  {peut('recherche_avancee', 'DELETE') ? (
+                    <Bouton
+                      taille="sm"
+                      variante="fantome"
+                      aria-label={`Supprimer ${requete.libelle}`}
+                      disabled={supprimer.isPending}
+                      onClick={() => supprimer.mutate(requete)}
+                      icone={<Trash2 size={15} aria-hidden />}
+                    >
+                      Supprimer
+                    </Bouton>
+                  ) : null}
+                </span>
+              ),
+            },
+          ]}
+        />
+      </Carte>
+
+      {executer.data && ouverte ? (
+        <Carte>
+          <EnteteCarte
+            titre={`${formaterNombre(executer.data.total)} résultat(s)`}
+            description={`${ouverte.libelle} — entité interrogée : ${humaniser(ouverte.entite_cible)}.`}
+          />
+          <ResultatTable
+            resultat={executer.data}
+            page={page}
+            onPage={(numeroPage) => executer.mutate({ requete: ouverte, page: numeroPage })}
+          />
+        </Carte>
+      ) : null}
+    </div>
+  );
+}
+
+// ------------------------------------------------------------------
+//  Tableau de résultats
 // ------------------------------------------------------------------
 
 function ResultatTable({

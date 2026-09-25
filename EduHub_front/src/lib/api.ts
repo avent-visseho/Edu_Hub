@@ -239,13 +239,22 @@ export const api = {
   delete: <T>(chemin: string, options?: OptionsRequete) =>
     requete<T>(chemin, { ...options, method: 'DELETE' }),
 
-  /** Télécharge un fichier produit par l'API (PDF, CSV) et déclenche l'enregistrement. */
+  /**
+   * Télécharge un fichier produit par l'API (PDF, CSV) et déclenche
+   * l'enregistrement. Certains exports décrivent ce qu'il faut produire dans un
+   * corps de requête : `corps` bascule alors l'appel en POST.
+   */
   async telecharger(
     chemin: string,
     nomFichier: string,
     parametres?: OptionsRequete['parametres'],
+    corps?: unknown,
   ): Promise<void> {
-    const reponse = await executer(chemin, { method: 'GET', parametres });
+    const reponse = await executer(chemin, {
+      method: corps === undefined ? 'GET' : 'POST',
+      parametres,
+      corps,
+    });
     if (!reponse.ok) throw new ErreurApi(reponse.status, await lireErreur(reponse));
 
     const blob = await reponse.blob();

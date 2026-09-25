@@ -31,6 +31,18 @@ import { api } from '@/lib/api';
 import { formaterDate, formaterNote, humaniser, initiales } from '@/lib/utils';
 import type { Apprenant } from '@/types/api';
 
+interface MoyenneMatiere {
+  matiere_id: string;
+  matiere_libelle: string;
+  moyenne: number | null;
+  coefficient: number;
+  rang: number | null;
+  moyenne_classe: number | null;
+  note_min_classe: number | null;
+  note_max_classe: number | null;
+  appreciation: string | null;
+}
+
 interface Dossier {
   apprenant: Apprenant;
   parents: Array<{
@@ -111,6 +123,11 @@ export default function PageDossierApprenant() {
   const dossier = useQuery({
     queryKey: ['dossier-apprenant', parametres.id],
     queryFn: () => api.get<Dossier>(`/apprenants/${parametres.id}/dossier`),
+  });
+
+  const moyennes = useQuery({
+    queryKey: ['moyennes-apprenant', parametres.id],
+    queryFn: () => api.get<MoyenneMatiere[]>(`/apprenants/${parametres.id}/moyennes`),
   });
 
   if (dossier.isLoading) return <Chargement libelle="Ouverture du dossier scolaire…" />;
@@ -309,6 +326,71 @@ export default function PageDossierApprenant() {
                 ) : (
                   '—'
                 ),
+            },
+          ]}
+        />
+      </Carte>
+
+      <Carte className="mt-4">
+        <EnteteCarte
+          titre="Moyennes par matière"
+          description="Moyenne de l'élève, rang dans la classe et écart avec la moyenne de classe, toutes périodes confondues."
+        />
+        <Tableau
+          legende="Moyennes par matière de l'apprenant"
+          lignes={moyennes.data ?? []}
+          cleLigne={(ligne, index) => `${ligne.matiere_id}-${index}`}
+          vide={
+            <EtatVide
+              titre="Aucune moyenne calculée"
+              description="Les moyennes apparaissent après la génération des bulletins d'une période."
+            />
+          }
+          colonnes={[
+            {
+              cle: 'matiere',
+              entete: 'Matière',
+              rendu: (ligne) => <span className="font-medium">{ligne.matiere_libelle}</span>,
+            },
+            {
+              cle: 'moyenne',
+              entete: 'Moyenne',
+              alignement: 'droite',
+              rendu: (ligne) => (
+                <span className="font-semibold">{formaterNote(ligne.moyenne)}</span>
+              ),
+            },
+            {
+              cle: 'coefficient',
+              entete: 'Coef.',
+              alignement: 'droite',
+              secondaire: true,
+              rendu: (ligne) => ligne.coefficient,
+            },
+            {
+              cle: 'rang',
+              entete: 'Rang',
+              alignement: 'droite',
+              rendu: (ligne) => ligne.rang ?? '—',
+            },
+            {
+              cle: 'classe',
+              entete: 'Classe',
+              alignement: 'droite',
+              secondaire: true,
+              rendu: (ligne) => (
+                <span className="min-w-0">
+                  <span className="block">{formaterNote(ligne.moyenne_classe)}</span>
+                  <span className="block text-xs texte-doux">
+                    {formaterNote(ligne.note_min_classe)} – {formaterNote(ligne.note_max_classe)}
+                  </span>
+                </span>
+              ),
+            },
+            {
+              cle: 'appreciation',
+              entete: 'Appréciation',
+              rendu: (ligne) => ligne.appreciation ?? '—',
             },
           ]}
         />

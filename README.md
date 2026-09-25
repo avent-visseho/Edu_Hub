@@ -193,8 +193,9 @@ docker exec eduhub-postgres psql -U eduhub -d eduhub \
    **statistiques nationales** y ajoutent les indicateurs précalculés avec leur
    variation sur un an et la comparaison pluriannuelle par examen ; **Mon
    profil** ouvre les écrans correspondant à votre périmètre.
-3. **Apprenants** → ouvrir un dossier : parcours, bulletins, examens, diplômes,
-   assiduité, bourses, transport, projets, stages, compétences.
+3. **Apprenants** → ouvrir un dossier : parcours, moyennes par matière avec le
+   rang et l'écart à la classe, bulletins, examens, diplômes, assiduité,
+   bourses, transport, projets, stages, compétences.
 4. **Annuaire** : parents et tuteurs avec les enfants qu'ils suivent et leur
    qualité de contact principal, puis personnels non enseignants par catégorie
    et par établissement.
@@ -219,7 +220,8 @@ docker exec eduhub-postgres psql -U eduhub -d eduhub \
    repêchage, publication des résultats, délivrance des diplômes.
 11. **Centres de composition** → ouvrir un centre : salles, plages de places,
    liste d'émargement exportable en CSV.
-12. **Candidats** → ouvrir un dossier : pièces jointes et leur vérification,
+12. **Candidats** : *Inscrire une classe entière* présente d'un geste tous ses
+    élèves à une session ; ouvrir un dossier : pièces jointes et leur vérification,
     affectation de composition, notes aux épreuves, décision du jury, actions
     de workflow autorisées et historique des transitions.
 13. **Contentieux** : recours déposés après publication, et leur instruction.

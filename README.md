@@ -236,7 +236,10 @@ docker exec eduhub-postgres psql -U eduhub -d eduhub \
 16. **Correction des copies** : choisir une épreuve, suivre l'avancement des
     correcteurs, noter des copies anonymées en première ou en seconde lecture —
     un écart de trois points déclenche une troisième correction — puis lire les
-    notes définitives, rattachées au candidat une fois la correction faite.
+    notes définitives, rattachées au candidat une fois la correction faite. La
+    saisie par lot, ouverte au centre de correction, corrige une note ou déclare
+    une absence, une copie manquante, une fraude ou une dispense ; la valeur
+    précédente est conservée.
 17. **Jurys et surveillance** : composition des jurys de délibération, ajout
     d'un membre, et agents affectés aux centres par rôle.
 18. **Gouvernance** : organigramme ministère → direction → direction

@@ -77,6 +77,15 @@ interface NoteEpreuve {
 /** Écart au-delà duquel l'API déclenche une troisième lecture. */
 const ECART_CRITIQUE = 3;
 
+/** Statuts qu'une note d'examen peut porter en dehors d'une valeur chiffrée. */
+const STATUTS_NOTE = [
+  { valeur: 'SAISIE', libelle: 'Note chiffrée' },
+  { valeur: 'ABSENT', libelle: 'Absent' },
+  { valeur: 'COPIE_ABSENTE', libelle: 'Copie absente' },
+  { valeur: 'FRAUDE', libelle: 'Fraude' },
+  { valeur: 'DISPENSE', libelle: 'Dispensé' },
+];
+
 export default function PageCorrection() {
   const fileAttente = useQueryClient();
   const { peut } = useSession();
@@ -87,6 +96,9 @@ export default function PageCorrection() {
   const [restantes, setRestantes] = useState(true);
   const [secondeLecture, setSecondeLecture] = useState(false);
   const [saisies, setSaisies] = useState<Record<string, string>>({});
+  const [notesSaisies, setNotesSaisies] = useState<Record<string, { valeur: string; statut: string }>>(
+    {},
+  );
   const [message, setMessage] = useState<string | null>(null);
   const [erreur, setErreur] = useState<string | null>(null);
 
@@ -182,6 +194,25 @@ export default function PageCorrection() {
       });
       void fileAttente.invalidateQueries({ queryKey: ['copies-epreuve'] });
       void fileAttente.invalidateQueries({ queryKey: ['correcteurs-epreuve', epreuveId] });
+    },
+    onError: signaler,
+  });
+
+  const enregistrerNotes = useMutation({
+    mutationFn: () =>
+      api.post<{ message: string; details?: Record<string, unknown> }>('/notes-examen/saisie', {
+        epreuve_id: epreuveId,
+        notes: Object.entries(notesSaisies).map(([candidatId, ligne]) => ({
+          candidat_id: candidatId,
+          valeur: ligne.statut === 'SAISIE' && ligne.valeur !== '' ? Number(ligne.valeur) : null,
+          statut: ligne.statut,
+        })),
+      }),
+    onSuccess: (reponse) => {
+      setErreur(null);
+      setMessage(reponse.message);
+      setNotesSaisies({});
+      void fileAttente.invalidateQueries({ queryKey: ['notes-epreuve', epreuveId] });
     },
     onError: signaler,
   });
@@ -589,9 +620,76 @@ export default function PageCorrection() {
                   </span>
                 ),
               },
+              {
+                cle: 'correction',
+                entete: 'Corriger la saisie',
+                largeur: '20rem',
+                rendu: (note) => {
+                  const ligne = notesSaisies[note.candidat_id];
+                  return (
+                    <span className="flex items-center gap-2">
+                      <Champ
+                        etiquette={`Note de ${note.nom_complet ?? note.numero_candidat ?? 'ce candidat'}`}
+                        etiquetteMasquee
+                        type="number"
+                        min={0}
+                        max={epreuve?.bareme ?? 20}
+                        step="0.25"
+                        disabled={!autorise || (ligne?.statut ?? 'SAISIE') !== 'SAISIE'}
+                        placeholder={note.valeur != null ? formaterNote(note.valeur) : '—'}
+                        value={ligne?.valeur ?? ''}
+                        onChange={(evenement) =>
+                          setNotesSaisies((precedent) => ({
+                            ...precedent,
+                            [note.candidat_id]: {
+                              statut: precedent[note.candidat_id]?.statut ?? 'SAISIE',
+                              valeur: evenement.target.value,
+                            },
+                          }))
+                        }
+                        className="text-right"
+                      />
+                      <Selection
+                        etiquette={`Statut de ${note.nom_complet ?? 'ce candidat'}`}
+                        etiquetteMasquee
+                        disabled={!autorise}
+                        options={STATUTS_NOTE}
+                        value={ligne?.statut ?? note.statut}
+                        onChange={(evenement) =>
+                          setNotesSaisies((precedent) => ({
+                            ...precedent,
+                            [note.candidat_id]: {
+                              valeur: precedent[note.candidat_id]?.valeur ?? '',
+                              statut: evenement.target.value,
+                            },
+                          }))
+                        }
+                      />
+                    </span>
+                  );
+                },
+              },
             ]}
           />
         )}
+
+        {autorise ? (
+          <CorpsCarte className="border-t">
+            <p className="mb-3 text-sm texte-doux">
+              La saisie par lot est la voie ouverte au centre de correction et aux opérateurs de
+              saisie : elle corrige une note déjà enregistrée ou déclare une absence, une copie
+              manquante, une fraude ou une dispense. La note ramenée sur 20 et les points sont
+              recalculés à l&apos;enregistrement.
+            </p>
+            <Bouton
+              disabled={Object.keys(notesSaisies).length === 0}
+              chargement={enregistrerNotes.isPending}
+              onClick={() => enregistrerNotes.mutate()}
+            >
+              Enregistrer {Object.keys(notesSaisies).length} saisie(s)
+            </Bouton>
+          </CorpsCarte>
+        ) : null}
         {notes.data && notes.data.length > 100 ? (
           <CorpsCarte className="border-t">
             <p className="text-sm texte-doux">

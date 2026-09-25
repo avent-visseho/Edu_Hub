@@ -84,15 +84,48 @@ if ss -ltnp 2>/dev/null | grep ':80 ' | grep -qv nginx; then
     erreur "libérez le port 80, ou intégrez EduHub à la configuration nginx existante."
 fi
 
+# Ce serveur sert déjà d'autres sites. On s'insère dans sa configuration, on ne
+# la remplace pas : le fichier d'EduHub est un site de plus, sans
+# « default_server », et les sites existants ne sont jamais touchés.
+sites_actifs=$(find /etc/nginx/sites-enabled /etc/nginx/conf.d \( -type l -o -type f \) 2>/dev/null \
+    | grep -cvE '/eduhub(\.conf)?$' || true)
+if [ "${sites_actifs}" -gt 0 ]; then
+    attention "${sites_actifs} site(s) nginx déjà configuré(s) — EduHub s'ajoute à côté,"
+    attention "  aucun n'est modifié."
+fi
+
+# Debian et Ubuntu incluent sites-enabled/*, mais une configuration reprise
+# d'ailleurs peut n'inclure que conf.d/ : le lien serait alors ignoré et le site
+# resterait invisible, sans la moindre erreur.
+if grep -qE '^\s*include\s+.*sites-enabled' /etc/nginx/nginx.conf; then
+    DOSSIER_SITE=/etc/nginx/sites-available
+    DOSSIER_LIEN=/etc/nginx/sites-enabled
+    mkdir -p "${DOSSIER_SITE}" "${DOSSIER_LIEN}"
+else
+    attention "nginx.conf n'inclut pas sites-enabled : le site ira dans conf.d/"
+    DOSSIER_SITE=/etc/nginx/conf.d
+    DOSSIER_LIEN=""
+    mkdir -p "${DOSSIER_SITE}"
+fi
+
 # ---- 4. Le site --------------------------------------------------------------
 # On n'écrit ici que la partie HTTP : certbot ajoutera lui-même le bloc 443, le
 # certificat et la redirection. Le laisser faire évite d'avoir à maintenir à la
 # main des chemins de certificats et des directives TLS.
 
-info "Écriture de /etc/nginx/sites-available/eduhub…"
-cat > /etc/nginx/sites-available/eduhub <<CONF
+if [ -n "${DOSSIER_LIEN}" ]; then
+    FICHIER_SITE="${DOSSIER_SITE}/eduhub"
+else
+    FICHIER_SITE="${DOSSIER_SITE}/eduhub.conf"
+fi
+
+info "Écriture de ${FICHIER_SITE}…"
+cat > "${FICHIER_SITE}" <<CONF
 # EduHub — API. Fichier généré par deploy_ment/scripts/configurer-nginx.sh.
 # Le bloc HTTPS est ajouté par certbot : ne le recopiez pas ici à la main.
+#
+# Pas de « default_server » : ce site ne répond que pour ${DOMAINE} et
+# laisse les autres sites de cette machine répondre pour les leurs.
 
 server {
     listen 80;
@@ -122,10 +155,40 @@ server {
 }
 CONF
 
-ln -sfn /etc/nginx/sites-available/eduhub /etc/nginx/sites-enabled/eduhub
+[ -n "${DOSSIER_LIEN}" ] && ln -sfn "${FICHIER_SITE}" "${DOSSIER_LIEN}/eduhub"
+
+# Un « reload » et non un « restart » : les autres sites hébergés continuent de
+# servir pendant le rechargement. Et si la configuration est invalide, on
+# s'arrête avant d'y toucher.
 nginx -t >/dev/null 2>&1 || { nginx -t; erreur "configuration nginx invalide."; }
 systemctl reload nginx 2>/dev/null || systemctl start nginx
-ok "site actif en HTTP"
+
+# Un rechargement est asynchrone : nginx signale le processus maître, qui lance
+# de nouveaux ouvriers pendant que les anciens finissent leurs requêtes. Tant
+# qu'ils n'ont pas pris le relais, c'est encore l'ancienne configuration qui
+# répond. On attend donc la bascule au lieu de l'annoncer à l'aveugle.
+#
+# La vérification porte sur le CONTENU de la réponse, pas sur son code : un
+# autre site déclaré « default_server » répondrait 200 à /health sans que la
+# requête ait jamais atteint EduHub, et le script annoncerait un succès
+# trompeur. Seule l'API renvoie {"status":"ok"}.
+info "Attente de la prise en compte par nginx…"
+bascule=""
+for _ in $(seq 1 15); do
+    reponse=$(curl -sS --max-time 3 -H "Host: ${DOMAINE}" http://127.0.0.1/health 2>/dev/null || true)
+    case "${reponse}" in
+        *'"status"'*'"ok"'*) bascule="oui"; break ;;
+    esac
+    sleep 1
+done
+if [ -z "${bascule}" ]; then
+    attention "réponse obtenue : ${reponse:-aucune}"
+    erreur "nginx a rechargé, mais ${DOMAINE} ne mène pas à l'API.
+      Un autre bloc server capte probablement ce nom — souvent celui déclaré
+      « default_server ». Pour le repérer :
+          nginx -T | grep -nE 'server_name|listen |default_server'"
+fi
+ok "site actif en HTTP, les autres sites n'ont pas été interrompus"
 
 # ---- 5. Le certificat --------------------------------------------------------
 if [ -d "/etc/letsencrypt/live/${DOMAINE}" ]; then

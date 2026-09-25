@@ -14,7 +14,7 @@
 #   ./deploy_ment/scripts/deployer.sh console       ouvre un shell sur le serveur
 #
 # À lancer depuis EduHub_api/. L'adresse du serveur se donne par variable :
-#   SERVEUR=root@203.0.113.10 ./deploy_ment/scripts/deployer.sh deployer
+#   SERVEUR=root@185.194.217.12 ./deploy_ment/scripts/deployer.sh deployer
 # ===========================================================================
 set -euo pipefail
 
@@ -37,7 +37,7 @@ RACINE="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 cd "${RACINE}"
 
 verifier_serveur_defini() {
-    [ -n "${SERVEUR}" ] || erreur "SERVEUR non défini. Exemple : SERVEUR=root@203.0.113.10 $0 $1"
+    [ -n "${SERVEUR}" ] || erreur "SERVEUR non défini. Exemple : SERVEUR=root@185.194.217.12 $0 $1"
 }
 
 # Le seed et la construction de l'image durent plusieurs minutes sans rien

@@ -99,17 +99,25 @@ Deux conséquences pratiques :
   problème ne se pose pas.
 
 Une seule chose est à faire de votre côté et ne peut pas l'être par un script :
-**créer l'enregistrement DNS**. Chez le registrar d'`ezafri.com` :
+**corriger l'enregistrement DNS**. Chez le registrar d'`ezafri.com` :
 
 ```
-eduhub.ezafri.com   A   <adresse IP du serveur>
+eduhub.ezafri.com   A   185.194.217.12
 ```
 
-Au moment d'écrire ces lignes, `eduhub.ezafri.com` ne résout vers aucune
-adresse. Let's Encrypt validant le domaine en appelant `http://eduhub.ezafri.com/`,
-le certificat échouera tant que l'enregistrement n'est pas propagé — et chaque
-échec consomme un essai sur le quota. `verifier-serveur.sh` le contrôle et
-vous donne la ligne exacte à créer, avec l'IP du serveur.
+Attention, il ne s'agit pas d'en créer un mais d'en **remplacer** un :
+`eduhub.ezafri.com` résout aujourd'hui vers `93.127.179.116` et `77.37.53.51`,
+c'est-à-dire ailleurs que sur votre serveur. C'est le comportement typique d'un
+enregistrement générique `*.ezafri.com` pointant vers les serveurs de parking du
+registrar : tous les sous-domaines répondent, mais aucun ne mène chez vous. Il
+faut donc un enregistrement `A` explicite pour `eduhub`, qui prendra le pas sur
+le générique.
+
+Let's Encrypt validant le domaine en appelant `http://eduhub.ezafri.com/`, le
+certificat serait délivré pour le serveur de parking — ou, plus probablement,
+échouerait. Et chaque échec consomme un essai sur le quota.
+`verifier-serveur.sh` compare la résolution à l'adresse réelle du serveur et
+refuse d'aller plus loin si elles diffèrent.
 
 ---
 
@@ -120,13 +128,13 @@ treize conteneurs. Pour le vérifier, ainsi que le port libre et les ressources
 disponibles :
 
 ```bash
-SERVEUR=root@<ip-du-serveur> ./deploy_ment/scripts/deployer.sh verifier
+SERVEUR=root@185.194.217.12 ./deploy_ment/scripts/deployer.sh verifier
 ```
 
 Ce script ne modifie rien. Il signale : la version de Docker, si le port 8100
-est libre, si les ports 80 et 443 le sont (nginx et le certificat en ont
-besoin), si `eduhub.ezafri.com` résout bien vers ce serveur, la liste des ports
-déjà pris, le nombre de conteneurs en service, la mémoire et le disque
+est libre, qui occupe les ports 80 et 443 (ici nginx, ce qui est le cas
+attendu), si `eduhub.ezafri.com` résout bien vers ce serveur, la liste des
+ports déjà pris, le nombre de conteneurs en service, la mémoire et le disque
 disponibles, et l'état du pare-feu.
 
 Rien à ouvrir manuellement dans le pare-feu : le port de l'API n'écoute que sur
@@ -178,7 +186,7 @@ pour créer le compte PostgreSQL.
 
 ```bash
 cd EduHub_api
-SERVEUR=root@<ip-du-serveur> ./deploy_ment/scripts/deployer.sh deployer
+SERVEUR=root@185.194.217.12 ./deploy_ment/scripts/deployer.sh deployer
 ```
 
 Le script, dans cet ordre : vérifie que la configuration est complète et que la
@@ -192,7 +200,7 @@ dépendances est réutilisée tant que `pyproject.toml` ne change pas.
 démonstration complet :
 
 ```bash
-SERVEUR=root@<ip-du-serveur> ./deploy_ment/scripts/deployer.sh peupler
+SERVEUR=root@185.194.217.12 ./deploy_ment/scripts/deployer.sh peupler
 ```
 
 Le volume dépend de `EDUHUB_SEED_SCALE` (`tiny`, `small`, `medium`, `large`).
@@ -206,14 +214,14 @@ L'API n'écoutant que sur la boucle locale, la vérification se fait depuis le
 serveur :
 
 ```bash
-ssh root@<ip-du-serveur> 'curl -s http://127.0.0.1:8100/health'
+ssh root@185.194.217.12 'curl -s http://127.0.0.1:8100/health'
 # {"status":"ok"}
 ```
 
 Puis publiez-la en HTTPS (section 6) :
 
 ```bash
-SERVEUR=root@<ip-du-serveur> ./deploy_ment/scripts/deployer.sh https
+SERVEUR=root@185.194.217.12 ./deploy_ment/scripts/deployer.sh https
 ```
 
 La documentation interactive sera alors sur `https://eduhub.ezafri.com/docs`.
@@ -231,7 +239,7 @@ Comptes de démonstration, mot de passe `EduHub2026!` :
 
 ## 5. Exploitation courante
 
-Toutes les commandes prennent `SERVEUR=root@<ip-du-serveur>` en préfixe.
+Toutes les commandes prennent `SERVEUR=root@185.194.217.12` en préfixe.
 
 | Commande | Effet |
 | --- | --- |
@@ -255,7 +263,7 @@ supprime pas de lui-même : un `docker image prune` global s'appliquerait à tou
 le serveur, y compris aux autres projets. Ciblez EduHub :
 
 ```bash
-ssh root@<ip-du-serveur> \
+ssh root@185.194.217.12 \
   "docker image ls --filter 'reference=eduhub-api' --filter 'dangling=true' -q \
    | xargs -r docker rmi"
 ```
@@ -263,7 +271,7 @@ ssh root@<ip-du-serveur> \
 ### Sauvegarder la base
 
 ```bash
-ssh root@<ip-du-serveur> \
+ssh root@185.194.217.12 \
   "docker exec eduhub-db pg_dump -U eduhub eduhub | gzip" \
   > eduhub-$(date +%F).sql.gz
 ```
@@ -272,7 +280,7 @@ ssh root@<ip-du-serveur> \
 
 ```bash
 gunzip -c eduhub-2026-09-25.sql.gz \
-  | ssh root@<ip-du-serveur> "docker exec -i eduhub-db psql -U eduhub -d eduhub"
+  | ssh root@185.194.217.12 "docker exec -i eduhub-db psql -U eduhub -d eduhub"
 ```
 
 ### Repartir d'une base vierge
@@ -280,12 +288,12 @@ gunzip -c eduhub-2026-09-25.sql.gz \
 Destructif : supprime le volume, donc toutes les données.
 
 ```bash
-ssh root@<ip-du-serveur> 'cd /opt/eduhub \
+ssh root@185.194.217.12 'cd /opt/eduhub \
   && docker compose --env-file deploy_ment/.env.production \
        -f deploy_ment/docker-compose.prod.yml down \
   && docker volume rm eduhub_postgres'
-SERVEUR=root@<ip-du-serveur> ./deploy_ment/scripts/deployer.sh deployer
-SERVEUR=root@<ip-du-serveur> ./deploy_ment/scripts/deployer.sh peupler
+SERVEUR=root@185.194.217.12 ./deploy_ment/scripts/deployer.sh deployer
+SERVEUR=root@185.194.217.12 ./deploy_ment/scripts/deployer.sh peupler
 ```
 
 Le `--env-file` n'est pas décoratif : le fichier de composition exige
@@ -299,7 +307,7 @@ que `deployer.sh` le passe systématiquement.
 Une seule commande, à lancer une seule fois :
 
 ```bash
-SERVEUR=root@<ip-du-serveur> ./deploy_ment/scripts/deployer.sh https
+SERVEUR=root@185.194.217.12 ./deploy_ment/scripts/deployer.sh https
 ```
 
 Elle exécute `configurer-nginx.sh` sur le serveur, qui :
@@ -326,20 +334,41 @@ ensuite automatique, assuré par le minuteur installé avec certbot.
 
 ### Le prérequis à faire soi-même : l'enregistrement DNS
 
-Chez le registrar d'`ezafri.com` :
+Chez le registrar d'`ezafri.com`, remplacez la résolution générique par un
+enregistrement explicite :
 
 ```
-eduhub.ezafri.com   A   <adresse IP du serveur>
+eduhub.ezafri.com   A   185.194.217.12
 ```
 
 Puis, en attendant la propagation :
 
 ```bash
 dig +short eduhub.ezafri.com
+# doit renvoyer 185.194.217.12, et rien d'autre
 ```
 
-Tant que cette commande ne renvoie pas l'IP du serveur, `https` s'arrêtera
-avant de demander le certificat.
+Tant que cette commande renvoie autre chose, `https` s'arrêtera avant de
+demander le certificat.
+
+### nginx est déjà en place sur ce serveur
+
+La machine fait déjà tourner **nginx 1.24.0 (Ubuntu)**, qui sert d'autres sites
+en HTTP et en HTTPS. Le script s'y insère plutôt que de s'y substituer :
+
+- il n'installe rien si nginx est présent ;
+- le fichier d'EduHub est **un site de plus**, déclaré sans `default_server` :
+  il ne répond que pour `eduhub.ezafri.com` et laisse les autres sites répondre
+  pour les leurs ;
+- aucun fichier existant n'est modifié, et le script annonce combien de sites
+  sont déjà configurés avant d'agir ;
+- nginx est **rechargé**, pas redémarré : les autres sites ne sont pas
+  interrompus ;
+- si la configuration produite était invalide, `nginx -t` l'arrête avant le
+  rechargement.
+
+Il vérifie aussi que `nginx.conf` inclut bien `sites-enabled/*` ; sinon il place
+le site dans `conf.d/`, sans quoi le fichier serait ignoré en silence.
 
 ### Ce que nginx fait de particulier
 
@@ -390,7 +419,7 @@ EDUHUB_CORS_ORIGINS=http://localhost:3000,https://eduhub.vercel.app
 ```
 
 ```bash
-SERVEUR=root@<ip-du-serveur> ./deploy_ment/scripts/deployer.sh deployer
+SERVEUR=root@185.194.217.12 ./deploy_ment/scripts/deployer.sh deployer
 ```
 
 L'origine doit être exacte : schéma compris, sans barre oblique finale.
@@ -422,6 +451,7 @@ plutôt que par Vercel. Le montage décrit ici est le plus simple des deux.
 | `Mixed Content ... has been blocked` | le front appelle l'API en `http://` : `NEXT_PUBLIC_API_URL` doit commencer par `https://` |
 | `curl https://eduhub.ezafri.com` : connexion refusée | nginx n'est pas configuré : `deployer.sh https` |
 | certbot : `Timeout during connect` | le DNS ne pointe pas encore vers le serveur, ou le port 80 est fermé |
+| `https` s'arrête sur un écart d'adresse | `eduhub.ezafri.com` résout encore vers les serveurs de parking du registrar : l'enregistrement `A` explicite n'est pas propagé (section 6) |
 | la construction échoue sur `No matching distribution ... --only-binary` | une version figée n'a pas de roue pour Linux/CPython 3.12. Ajustez la version dans le `.venv`, puis regénérez `contraintes.txt` (section 1.2) |
 | `Target database is not up to date` | migrations non appliquées : `deployer.sh migrer` |
 | le seed échoue sur une contrainte d'unicité | la base est déjà peuplée : videz-la d'abord (section 5) |

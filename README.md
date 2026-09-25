@@ -189,7 +189,10 @@ docker exec eduhub-postgres psql -U eduhub -d eduhub \
 1. **Connexion** en super administrateur — la page de connexion propose les
    comptes en un clic.
 2. **Tableau de bord national** : effectifs, parité, inclusion, distribution des
-   moyennes, taux de réussite par session, alertes du moteur de règles.
+   moyennes, taux de réussite par session, alertes du moteur de règles. Les
+   **statistiques nationales** y ajoutent les indicateurs précalculés avec leur
+   variation sur un an et la comparaison pluriannuelle par examen ; **Mon
+   profil** ouvre les écrans correspondant à votre périmètre.
 3. **Apprenants** → ouvrir un dossier : parcours, bulletins, examens, diplômes,
    assiduité, bourses, transport, projets, stages, compétences.
 4. **Annuaire** : parents et tuteurs avec les enfants qu'ils suivent et leur

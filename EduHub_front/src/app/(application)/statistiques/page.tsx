@@ -6,13 +6,14 @@ import { useState } from 'react';
 
 import { EntetePage } from '@/components/layout/entete-page';
 import { GraphiqueBarres, GraphiqueLignes } from '@/components/graphiques';
-import { Tableau } from '@/components/ui/donnees';
+import { Indicateur, Jauge, Tableau } from '@/components/ui/donnees';
 import {
   Bouton,
   Carte,
   Chargement,
   CorpsCarte,
   EnteteCarte,
+  EtatVide,
   MessageErreur,
   Selection,
 } from '@/components/ui/primitives';
@@ -20,6 +21,30 @@ import { api, type Page } from '@/lib/api';
 import { useSession } from '@/lib/session';
 import { formaterNombre, formaterNote, formaterPourcentage } from '@/lib/utils';
 import type { SessionExamen } from '@/types/api';
+
+interface IndicateurNational {
+  code: string;
+  libelle: string;
+  valeur: number;
+  unite: string | null;
+  variation: number | null;
+  perimetre: string | null;
+}
+
+interface LigneEvolution extends Record<string, unknown> {
+  annee: number;
+  examen: string;
+  taux_reussite: number;
+  moyenne: number;
+  inscrits: number;
+}
+
+interface AnneeAcademique {
+  id: string;
+  code: string;
+  libelle: string;
+  courante: boolean;
+}
 
 interface SyntheseTerritoriale extends Record<string, unknown> {
   code: string;
@@ -37,6 +62,28 @@ export default function PageStatistiques() {
   const { peut } = useSession();
   const [sessionId, setSessionId] = useState('');
   const [rapport, setRapport] = useState<string | null>(null);
+  const [anneeId, setAnneeId] = useState('');
+
+  const indicateurs = useQuery({
+    queryKey: ['indicateurs-nationaux'],
+    queryFn: () => api.get<IndicateurNational[]>('/indicateurs'),
+  });
+
+  const annees = useQuery({
+    queryKey: ['annees'],
+    queryFn: () => api.get<Page<AnneeAcademique>>('/annees', { size: 20 }),
+  });
+
+  // L'année courante sert de référence par défaut à la comparaison.
+  const anneeReference =
+    anneeId || annees.data?.items.find((annee) => annee.courante)?.id || annees.data?.items[0]?.id;
+
+  const comparaison = useQuery({
+    queryKey: ['comparaison-annees', anneeReference],
+    queryFn: () =>
+      api.get<{ evolution: LigneEvolution[] }>(`/annees/${anneeReference}/comparaison`),
+    enabled: Boolean(anneeReference),
+  });
 
   const sessions = useQuery({
     queryKey: ['sessions-liste'],
@@ -120,6 +167,22 @@ export default function PageStatistiques() {
         </div>
       ) : null}
 
+      <div className="mb-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        {(indicateurs.data ?? []).slice(0, 8).map((indicateur) => (
+          <Indicateur
+            key={indicateur.code}
+            libelle={indicateur.libelle}
+            valeur={
+              indicateur.unite === '%'
+                ? formaterPourcentage(indicateur.valeur)
+                : formaterNombre(indicateur.valeur)
+            }
+            unite={indicateur.unite === '%' ? undefined : indicateur.unite}
+            variation={indicateur.variation}
+          />
+        ))}
+      </div>
+
       <div className="grid gap-4 xl:grid-cols-2">
         <Carte>
           <EnteteCarte titre="Apprenants par département" />
@@ -151,6 +214,74 @@ export default function PageStatistiques() {
           </CorpsCarte>
         </Carte>
       </div>
+
+      <Carte className="mt-4">
+        <EnteteCarte
+          titre="Comparaison pluriannuelle"
+          description="Taux de réussite et moyenne par examen, d'une année académique à l'autre."
+          action={
+            <Selection
+              etiquette="Année de référence"
+              etiquetteMasquee
+              value={anneeReference ?? ''}
+              onChange={(evenement) => setAnneeId(evenement.target.value)}
+              options={(annees.data?.items ?? []).map((annee) => ({
+                valeur: annee.id,
+                libelle: annee.libelle,
+              }))}
+              className="h-11"
+            />
+          }
+        />
+        <Tableau
+          legende="Évolution des résultats par examen et par année"
+          lignes={comparaison.data?.evolution ?? []}
+          cleLigne={(ligne, index) => `${ligne.annee}-${ligne.examen}-${index}`}
+          vide={
+            <EtatVide
+              titre="Aucune donnée comparable"
+              description="Les résultats d'au moins une session doivent être publiés."
+            />
+          }
+          colonnes={[
+            {
+              cle: 'examen',
+              entete: 'Examen',
+              rendu: (ligne) => <span className="font-medium">{ligne.examen}</span>,
+            },
+            { cle: 'annee', entete: 'Année', alignement: 'droite', rendu: (ligne) => ligne.annee },
+            {
+              cle: 'inscrits',
+              entete: 'Inscrits',
+              alignement: 'droite',
+              rendu: (ligne) => formaterNombre(ligne.inscrits),
+            },
+            {
+              cle: 'moyenne',
+              entete: 'Moyenne',
+              alignement: 'droite',
+              rendu: (ligne) => formaterNote(ligne.moyenne),
+            },
+            {
+              cle: 'reussite',
+              entete: 'Taux de réussite',
+              largeur: '16rem',
+              rendu: (ligne) => (
+                <Jauge
+                  valeur={ligne.taux_reussite}
+                  ton={
+                    ligne.taux_reussite >= 60
+                      ? 'succes'
+                      : ligne.taux_reussite >= 45
+                        ? 'alerte'
+                        : 'danger'
+                  }
+                />
+              ),
+            },
+          ]}
+        />
+      </Carte>
 
       <Carte className="mt-4">
         <EnteteCarte

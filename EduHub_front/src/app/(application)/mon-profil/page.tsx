@@ -1,7 +1,8 @@
 'use client';
 
-import { useMutation } from '@tanstack/react-query';
-import { Accessibility, KeyRound, ShieldCheck } from 'lucide-react';
+import { useMutation, useQuery } from '@tanstack/react-query';
+import { Accessibility, ArrowRight, Compass, KeyRound, ShieldCheck } from 'lucide-react';
+import Link from 'next/link';
 import { useState } from 'react';
 
 import { EntetePage } from '@/components/layout/entete-page';
@@ -22,9 +23,41 @@ import { api } from '@/lib/api';
 import { useSession } from '@/lib/session';
 import { formaterDateHeure, humaniser } from '@/lib/utils';
 
+/**
+ * Correspondance entre les raccourcis renvoyés par l'API — qui désignent des
+ * points d'entrée du service — et les écrans qui les présentent.
+ */
+const ECRANS: Record<string, string> = {
+  '/tableaux-de-bord/national': '/tableau-de-bord',
+  '/recherche/avancee': '/recherche',
+  '/sessions': '/examens',
+  '/etablissements-carte/points': '/cartographie',
+  '/etablissements': '/etablissements',
+  '/classes': '/classes',
+  '/apprenants': '/apprenants',
+  '/enseignants': '/enseignants',
+  '/candidats': '/candidats',
+  '/bulletins': '/bulletins',
+  '/evaluations': '/evaluations',
+  '/bourses': '/bourses',
+  '/notifications': '/notifications',
+};
+
+interface MonEspace {
+  utilisateur: string;
+  roles: string[];
+  niveau: string;
+  raccourcis: Array<{ libelle: string; lien: string }>;
+}
+
 export default function PageProfil() {
   const { utilisateur, chargement, rafraichirProfil } = useSession();
   const accessibilite = useAccessibilite();
+
+  const espace = useQuery({
+    queryKey: ['mon-espace'],
+    queryFn: () => api.get<MonEspace>('/tableaux-de-bord/mon-espace'),
+  });
 
   const [ancien, setAncien] = useState('');
   const [nouveau, setNouveau] = useState('');
@@ -61,6 +94,53 @@ export default function PageProfil() {
         titre="Mon profil"
         description="Vos informations, vos droits et vos préférences d'accessibilité."
       />
+
+      <Carte className="mb-4">
+        <EnteteCarte
+          titre={
+            <span className="flex items-center gap-2">
+              <Compass size={19} aria-hidden /> Mon espace
+            </span>
+          }
+          description={
+            espace.data
+              ? `Périmètre ${humaniser(espace.data.niveau).toLowerCase()} — les écrans ci-dessous correspondent à vos droits.`
+              : 'Écrans ouverts par vos rôles.'
+          }
+        />
+        <CorpsCarte>
+          {espace.isLoading ? (
+            <Chargement libelle="Chargement de votre espace…" />
+          ) : (espace.data?.raccourcis ?? []).length === 0 ? (
+            <p className="text-sm texte-doux">
+              Aucun raccourci proposé : vos droits ne couvrent pas d&apos;écran de pilotage.
+            </p>
+          ) : (
+            <ul className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+              {(espace.data?.raccourcis ?? []).map((raccourci) => {
+                const cible = ECRANS[raccourci.lien];
+                return (
+                  <li key={raccourci.lien}>
+                    {cible ? (
+                      <Link
+                        href={cible}
+                        className="surface-douce flex items-center justify-between gap-2 rounded-lg px-4 py-3 text-sm font-medium hover:bg-[rgb(var(--fond-doux))]"
+                      >
+                        {raccourci.libelle}
+                        <ArrowRight size={16} aria-hidden />
+                      </Link>
+                    ) : (
+                      <span className="surface-douce flex rounded-lg px-4 py-3 text-sm texte-doux">
+                        {raccourci.libelle}
+                      </span>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </CorpsCarte>
+      </Carte>
 
       <div className="grid gap-4 xl:grid-cols-3">
         <Carte className="xl:col-span-2">

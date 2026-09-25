@@ -1,13 +1,33 @@
 'use client';
 
-import { Lightbulb, Users } from 'lucide-react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { Lightbulb, UserPlus, Users } from 'lucide-react';
+import { useState } from 'react';
 
 import { EntetePage } from '@/components/layout/entete-page';
 import { Jauge } from '@/components/ui/donnees';
 import { ListeRessource } from '@/components/ui/liste';
-import { Badge, tonDuStatut } from '@/components/ui/primitives';
+import {
+  Badge,
+  Bouton,
+  Carte,
+  Champ,
+  CorpsCarte,
+  EnteteCarte,
+  Selection,
+  tonDuStatut,
+} from '@/components/ui/primitives';
+import {
+  SelecteurApprenant,
+  type ApprenantChoisi,
+} from '@/components/ui/selecteur-apprenant';
 import { useListe } from '@/hooks/useListe';
+import { api, ErreurApi } from '@/lib/api';
+import { useSession } from '@/lib/session';
 import { formaterDate, formaterMontant, humaniser } from '@/lib/utils';
+
+/** Rôles qu'un membre peut tenir dans l'équipe d'un projet. */
+const ROLES_MEMBRE = ['MEMBRE', 'PORTEUR', 'ENCADREUR', 'MENTOR', 'PARTENAIRE'];
 
 interface Projet {
   id: string;
@@ -26,7 +46,39 @@ interface Projet {
 }
 
 export default function PageProjets() {
+  const fileAttente = useQueryClient();
+  const { peut } = useSession();
   const liste = useListe<Projet>('/projets', { tri: 'titre' });
+
+  const [projet, setProjet] = useState<Projet | null>(null);
+  const [apprenant, setApprenant] = useState<ApprenantChoisi | null>(null);
+  const [role, setRole] = useState('MEMBRE');
+  const [competences, setCompetences] = useState('');
+  const [journal, setJournal] = useState<string | null>(null);
+
+  const rejoindre = useMutation({
+    mutationFn: () =>
+      api.post<{ message: string }>(`/projets/${projet!.id}/rejoindre`, {
+        apprenant_id: apprenant!.id,
+        nom_complet: apprenant!.nom_complet,
+        role,
+        competences: competences || null,
+      }),
+    onSuccess: (reponse) => {
+      setJournal(`${reponse.message} ${apprenant!.nom_complet} rejoint « ${projet!.titre} ».`);
+      setApprenant(null);
+      setCompetences('');
+      setProjet(null);
+      void fileAttente.invalidateQueries({ queryKey: ['/projets'] });
+    },
+    onError: (erreurBrute: unknown) => {
+      setJournal(
+        erreurBrute instanceof ErreurApi
+          ? erreurBrute.message
+          : "L'adhésion n'a pas pu être enregistrée.",
+      );
+    },
+  });
 
   return (
     <>
@@ -106,19 +158,93 @@ export default function PageProjets() {
           {
             cle: 'statut',
             entete: 'Statut',
-            rendu: (projet) => (
+            rendu: (element) => (
               <span className="flex flex-wrap items-center gap-2">
-                <Badge ton={tonDuStatut(projet.statut)}>{humaniser(projet.statut)}</Badge>
-                {projet.ouvert_candidatures && projet.places_disponibles > 0 ? (
+                <Badge ton={tonDuStatut(element.statut)}>{humaniser(element.statut)}</Badge>
+                {element.ouvert_candidatures && element.places_disponibles > 0 ? (
                   <Badge ton="info">
-                    <Users size={13} aria-hidden /> {projet.places_disponibles} place(s)
+                    <Users size={13} aria-hidden /> {element.places_disponibles} place(s)
                   </Badge>
                 ) : null}
               </span>
             ),
           },
+          {
+            cle: 'adhesion',
+            entete: 'Équipe',
+            alignement: 'droite',
+            rendu: (element) =>
+              element.ouvert_candidatures && element.places_disponibles > 0 ? (
+                <Bouton
+                  taille="sm"
+                  variante="secondaire"
+                  disabled={!peut('projets', 'CREATE')}
+                  onClick={() => {
+                    setProjet(element);
+                    setJournal(null);
+                  }}
+                >
+                  Rejoindre
+                </Bouton>
+              ) : (
+                <span className="texte-doux">Équipe close</span>
+              ),
+          },
         ]}
       />
+
+      {journal ? (
+        <p role="status" className="surface mt-4 rounded-lg border px-4 py-3 text-sm">
+          {journal}
+        </p>
+      ) : null}
+
+      {projet ? (
+        <Carte className="mt-4">
+          <EnteteCarte
+            titre={
+              <span className="flex items-center gap-2">
+                <UserPlus size={19} aria-hidden /> Rejoindre « {projet.titre} »
+              </span>
+            }
+            description={`${projet.places_disponibles} place(s) encore disponible(s) dans l'équipe.`}
+            action={
+              <Bouton variante="fantome" taille="sm" onClick={() => setProjet(null)}>
+                Fermer
+              </Bouton>
+            }
+          />
+          <CorpsCarte>
+            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+              <SelecteurApprenant
+                etiquette="Apprenant"
+                choisi={apprenant}
+                onChoisir={setApprenant}
+              />
+              <Selection
+                etiquette="Rôle dans l'équipe"
+                value={role}
+                onChange={(evenement) => setRole(evenement.target.value)}
+                options={ROLES_MEMBRE.map((valeur) => ({ valeur, libelle: humaniser(valeur) }))}
+              />
+              <Champ
+                etiquette="Compétences apportées"
+                placeholder="Programmation, dessin, médiation…"
+                value={competences}
+                onChange={(evenement) => setCompetences(evenement.target.value)}
+              />
+            </div>
+            <Bouton
+              className="mt-3"
+              disabled={!apprenant}
+              chargement={rejoindre.isPending}
+              onClick={() => rejoindre.mutate()}
+            >
+              Enregistrer l&apos;adhésion
+            </Bouton>
+          </CorpsCarte>
+        </Carte>
+      ) : null}
     </>
   );
 }

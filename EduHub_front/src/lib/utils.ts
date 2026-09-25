@@ -133,6 +133,7 @@ const ACCENTS: Record<string, string> = {
   feminin: 'féminin',
   frere: 'frère',
   general: 'général',
+  honore: 'honoré',
   idee: 'idée',
   identite: 'identité',
   incomplete: 'incomplète',

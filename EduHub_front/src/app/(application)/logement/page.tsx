@@ -1,6 +1,6 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Accessibility, BedDouble, Building } from 'lucide-react';
 import { useState } from 'react';
 
@@ -8,14 +8,21 @@ import { EntetePage } from '@/components/layout/entete-page';
 import { Indicateur, Jauge, Tableau } from '@/components/ui/donnees';
 import {
   Badge,
+  Bouton,
   Carte,
+  Champ,
   Chargement,
   CorpsCarte,
   EnteteCarte,
   EtatVide,
   MessageErreur,
 } from '@/components/ui/primitives';
-import { api, type Page } from '@/lib/api';
+import {
+  SelecteurApprenant,
+  type ApprenantChoisi,
+} from '@/components/ui/selecteur-apprenant';
+import { api, ErreurApi, type Page } from '@/lib/api';
+import { useSession } from '@/lib/session';
 import { formaterMontant, formaterNombre, formaterPourcentage } from '@/lib/utils';
 
 interface Residence {
@@ -43,7 +50,14 @@ interface Chambre {
 }
 
 export default function PageLogement() {
+  const fileAttente = useQueryClient();
+  const { peut } = useSession();
   const [residenceId, setResidenceId] = useState<string | null>(null);
+  const [chambre, setChambre] = useState<Chambre | null>(null);
+  const [apprenant, setApprenant] = useState<ApprenantChoisi | null>(null);
+  const [debut, setDebut] = useState(() => new Date().toISOString().slice(0, 10));
+  const [fin, setFin] = useState('');
+  const [journal, setJournal] = useState<string | null>(null);
   const [disponiblesSeulement, setDisponiblesSeulement] = useState(false);
 
   const residences = useQuery({
@@ -52,6 +66,33 @@ export default function PageLogement() {
   });
 
   const active = residenceId ?? residences.data?.items[0]?.id ?? null;
+
+  const attribuer = useMutation({
+    mutationFn: () =>
+      api.post<{ message: string }>('/residences/attributions', {
+        apprenant_id: apprenant!.id,
+        chambre_id: chambre!.id,
+        date_debut: debut,
+        date_fin: fin || null,
+      }),
+    onSuccess: (reponse) => {
+      setJournal(
+        `${reponse.message} ${apprenant!.nom_complet} est logé(e) en chambre ${chambre!.numero}.`,
+      );
+      setApprenant(null);
+      setFin('');
+      setChambre(null);
+      void fileAttente.invalidateQueries({ queryKey: ['chambres'] });
+      void fileAttente.invalidateQueries({ queryKey: ['residences'] });
+    },
+    onError: (erreurBrute: unknown) => {
+      setJournal(
+        erreurBrute instanceof ErreurApi
+          ? erreurBrute.message
+          : "L'attribution n'a pas pu être enregistrée.",
+      );
+    },
+  });
 
   const chambres = useQuery({
     queryKey: ['chambres', active, disponiblesSeulement],
@@ -239,6 +280,27 @@ export default function PageLogement() {
                     rendu: (chambre) => formaterMontant(chambre.tarif_mensuel),
                   },
                   {
+                    cle: 'attribution',
+                    entete: 'Attribuer',
+                    alignement: 'droite',
+                    rendu: (chambre) =>
+                      chambre.lits_occupes >= chambre.nombre_lits ? (
+                        <span className="texte-doux">Complète</span>
+                      ) : (
+                        <Bouton
+                          taille="sm"
+                          variante="secondaire"
+                          disabled={!peut('logement', 'ASSIGN')}
+                          onClick={() => {
+                            setChambre(chambre);
+                            setJournal(null);
+                          }}
+                        >
+                          Attribuer un lit
+                        </Bouton>
+                      ),
+                  },
+                  {
                     cle: 'disponible',
                     entete: 'Statut',
                     rendu: (chambre) => (
@@ -253,6 +315,56 @@ export default function PageLogement() {
           </div>
         </div>
       )}
+
+      {journal ? (
+        <p role="status" className="surface mt-4 rounded-lg border px-4 py-3 text-sm">
+          {journal}
+        </p>
+      ) : null}
+
+      {chambre ? (
+        <Carte className="mt-4">
+          <EnteteCarte
+            titre={`Attribuer un lit — chambre ${chambre.numero}`}
+            description={`${chambre.nombre_lits - chambre.lits_occupes} lit(s) libre(s), ${formaterMontant(chambre.tarif_mensuel)} par mois.`}
+            action={
+              <Bouton variante="fantome" taille="sm" onClick={() => setChambre(null)}>
+                Fermer
+              </Bouton>
+            }
+          />
+          <CorpsCarte>
+            <div className="grid gap-3 sm:grid-cols-3">
+              <SelecteurApprenant
+                etiquette="Apprenant logé"
+                choisi={apprenant}
+                onChoisir={setApprenant}
+              />
+              <Champ
+                etiquette="Début du séjour"
+                type="date"
+                value={debut}
+                onChange={(evenement) => setDebut(evenement.target.value)}
+              />
+              <Champ
+                etiquette="Fin du séjour"
+                aide="Laisser vide pour une attribution sans terme fixé."
+                type="date"
+                value={fin}
+                onChange={(evenement) => setFin(evenement.target.value)}
+              />
+            </div>
+            <Bouton
+              className="mt-3"
+              disabled={!apprenant || !debut}
+              chargement={attribuer.isPending}
+              onClick={() => attribuer.mutate()}
+            >
+              Enregistrer l&apos;attribution
+            </Bouton>
+          </CorpsCarte>
+        </Carte>
+      ) : null}
     </>
   );
 }

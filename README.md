@@ -248,6 +248,9 @@ docker exec eduhub-postgres psql -U eduhub -d eduhub \
 22. **Bibliothèque** : catalogue et prêts — *Enregistrer le retour* calcule le
     retard et la pénalité. **Bourses** : aides sociales ponctuelles en plus des
     programmes. **Stages et emploi** : candidatures déposées sur les offres.
+    **Projets** : *Rejoindre* ajoute un apprenant à une équipe. **Logement** :
+    *Attribuer un lit* affecte une chambre. **Santé** : ouvrir un centre montre
+    ses rendez-vous, sans aucune donnée médicale individuelle.
 23. **Référentiels** : les nomenclatures partagées par tout le système. Tenter
     de retirer un type de salle utilisé par 890 salles est refusé, avec le
     décompte exact des enregistrements concernés.

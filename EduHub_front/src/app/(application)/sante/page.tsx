@@ -2,20 +2,33 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { HeartPulse, Syringe, Users } from 'lucide-react';
+import { useState } from 'react';
 
 import { EntetePage } from '@/components/layout/entete-page';
 import { Indicateur, Jauge, Tableau } from '@/components/ui/donnees';
 import {
+  Badge,
+  Bouton,
   Carte,
   Chargement,
+  CorpsCarte,
   EnteteCarte,
   EtatVide,
   MessageErreur,
+  tonDuStatut,
 } from '@/components/ui/primitives';
 import { ListeRessource } from '@/components/ui/liste';
 import { useListe } from '@/hooks/useListe';
 import { api } from '@/lib/api';
-import { formaterDate, formaterNombre } from '@/lib/utils';
+import { formaterDate, formaterDateHeure, formaterNombre, humaniser } from '@/lib/utils';
+
+interface RendezVous {
+  id: string;
+  motif: string;
+  date_rdv: string;
+  statut: string;
+  orientation: string | null;
+}
 
 interface CentreSante {
   id: string;
@@ -39,7 +52,17 @@ interface CampagneSante {
 }
 
 export default function PageSante() {
+  const [centreId, setCentreId] = useState<string | null>(null);
+
   const centres = useListe<CentreSante>('/sante/centres', { tri: 'nom' });
+
+  const rendezVous = useQuery({
+    queryKey: ['rendez-vous-centre', centreId],
+    queryFn: () => api.get<RendezVous[]>(`/sante/centres/${centreId}/rendez-vous`, { limite: 50 }),
+    enabled: Boolean(centreId),
+  });
+
+  const centreOuvert = centres.items.find((centre) => centre.id === centreId) ?? null;
 
   const campagnes = useQuery({
     queryKey: ['campagnes-sante'],
@@ -157,6 +180,7 @@ export default function PageSante() {
         onRecherche={centres.changerRecherche}
         onPage={centres.changerPage}
         cleLigne={(centre) => centre.id}
+        onLigneClic={(centre) => setCentreId(centre.id === centreId ? null : centre.id)}
         videTitre="Aucun centre de santé"
         colonnes={[
           {
@@ -189,6 +213,57 @@ export default function PageSante() {
           },
         ]}
       />
+
+      {centreId ? (
+        <Carte className="mt-4">
+          <EnteteCarte
+            titre={`Rendez-vous — ${centreOuvert?.nom ?? 'centre sélectionné'}`}
+            description="Motif, date et suite donnée. Conformément au parti pris du système, aucune donnée médicale individuelle n'est conservée ni affichée."
+            action={
+              <Bouton variante="fantome" taille="sm" onClick={() => setCentreId(null)}>
+                Fermer
+              </Bouton>
+            }
+          />
+          {rendezVous.isLoading ? (
+            <CorpsCarte>
+              <Chargement libelle="Chargement des rendez-vous…" />
+            </CorpsCarte>
+          ) : (
+            <Tableau
+              legende="Rendez-vous du centre de santé"
+              lignes={rendezVous.data ?? []}
+              cleLigne={(rdv) => rdv.id}
+              vide={<EtatVide titre="Aucun rendez-vous enregistré" />}
+              colonnes={[
+                {
+                  cle: 'date',
+                  entete: 'Date',
+                  rendu: (rdv) => formaterDateHeure(rdv.date_rdv),
+                },
+                {
+                  cle: 'motif',
+                  entete: 'Motif',
+                  rendu: (rdv) => rdv.motif,
+                },
+                {
+                  cle: 'orientation',
+                  entete: 'Orientation',
+                  secondaire: true,
+                  rendu: (rdv) => rdv.orientation ?? '—',
+                },
+                {
+                  cle: 'statut',
+                  entete: 'Suite',
+                  rendu: (rdv) => (
+                    <Badge ton={tonDuStatut(rdv.statut)}>{humaniser(rdv.statut)}</Badge>
+                  ),
+                },
+              ]}
+            />
+          )}
+        </Carte>
+      ) : null}
     </>
   );
 }

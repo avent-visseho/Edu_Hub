@@ -60,7 +60,18 @@ interface ProjetRecherche {
   statut: string;
 }
 
-type Onglet = 'laboratoires' | 'publications' | 'projets';
+interface Chercheur {
+  id: string;
+  laboratoire_id: string | null;
+  nom_complet: string;
+  grade: string | null;
+  specialite: string | null;
+  orcid: string | null;
+  indice_h: number;
+  nombre_publications: number;
+}
+
+type Onglet = 'laboratoires' | 'chercheurs' | 'publications' | 'projets';
 
 export default function PageRechercheScientifique() {
   const [onglet, setOnglet] = useState<Onglet>('laboratoires');
@@ -74,11 +85,38 @@ export default function PageRechercheScientifique() {
 
   const actif = laboratoireId ?? laboratoires.data?.items[0]?.id ?? null;
 
+  // Les listes ne sont chargées que sur leur onglet : les compteurs d'en-tête
+  // passent par une page d'un élément, dont seul le total est lu.
+  const comptages = useQuery({
+    queryKey: ['comptages-recherche'],
+    queryFn: async () => {
+      const [chercheurs, publications, projets] = await Promise.all([
+        api.get<Page<unknown>>('/recherche-scientifique/chercheurs', { size: 1 }),
+        api.get<Page<unknown>>('/recherche-scientifique/publications', { size: 1 }),
+        api.get<Page<unknown>>('/recherche-scientifique/projets', { size: 1 }),
+      ]);
+      return {
+        chercheurs: chercheurs.total,
+        publications: publications.total,
+        projets: projets.total,
+      };
+    },
+  });
+
+  const nomsLaboratoires = new Map(
+    (laboratoires.data?.items ?? []).map((laboratoire) => [laboratoire.id, laboratoire.nom]),
+  );
+
   const equipe = useQuery({
     queryKey: ['equipe-laboratoire', actif],
     enabled: Boolean(actif) && onglet === 'laboratoires',
     queryFn: () =>
       api.get<Chercheur[]>(`/recherche-scientifique/laboratoires/${actif}/equipe`),
+  });
+
+  const listeChercheurs = useListe<Chercheur>('/recherche-scientifique/chercheurs', {
+    tri: 'nom_complet',
+    active: onglet === 'chercheurs',
   });
 
   const publications = useListe<Publication>('/recherche-scientifique/publications', {
@@ -117,13 +155,13 @@ export default function PageRechercheScientifique() {
         />
         <Indicateur
           libelle="Publications"
-          valeur={publications.total}
+          valeur={comptages.data?.publications ?? '—'}
           icone={<BookMarked size={18} />}
           pictogramme="📄"
         />
         <Indicateur
           libelle="Projets de recherche"
-          valeur={projets.total}
+          valeur={comptages.data?.projets ?? '—'}
           icone={<Microscope size={18} />}
           pictogramme="🧪"
         />
@@ -133,6 +171,7 @@ export default function PageRechercheScientifique() {
         {(
           [
             { cle: 'laboratoires', libelle: 'Laboratoires' },
+            { cle: 'chercheurs', libelle: 'Chercheurs' },
             { cle: 'publications', libelle: 'Publications' },
             { cle: 'projets', libelle: 'Projets financés' },
           ] as const
@@ -319,7 +358,7 @@ export default function PageRechercheScientifique() {
             },
           ]}
         />
-      ) : (
+      ) : onglet === 'projets' ? (
         <ListeRessource
           legende="Projets de recherche"
           placeholderRecherche="Rechercher un projet, un domaine, un bailleur…"
@@ -373,7 +412,71 @@ export default function PageRechercheScientifique() {
             },
           ]}
         />
-      )}
+      ) : null}
+
+      {onglet === 'chercheurs' ? (
+        <ListeRessource
+          legende="Chercheurs rattachés aux laboratoires"
+          placeholderRecherche="Rechercher par nom ou spécialité…"
+          items={listeChercheurs.items}
+          total={listeChercheurs.total}
+          pages={listeChercheurs.pages}
+          page={listeChercheurs.etat.page}
+          taille={listeChercheurs.etat.taille}
+          chargement={listeChercheurs.isLoading}
+          erreur={listeChercheurs.error}
+          recherche={listeChercheurs.etat.recherche}
+          onRecherche={listeChercheurs.changerRecherche}
+          onPage={listeChercheurs.changerPage}
+          cleLigne={(chercheur) => chercheur.id}
+          videTitre="Aucun chercheur enregistré"
+          colonnes={[
+            {
+              cle: 'nom',
+              entete: 'Chercheur',
+              rendu: (chercheur) => (
+                <span className="min-w-0">
+                  <span className="block truncate font-medium">{chercheur.nom_complet}</span>
+                  <span className="block truncate text-xs texte-doux">
+                    {chercheur.grade ?? 'Grade non renseigné'}
+                  </span>
+                </span>
+              ),
+            },
+            {
+              cle: 'specialite',
+              entete: 'Spécialité',
+              rendu: (chercheur) => chercheur.specialite ?? '—',
+            },
+            {
+              cle: 'laboratoire',
+              entete: 'Laboratoire',
+              secondaire: true,
+              rendu: (chercheur) => (
+                <span className="block max-w-[20rem] truncate">
+                  {chercheur.laboratoire_id
+                    ? (nomsLaboratoires.get(chercheur.laboratoire_id) ?? '—')
+                    : 'Non rattaché'}
+                </span>
+              ),
+            },
+            {
+              cle: 'publications',
+              entete: 'Publications',
+              alignement: 'droite',
+              rendu: (chercheur) => formaterNombre(chercheur.nombre_publications),
+            },
+            {
+              cle: 'indice',
+              entete: 'Indice h',
+              alignement: 'droite',
+              rendu: (chercheur) => (
+                <span className="font-semibold tabular-nums">{chercheur.indice_h}</span>
+              ),
+            },
+          ]}
+        />
+      ) : null}
     </>
   );
 }

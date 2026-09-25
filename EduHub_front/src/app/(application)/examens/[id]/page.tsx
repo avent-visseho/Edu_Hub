@@ -28,7 +28,7 @@ import {
   MessageErreur,
   tonDuStatut,
 } from '@/components/ui/primitives';
-import { api } from '@/lib/api';
+import { api, type Page } from '@/lib/api';
 import { useSession } from '@/lib/session';
 import {
   formaterMontant,
@@ -39,10 +39,24 @@ import {
 } from '@/lib/utils';
 import type { TableauBordSession } from '@/types/api';
 
+interface BudgetSession {
+  id: string;
+  code: string;
+  libelle: string;
+  devise: string;
+  valide: boolean;
+  exercice: number | null;
+}
+
 export default function PagePilotageSession() {
   const parametres = useParams<{ id: string }>();
   const { peut } = useSession();
   const client = useQueryClient();
+
+  const budget = useQuery({
+    queryKey: ['budget-session', parametres.id],
+    queryFn: () => api.get<Page<BudgetSession>>('/budgets-examen', { session_id: parametres.id }),
+  });
 
   const tableau = useQuery({
     queryKey: ['session-tableau', parametres.id],
@@ -288,6 +302,19 @@ export default function PagePilotageSession() {
                 ton="accent"
               />
             </div>
+            {(budget.data?.items ?? []).map((ligne) => (
+              <p
+                key={ligne.id}
+                className="mt-3 flex flex-wrap items-center gap-2 border-t pt-3 text-xs texte-doux"
+              >
+                <span className="font-mono">{ligne.code}</span>
+                {ligne.exercice ? <span>exercice {ligne.exercice}</span> : null}
+                <span>{ligne.devise}</span>
+                <Badge ton={ligne.valide ? 'succes' : 'alerte'}>
+                  {ligne.valide ? 'Budget validé' : 'En attente de validation'}
+                </Badge>
+              </p>
+            ))}
           </CorpsCarte>
         </Carte>
       </div>

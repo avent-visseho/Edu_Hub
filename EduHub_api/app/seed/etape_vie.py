@@ -1095,6 +1095,7 @@ async def _projets_et_recherche(ctx: ContexteSeed) -> None:
         for index in range(ctx.entier(1, 4)):
             id_labo = ctx.nouvel_id()
             domaine = ctx.choix(scolaire.DOMAINES_PROJET)
+            effectif_labo = ctx.entier(3, 8)
             laboratoires.append(
                 {
                     "id": id_labo,
@@ -1103,14 +1104,15 @@ async def _projets_et_recherche(ctx: ContexteSeed) -> None:
                     "etablissement_id": info["id"],
                     "domaines": domaine,
                     "directeur_nom": f"Pr. {ctx.identite('MASCULIN')[0]}",
-                    "annee_creation": ctx.entier(1990, 2022),
-                    "nombre_chercheurs": ctx.entier(3, 25),
+                    # Le compteur reflète les chercheurs réellement créés : un
+                    # tirage indépendant ferait mentir l'affichage.
+                    "nombre_chercheurs": effectif_labo,
                     "actif": True,
                 }
             )
 
             equipe_recherche = []
-            for _ in range(ctx.entier(3, 8)):
+            for _ in range(effectif_labo):
                 id_chercheur = ctx.nouvel_id()
                 sexe = ctx.sexe(0.3)
                 nom, prenoms = ctx.identite(sexe)

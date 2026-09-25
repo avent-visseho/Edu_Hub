@@ -22,12 +22,11 @@ services:
     container_name: eduhub-api
     restart: unless-stopped
     ports:
-      # Publié sur la boucle locale seulement : c'est nginx qui expose l'API au
-      # monde, en HTTPS, sur eduhub.ezafri.com. Le port n'a donc pas à être
-      # joignable depuis Internet, et il n'y a aucune règle de pare-feu à
-      # ouvrir pour lui. 8000 est de toute façon pris par swiftlink et 8080 par
-      # lokahome ; EDUHUB_PORT vaut 8100.
-      - "127.0.0.1:${EDUHUB_PORT:-8100}:8000"
+      # EDUHUB_BIND décide de qui peut joindre l'API :
+      #   0.0.0.0    exposée sur Internet, en clair — pour les essais
+      #   127.0.0.1  réservée à nginx, qui la publie en HTTPS — cible visée
+      # 8000 est pris par swiftlink et 8080 par lokahome ; EDUHUB_PORT vaut 8100.
+      - "${EDUHUB_BIND:-0.0.0.0}:${EDUHUB_PORT:-8100}:8000"
     env_file:
       - .env.production
     depends_on:

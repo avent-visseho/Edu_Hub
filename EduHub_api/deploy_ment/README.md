@@ -82,24 +82,32 @@ fichier puis redéployez :
 Si une roue venait à manquer pour une version figée, la construction échouerait
 franchement (`--only-binary`) au lieu de compiler en silence : c'est voulu.
 
-### 1.3 L'API n'est jamais exposée en clair
+### 1.3 Deux façons d'exposer l'API, et une seule est tenable
 
-L'API publie son port **sur `127.0.0.1` uniquement**. Elle n'est donc pas
-joignable depuis Internet tant que nginx n'est pas configuré, et ce n'est pas
-une limitation mais le montage visé : c'est nginx qui l'expose, en HTTPS, sur
-**`eduhub.ezafri.com`**.
+`EDUHUB_BIND`, dans `.env.production`, décide de qui peut joindre l'API :
 
-Deux conséquences pratiques :
+| `EDUHUB_BIND` | L'API est joignable… | Pour quoi faire |
+| --- | --- | --- |
+| `0.0.0.0` | sur `http://185.194.217.12:8100`, **en clair** | essayer `/docs` tout de suite, sans DNS ni certificat |
+| `127.0.0.1` | par nginx seulement, qui la publie en **HTTPS** | la configuration visée |
 
-- **le déploiement seul ne suffit pas.** Après `deployer`, lancez `https`
-  (section 6). D'ici là, l'API ne répond qu'en `ssh` sur le serveur.
-- **c'est ce qui rend Vercel possible.** Un front servi en HTTPS ne peut pas
-  appeler une API en HTTP : le navigateur bloque la requête pour contenu mixte,
-  sans contournement possible côté code. Avec le certificat en place, le
-  problème ne se pose pas.
+Le modèle livré est sur `0.0.0.0` pour que vous puissiez déployer et regarder
+l'API vivre dès maintenant. C'est une étape, pas une destination :
 
-Une seule chose est à faire de votre côté et ne peut pas l'être par un script :
-**corriger l'enregistrement DNS**. Chez le registrar d'`ezafri.com` :
+- **en clair, les jetons d'authentification et les mots de passe circulent en
+  clair.** Les données sont fictives, mais prenez-le comme un banc d'essai, pas
+  comme une mise en service ;
+- **un front sur Vercel ne pourra pas l'appeler.** Vercel sert en HTTPS, et le
+  navigateur bloque toute requête HTTP émise depuis une page HTTPS — c'est le
+  « contenu mixte », et il n'existe aucun contournement côté code. Le front se
+  déploiera, s'affichera, et **toutes ses requêtes échoueront**.
+
+Il faut donc, pour que le front fonctionne : un sous-domaine pour l'API, un
+certificat (`deployer.sh https`), puis `EDUHUB_BIND=127.0.0.1` et un
+redéploiement.
+
+Le seul geste qu'aucun script ne peut faire à votre place, c'est
+**l'enregistrement DNS**. Chez Hostinger, dans la zone d'`ezafri.com` :
 
 ```
 eduhub.ezafri.com   A   185.194.217.12
@@ -110,8 +118,12 @@ Attention, il ne s'agit pas d'en créer un mais d'en **remplacer** un :
 c'est-à-dire ailleurs que sur votre serveur. C'est le comportement typique d'un
 enregistrement générique `*.ezafri.com` pointant vers les serveurs de parking du
 registrar : tous les sous-domaines répondent, mais aucun ne mène chez vous. Il
-faut donc un enregistrement `A` explicite pour `eduhub`, qui prendra le pas sur
-le générique.
+faut donc un enregistrement `A` explicite, qui prendra le pas sur le générique.
+
+**Si vous destinez `eduhub.ezafri.com` au front sur Vercel**, alors l'API a
+besoin de son propre nom — `api.ezafri.com`, par exemple. Un nom ne peut pas
+pointer à la fois vers Vercel et vers ce serveur. Renseignez le nom retenu dans
+`EDUHUB_DOMAINE`.
 
 Let's Encrypt validant le domaine en appelant `http://eduhub.ezafri.com/`, le
 certificat serait délivré pour le serveur de parking — ou, plus probablement,
@@ -160,7 +172,8 @@ Puis éditez `deploy_ment/.env.production` et remplacez **chaque** `CHANGEZ_MOI`
 | `EDUHUB_DB_PASSWORD` | un mot de passe fort |
 | `EDUHUB_DATABASE_URL` | le **même** mot de passe, dans l'URL |
 | `EDUHUB_CORS_ORIGINS` | l'URL Vercel, dès qu'elle est connue |
-| `EDUHUB_DOMAINE` | déjà renseigné : `eduhub.ezafri.com` |
+| `EDUHUB_DOMAINE` | le nom réservé à l'API (voir section 1.3) |
+| `EDUHUB_BIND` | `0.0.0.0` pour essayer tout de suite, `127.0.0.1` une fois nginx en place |
 | `EDUHUB_PORT` | 8100, sauf si `verifier` le dit occupé |
 
 Trois pièges qui ne produisent aucune erreur visible :
@@ -210,21 +223,23 @@ demande confirmation avant de partir.
 
 ### Vérifier
 
-L'API n'écoutant que sur la boucle locale, la vérification se fait depuis le
-serveur :
+Avec `EDUHUB_BIND=0.0.0.0`, tel que livré, depuis n'importe où :
 
 ```bash
-ssh root@185.194.217.12 'curl -s http://127.0.0.1:8100/health'
+curl http://185.194.217.12:8100/health
 # {"status":"ok"}
 ```
 
-Puis publiez-la en HTTPS (section 6) :
+Et dans un navigateur : **`http://185.194.217.12:8100/docs`** — la
+documentation interactive, où toutes les routes sont essayables directement.
+
+Avec `EDUHUB_BIND=127.0.0.1`, la même vérification passe par le serveur :
 
 ```bash
-SERVEUR=root@185.194.217.12 ./deploy_ment/scripts/deployer.sh https
+ssh root@185.194.217.12 'curl -s http://127.0.0.1:8100/health'
 ```
 
-La documentation interactive sera alors sur `https://eduhub.ezafri.com/docs`.
+Le passage en HTTPS fait l'objet de la section 6.
 
 Comptes de démonstration, mot de passe `EduHub2026!` :
 
@@ -398,21 +413,54 @@ Et dans un navigateur : `https://eduhub.ezafri.com/docs`
 
 ## 7. Brancher le front sur Vercel
 
-**a. Côté Vercel**, dans *Settings → Environment Variables* du projet :
+### Les variables que Vercel vous propose sont les mauvaises
+
+Vercel scrute le dépôt et, y trouvant le `docker-compose.yml` de la racine, il
+propose `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`, `POSTGRES_PORT`,
+`REDIS_PORT`, `MINIO_ROOT_USER`, `MINIO_ROOT_PASSWORD`, `MINIO_PORT` et
+`MINIO_CONSOLE_PORT`.
+
+**Laissez-les toutes vides et n'en créez aucune.** Ce sont les variables de la
+pile de développement locale — PostgreSQL, Redis, MinIO — c'est-à-dire des
+services qui tournent sur *votre* machine et sur *le serveur*, jamais sur
+Vercel. Vercel n'héberge que le front Next.js : il ne parle pas à la base, il
+parle à l'API par HTTP. Y déposer le mot de passe de PostgreSQL ne servirait à
+rien et l'exposerait pour rien.
+
+### Les variables qui comptent
+
+Le front n'en lit qu'une, dans `src/lib/api.ts` :
 
 ```
-NEXT_PUBLIC_API_URL        = https://eduhub.ezafri.com/api/v1
-NEXT_PUBLIC_NOM_PLATEFORME = EduHub
+NEXT_PUBLIC_API_URL = https://<le-nom-de-l-api>/api/v1
 ```
 
-Le suffixe `/api/v1` fait partie de l'URL : c'est le préfixe sous lequel toutes
+C'est tout. (`NEXT_PUBLIC_NOM_PLATEFORME` figure dans `.env.example` mais n'est
+lue nulle part dans le code : inutile de la renseigner.)
+
+Le suffixe `/api/v1` fait partie de l'URL — c'est le préfixe sous lequel toutes
 les routes sont montées. Seule `/health` vit à la racine.
 
-Ces variables sont lues **à la construction** : après les avoir modifiées, il
-faut relancer un déploiement pour qu'elles prennent effet.
+Cette variable est lue **à la construction** : après l'avoir modifiée, il faut
+relancer un déploiement pour qu'elle prenne effet.
 
-**b. Côté API**, ajoutez l'origine Vercel à `EDUHUB_CORS_ORIGINS` dans
-`deploy_ment/.env.production`, puis redéployez :
+### Les réglages du projet Vercel
+
+| Réglage | Valeur |
+| --- | --- |
+| Framework Preset | Next.js |
+| **Root Directory** | **`EduHub_front`** |
+| Build Command | (par défaut) |
+| Install Command | (par défaut) |
+
+Le **Root Directory** est le point à ne pas manquer : le dépôt contient l'API et
+le front côte à côte, et sans lui Vercel construirait la racine et ne trouverait
+aucune application Next.js.
+
+### Côté API : autoriser l'origine
+
+Ajoutez l'URL Vercel à `EDUHUB_CORS_ORIGINS` dans `deploy_ment/.env.production`,
+puis redéployez :
 
 ```
 EDUHUB_CORS_ORIGINS=http://localhost:3000,https://eduhub.vercel.app
@@ -432,10 +480,23 @@ pas couvertes par l'origine de production : ajoutez-les au fur et à mesure si
 vous voulez les faire fonctionner, ou fixez un domaine de prévisualisation
 stable dans Vercel.
 
-**c. Si vous préférez servir le front sur le même domaine**, par exemple
-`eduhub.ezafri.com` pour le front et `eduhub.ezafri.com/api` pour l'API, il n'y
-a plus de CORS du tout — mais cela suppose de faire passer le front par nginx
-plutôt que par Vercel. Le montage décrit ici est le plus simple des deux.
+### L'ordre des opérations
+
+Le front ne peut pas fonctionner avant que l'API soit en HTTPS. L'enchaînement
+qui évite les allers-retours :
+
+1. **Déployer l'API sur son port** (`EDUHUB_BIND=0.0.0.0`) et vérifier
+   `http://185.194.217.12:8100/docs`. Rien d'autre n'est nécessaire à ce stade :
+   ni DNS, ni certificat, ni Vercel.
+2. **Créer les enregistrements DNS** chez Hostinger : un nom pour l'API vers
+   `185.194.217.12`, et le nom du front vers Vercel.
+3. **`deployer.sh https`**, puis `EDUHUB_BIND=127.0.0.1` et un redéploiement.
+4. **Déployer le front sur Vercel** avec `NEXT_PUBLIC_API_URL` pointant vers
+   l'API en HTTPS, et l'origine Vercel ajoutée à `EDUHUB_CORS_ORIGINS`.
+
+Rien n'empêche de déployer le front dès l'étape 1 pour voir l'interface
+s'afficher — sachez seulement que toutes ses requêtes échoueront jusqu'à
+l'étape 4, et que ce n'est pas un bogue.
 
 ---
 
@@ -448,7 +509,8 @@ plutôt que par Vercel. Le montage décrit ici est le plus simple des deux.
 | l'API essaie de joindre `localhost:5432` | une variable a été écrite sans le préfixe `EDUHUB_` |
 | `bind: address already in use` | le port est pris : `deployer.sh verifier`, puis changez `EDUHUB_PORT` |
 | erreur CORS dans la console du navigateur | l'origine du front n'est pas dans `EDUHUB_CORS_ORIGINS`, ou elle y figure avec une barre oblique finale |
-| `Mixed Content ... has been blocked` | le front appelle l'API en `http://` : `NEXT_PUBLIC_API_URL` doit commencer par `https://` |
+| `Mixed Content ... has been blocked` | le front appelle l'API en `http://` : `NEXT_PUBLIC_API_URL` doit commencer par `https://`, ce qui suppose l'étape 3 de la section 7 |
+| Vercel : `No Next.js version detected` | le **Root Directory** du projet n'est pas `EduHub_front` |
 | `curl https://eduhub.ezafri.com` : connexion refusée | nginx n'est pas configuré : `deployer.sh https` |
 | certbot : `Timeout during connect` | le DNS ne pointe pas encore vers le serveur, ou le port 80 est fermé |
 | `https` s'arrête sur un écart d'adresse | `eduhub.ezafri.com` résout encore vers les serveurs de parking du registrar : l'enregistrement `A` explicite n'est pas propagé (section 6) |

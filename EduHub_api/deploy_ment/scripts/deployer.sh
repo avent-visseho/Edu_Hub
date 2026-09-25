@@ -132,14 +132,26 @@ deployer() {
     ok "Déploiement terminé."
     echo
     domaine=$(grep -E '^EDUHUB_DOMAINE=' deploy_ment/.env.production | cut -d= -f2- || true)
+    liaison=$(grep -E '^EDUHUB_BIND=' deploy_ment/.env.production | cut -d= -f2- || true)
+    liaison="${liaison:-0.0.0.0}"
+    hote="${SERVEUR#*@}"
+
     if [ -n "${domaine}" ] && distant "test -d /etc/letsencrypt/live/${domaine}"; then
         echo "  Santé        : https://${domaine}/health"
         echo "  Documentation: https://${domaine}/docs"
-    else
+    elif [ "${liaison}" = "127.0.0.1" ]; then
         echo "  L'API n'écoute que sur 127.0.0.1:${port} du serveur : elle n'est pas"
-        echo "  encore joignable depuis Internet. Pour la publier en HTTPS sur"
-        echo "  ${domaine:-votre sous-domaine} :"
+        echo "  joignable depuis Internet. Pour la publier en HTTPS :"
         echo "      $0 https"
+    else
+        echo "  Santé        : http://${hote}:${port}/health"
+        echo "  Documentation: http://${hote}:${port}/docs"
+        echo
+        echo "  ATTENTION : l'API est exposée en clair. Les jetons et les mots de"
+        echo "  passe circulent en clair, et un front servi en HTTPS (Vercel) ne"
+        echo "  pourra pas l'appeler — le navigateur bloque le contenu mixte."
+        echo "  Passez EDUHUB_BIND à 127.0.0.1 et lancez « $0 https » dès que le"
+        echo "  sous-domaine est en place."
     fi
     echo
     echo "  Si la base est vide, générez le jeu de démonstration :"

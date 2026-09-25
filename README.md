@@ -213,31 +213,34 @@ docker exec eduhub-postgres psql -U eduhub -d eduhub \
     affectation de composition, notes aux épreuves, décision du jury, actions
     de workflow autorisées et historique des transitions.
 12. **Contentieux** : recours déposés après publication, et leur instruction.
-13. **Recherche avancée** : constructeur visuel, onglet *Question en français*
+13. **Barre de recherche de l'en-tête** : taper un nom, un identifiant éducatif
+    ou un nom d'école remonte apprenants, enseignants, établissements, diplômes
+    et projets ensemble ; les flèches et la touche Entrée mènent à la fiche.
+14. **Recherche avancée** : constructeur visuel, onglet *Question en français*
     — « Montre-moi les élèves des CEG ayant au moins 17 de moyenne en
     mathématiques. » — puis *Requêtes enregistrées*, où les sept exemples de la
     spécification s'exécutent en un clic. Toute requête construite peut être
     enregistrée, et tout résultat exporté en CSV.
-14. **Correction des copies** : choisir une épreuve, suivre l'avancement des
+15. **Correction des copies** : choisir une épreuve, suivre l'avancement des
     correcteurs, noter des copies anonymées en première ou en seconde lecture —
     un écart de trois points déclenche une troisième correction — puis lire les
     notes définitives, rattachées au candidat une fois la correction faite.
-15. **Jurys et surveillance** : composition des jurys de délibération, ajout
+16. **Jurys et surveillance** : composition des jurys de délibération, ajout
     d'un membre, et agents affectés aux centres par rôle.
-16. **Gouvernance** : organigramme ministère → direction → direction
+17. **Gouvernance** : organigramme ministère → direction → direction
     départementale, règles métier et bouton *Simuler* qui les confronte aux
     données réelles sans rien modifier, alertes et leur traitement.
-17. **Cartographie** : implantation nationale des établissements.
-18. **Infrastructures** : bâtiments, salles et équipements, avec leur état et
+18. **Cartographie** : implantation nationale des établissements.
+19. **Infrastructures** : bâtiments, salles et équipements, avec leur état et
     leur niveau d'accessibilité.
-19. **Transport** : suivi des trajets, prochain arrêt, places disponibles.
-20. **Référentiels** : les nomenclatures partagées par tout le système. Tenter
+20. **Transport** : suivi des trajets, prochain arrêt, places disponibles.
+21. **Référentiels** : les nomenclatures partagées par tout le système. Tenter
     de retirer un type de salle utilisé par 890 salles est refusé, avec le
     décompte exact des enregistrements concernés.
-21. **Comptes et rôles** → ouvrir un compte : rôles exercés et leur portée,
+22. **Comptes et rôles** → ouvrir un compte : rôles exercés et leur portée,
     attribution d'un rôle dans un périmètre, permissions effectives recalculées
     à chaque changement, réinitialisation du mot de passe.
-22. **Vérification publique** : coller le code d'un diplôme sur `/verification`.
+23. **Vérification publique** : coller le code d'un diplôme sur `/verification`.
 
 À tout moment, le bouton **Accessibilité** de l'en-tête permet de basculer en
 contraste élevé, grande police, interface simplifiée, lecture vocale ou

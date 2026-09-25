@@ -1,6 +1,6 @@
 'use client';
 
-import { Bell, LogOut, Menu, Search, X } from 'lucide-react';
+import { Bell, LogOut, Menu, X } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState, type ReactNode } from 'react';
@@ -12,6 +12,7 @@ import { cn, initiales } from '@/lib/utils';
 import { Bouton } from '../ui/primitives';
 import { BarreAccessibilite } from './barre-accessibilite';
 import { NAVIGATION } from './navigation';
+import { RechercheGlobale } from './recherche-globale';
 
 /**
  * Coquille applicative : barre latérale, en-tête et zone de contenu.
@@ -168,14 +169,7 @@ export function Coquille({ children }: { children: ReactNode }) {
               <Menu size={22} aria-hidden />
             </button>
 
-            <Link href="/recherche" className="flex-1">
-              <span className="flex h-11 max-w-md items-center gap-2 rounded-lg border px-3 texte-doux">
-                <Search size={18} aria-hidden />
-                <span className="truncate text-sm">
-                  {modeSimplifie ? 'Chercher' : 'Rechercher un élève, une école, un diplôme…'}
-                </span>
-              </span>
-            </Link>
+            <RechercheGlobale />
 
             <BarreAccessibilite />
 

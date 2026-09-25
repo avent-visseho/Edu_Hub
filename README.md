@@ -198,9 +198,10 @@ docker exec eduhub-postgres psql -U eduhub -d eduhub \
 4. **Annuaire** : parents et tuteurs avec les enfants qu'ils suivent et leur
    qualité de contact principal, puis personnels non enseignants par catégorie
    et par établissement.
-5. **Classes** → choisir une classe : emploi du temps hebdomadaire, assiduité,
-   puis *Générer les bulletins* — moyennes pondérées, rangs et appréciations
-   sont recalculés en direct.
+5. **Classes** → choisir une classe : emploi du temps hebdomadaire — un créneau
+   s'ajoute et se retire, et le chevauchement de la classe, de l'enseignant ou
+   de la salle est signalé avant d'enregistrer — assiduité, puis *Générer les
+   bulletins*, qui recalcule moyennes pondérées, rangs et appréciations.
 6. **Classes** → *Faire l'appel* : feuille d'appel d'une séance, présents,
    retards et absences justifiées ou non ; la synthèse d'assiduité suit.
 7. **Inscriptions** : répartition des dossiers par étape, puis ouvrir une

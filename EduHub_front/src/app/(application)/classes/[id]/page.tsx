@@ -13,6 +13,7 @@ import {
   Badge,
   Bouton,
   Carte,
+  Champ,
   Chargement,
   CorpsCarte,
   EnteteCarte,
@@ -21,7 +22,7 @@ import {
   Selection,
   tonDuStatut,
 } from '@/components/ui/primitives';
-import { api, type Page } from '@/lib/api';
+import { api, ErreurApi, type Page } from '@/lib/api';
 import { useSession } from '@/lib/session';
 import { formaterDate, formaterNote, formaterPourcentage, humaniser } from '@/lib/utils';
 
@@ -77,6 +78,24 @@ interface LigneAssiduite {
   alerte: boolean;
 }
 
+interface SalleSimple {
+  id: string;
+  code: string;
+  nom: string;
+  capacite: number;
+}
+
+interface Conflit {
+  type: string;
+  jour: string;
+  heure_debut: string;
+  heure_fin: string;
+  message: string;
+}
+
+/** Jours ouvrés de l'emploi du temps, dans l'ordre de la semaine scolaire. */
+const JOURS_OUVRES = ['LUNDI', 'MARDI', 'MERCREDI', 'JEUDI', 'VENDREDI', 'SAMEDI'];
+
 interface ConseilClasse {
   id: string;
   date_conseil: string;
@@ -106,6 +125,15 @@ export default function PageDetailClasse() {
   const { peut } = useSession();
   const client = useQueryClient();
   const [periodeId, setPeriodeId] = useState('');
+  const [nouveauCreneau, setNouveauCreneau] = useState({
+    matiere_id: '',
+    enseignant_id: '',
+    salle_id: '',
+    jour: 'LUNDI',
+    heure_debut: '08:00',
+    heure_fin: '10:00',
+  });
+  const [journalCreneau, setJournalCreneau] = useState<string | null>(null);
 
   const annee = useQuery({
     queryKey: ['annee-courante'],
@@ -127,6 +155,11 @@ export default function PageDetailClasse() {
     queryFn: () => api.get<Creneau[]>(`/classes/${parametres.id}/emploi-du-temps`),
   });
 
+  const salles = useQuery({
+    queryKey: ['salles-classe', parametres.id],
+    queryFn: () => api.get<Page<SalleSimple>>('/salles', { size: 200, sort_by: 'code' }),
+  });
+
   const matieres = useQuery({
     queryKey: ['matieres-resume'],
     queryFn: () => api.get<{ items: Matiere[] }>('/matieres', { size: 100 }),
@@ -135,6 +168,63 @@ export default function PageDetailClasse() {
   const enseignants = useQuery({
     queryKey: ['enseignants-resume'],
     queryFn: () => api.get<{ items: Enseignant[] }>('/enseignants', { size: 300 }),
+  });
+
+  // La charge est calculée à part pour servir à la fois la détection de
+  // conflits et la création : les deux doivent porter exactement le même
+  // créneau, sinon le contrôle ne vaut rien.
+  const chargeCreneau = {
+    classe_id: parametres.id,
+    matiere_id: nouveauCreneau.matiere_id,
+    enseignant_id: nouveauCreneau.enseignant_id || null,
+    salle_id: nouveauCreneau.salle_id || null,
+    jour: nouveauCreneau.jour,
+    heure_debut: `${nouveauCreneau.heure_debut}:00`,
+    heure_fin: `${nouveauCreneau.heure_fin}:00`,
+  };
+
+  const creneauComplet =
+    Boolean(nouveauCreneau.matiere_id) && nouveauCreneau.heure_debut < nouveauCreneau.heure_fin;
+
+  const conflits = useQuery({
+    queryKey: ['conflits-creneau', chargeCreneau],
+    queryFn: () =>
+      api.post<{ conflit: boolean; conflits: Conflit[] }>(
+        '/creneaux/verifier-conflits',
+        chargeCreneau,
+      ),
+    enabled: creneauComplet && peut('emploi_du_temps', 'CREATE'),
+  });
+
+  const ajouterCreneau = useMutation({
+    mutationFn: () => api.post<Creneau>('/creneaux', chargeCreneau),
+    onSuccess: () => {
+      setJournalCreneau('Créneau ajouté à l’emploi du temps.');
+      void client.invalidateQueries({ queryKey: ['classe-emploi-du-temps', parametres.id] });
+      void client.invalidateQueries({ queryKey: ['conflits-creneau'] });
+    },
+    onError: (erreurBrute: unknown) => {
+      setJournalCreneau(
+        erreurBrute instanceof ErreurApi
+          ? erreurBrute.message
+          : "Le créneau n'a pas pu être ajouté.",
+      );
+    },
+  });
+
+  const supprimerCreneau = useMutation({
+    mutationFn: (creneau: Creneau) => api.delete(`/creneaux/${creneau.id}`),
+    onSuccess: () => {
+      setJournalCreneau('Créneau retiré de l’emploi du temps.');
+      void client.invalidateQueries({ queryKey: ['classe-emploi-du-temps', parametres.id] });
+    },
+    onError: (erreurBrute: unknown) => {
+      setJournalCreneau(
+        erreurBrute instanceof ErreurApi
+          ? erreurBrute.message
+          : "Le créneau n'a pas pu être retiré.",
+      );
+    },
   });
 
   const conseils = useQuery({
@@ -320,6 +410,11 @@ export default function PageDetailClasse() {
           description="Grille hebdomadaire des cours, avec l'enseignant affecté à chaque créneau."
         />
         <EmploiDuTemps
+          onSupprimer={
+            peut('emploi_du_temps', 'DELETE')
+              ? (creneau) => supprimerCreneau.mutate(creneau)
+              : undefined
+          }
           creneaux={creneaux.data ?? []}
           libelleMatiere={(id) =>
             matieres.data?.items.find((matiere) => matiere.id === id)?.libelle ?? 'Matière'
@@ -331,6 +426,140 @@ export default function PageDetailClasse() {
               : null
           }
         />
+
+        {peut('emploi_du_temps', 'CREATE') ? (
+          <CorpsCarte className="border-t">
+            <h3 className="mb-3 font-medium">Ajouter un créneau</h3>
+            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+              <Selection
+                etiquette="Matière"
+                required
+                value={nouveauCreneau.matiere_id}
+                onChange={(evenement) =>
+                  setNouveauCreneau((precedent) => ({
+                    ...precedent,
+                    matiere_id: evenement.target.value,
+                  }))
+                }
+                options={[
+                  { valeur: '', libelle: 'Choisir une matière…' },
+                  ...(matieres.data?.items ?? []).map((matiere) => ({
+                    valeur: matiere.id,
+                    libelle: matiere.libelle,
+                  })),
+                ]}
+              />
+              <Selection
+                etiquette="Enseignant"
+                value={nouveauCreneau.enseignant_id}
+                onChange={(evenement) =>
+                  setNouveauCreneau((precedent) => ({
+                    ...precedent,
+                    enseignant_id: evenement.target.value,
+                  }))
+                }
+                options={[
+                  { valeur: '', libelle: 'Non affecté' },
+                  ...(enseignants.data?.items ?? []).map((enseignant) => ({
+                    valeur: enseignant.id,
+                    libelle: enseignant.nom_complet,
+                  })),
+                ]}
+              />
+              <Selection
+                etiquette="Salle"
+                value={nouveauCreneau.salle_id}
+                onChange={(evenement) =>
+                  setNouveauCreneau((precedent) => ({
+                    ...precedent,
+                    salle_id: evenement.target.value,
+                  }))
+                }
+                options={[
+                  { valeur: '', libelle: 'Non précisée' },
+                  ...(salles.data?.items ?? []).map((salle) => ({
+                    valeur: salle.id,
+                    libelle: `${salle.nom} (${salle.capacite} places)`,
+                  })),
+                ]}
+              />
+              <Selection
+                etiquette="Jour"
+                value={nouveauCreneau.jour}
+                onChange={(evenement) =>
+                  setNouveauCreneau((precedent) => ({ ...precedent, jour: evenement.target.value }))
+                }
+                options={JOURS_OUVRES.map((jour) => ({ valeur: jour, libelle: humaniser(jour) }))}
+              />
+              <Champ
+                etiquette="Début"
+                type="time"
+                value={nouveauCreneau.heure_debut}
+                onChange={(evenement) =>
+                  setNouveauCreneau((precedent) => ({
+                    ...precedent,
+                    heure_debut: evenement.target.value,
+                  }))
+                }
+              />
+              <Champ
+                etiquette="Fin"
+                type="time"
+                value={nouveauCreneau.heure_fin}
+                onChange={(evenement) =>
+                  setNouveauCreneau((precedent) => ({
+                    ...precedent,
+                    heure_fin: evenement.target.value,
+                  }))
+                }
+              />
+            </div>
+
+            {creneauComplet && conflits.data?.conflit ? (
+              <div
+                role="alert"
+                className="mt-3 rounded-lg border border-[rgb(var(--danger))]/40 bg-[rgb(var(--danger))]/10 px-4 py-3 text-sm"
+              >
+                <p className="font-medium">
+                  Ce créneau en chevauche {conflits.data.conflits.length} autre(s) :
+                </p>
+                <ul className="mt-1 space-y-0.5">
+                  {conflits.data.conflits.map((conflit, index) => (
+                    <li key={`${conflit.type}-${index}`}>
+                      {conflit.message} ({conflit.heure_debut.slice(0, 5)} –{' '}
+                      {conflit.heure_fin.slice(0, 5)})
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : creneauComplet && conflits.data ? (
+              <p className="mt-3 text-sm text-[rgb(var(--succes))]">
+                Aucun chevauchement : la classe, l&apos;enseignant et la salle sont libres.
+              </p>
+            ) : null}
+
+            {nouveauCreneau.heure_debut >= nouveauCreneau.heure_fin ? (
+              <p className="mt-3 text-sm text-[rgb(var(--danger))]">
+                L&apos;heure de fin doit suivre l&apos;heure de début.
+              </p>
+            ) : null}
+
+            <Bouton
+              className="mt-3"
+              disabled={!creneauComplet || conflits.data?.conflit === true}
+              chargement={ajouterCreneau.isPending}
+              onClick={() => ajouterCreneau.mutate()}
+            >
+              Ajouter le créneau
+            </Bouton>
+
+            {journalCreneau ? (
+              <p role="status" className="mt-2 text-sm texte-doux">
+                {journalCreneau}
+              </p>
+            ) : null}
+          </CorpsCarte>
+        ) : null}
       </Carte>
 
       <Carte className="mt-4">

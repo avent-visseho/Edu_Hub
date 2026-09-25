@@ -1,5 +1,6 @@
 'use client';
 
+import { Trash2 } from 'lucide-react';
 import { useMemo } from 'react';
 
 import { cn } from '@/lib/utils';
@@ -53,10 +54,13 @@ export function EmploiDuTemps({
   creneaux,
   libelleMatiere,
   libelleEnseignant,
+  onSupprimer,
 }: {
   creneaux: Creneau[];
   libelleMatiere: (id: string) => string;
   libelleEnseignant: (id: string | null) => string | null;
+  /** Fourni seulement quand la personne peut modifier l'emploi du temps. */
+  onSupprimer?: (creneau: Creneau) => void;
 }) {
   const parJour = useMemo(() => {
     const groupes = new Map<string, Creneau[]>();
@@ -113,6 +117,16 @@ export function EmploiDuTemps({
                         Enseignant non affecté
                       </p>
                     )}
+                    {onSupprimer ? (
+                      <button
+                        type="button"
+                        onClick={() => onSupprimer(creneau)}
+                        aria-label={`Retirer le créneau de ${matiere} du ${LIBELLES_JOURS[jour].toLowerCase()} à ${creneau.heure_debut.slice(0, 5)}`}
+                        className="mt-1 inline-flex items-center gap-1 text-xs texte-doux hover:text-[rgb(var(--danger))] hover:underline"
+                      >
+                        <Trash2 size={13} aria-hidden /> Retirer
+                      </button>
+                    ) : null}
                   </li>
                 );
               })}

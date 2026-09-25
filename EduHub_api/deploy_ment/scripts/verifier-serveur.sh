@@ -39,11 +39,43 @@ else
 fi
 
 titre "Port destiné à EduHub (${PORT})"
+# L'API ne publie ce port que sur 127.0.0.1 — c'est nginx qui l'expose en HTTPS —
+# mais il doit tout de même être libre sur la boucle locale.
 if ss -ltn 2>/dev/null | grep -q ":${PORT} "; then
     manque "le port ${PORT} est déjà occupé — choisissez-en un autre via EDUHUB_PORT"
     ss -ltnp 2>/dev/null | grep ":${PORT} " | sed 's/^/      /'
 else
     ok "le port ${PORT} est libre"
+fi
+
+titre "Ports 80 et 443, nécessaires à nginx et au certificat"
+for p in 80 443; do
+    if ss -ltn 2>/dev/null | grep -q ":${p} "; then
+        # Sans les privilèges root, ss ne révèle pas le processus : l'occupant
+        # reste inconnu, ce qui ne doit pas interrompre le diagnostic.
+        occupant=$(ss -ltnp 2>/dev/null | grep ":${p} " | grep -oP 'users:\(\("\K[^"]+' | head -1 || true)
+        if [ "${occupant}" = "nginx" ]; then
+            ok "port ${p} : nginx — la configuration EduHub s'y ajoutera"
+        else
+            attention "port ${p} occupé par « ${occupant:-inconnu} » — à libérer, ou intégrez"
+            attention "  EduHub à la configuration du serveur web déjà en place"
+        fi
+    else
+        ok "le port ${p} est libre"
+    fi
+done
+
+titre "Résolution DNS du sous-domaine"
+DOMAINE="${EDUHUB_DOMAINE:-eduhub.ezafri.com}"
+adresse=$(getent ahostsv4 "${DOMAINE}" 2>/dev/null | awk 'NR==1 {print $1}' || true)
+publique=$(curl -fsS --max-time 10 https://api.ipify.org 2>/dev/null || true)
+if [ -z "${adresse}" ]; then
+    manque "${DOMAINE} ne résout vers aucune adresse — créez l'enregistrement A"
+    [ -n "${publique}" ] && echo "      ${DOMAINE}  A  ${publique}"
+elif [ -n "${publique}" ] && [ "${adresse}" != "${publique}" ]; then
+    attention "${DOMAINE} → ${adresse}, mais ce serveur se voit en ${publique}"
+else
+    ok "${DOMAINE} → ${adresse}"
 fi
 
 titre "Ports déjà pris sur cette machine"
@@ -58,9 +90,12 @@ echo
 titre "Conteneurs en service"
 nombre=$(docker ps -q 2>/dev/null | wc -l)
 ok "${nombre} conteneur(s) en cours d'exécution"
-if docker ps --format '{{.Names}}' 2>/dev/null | grep -q '^eduhub-'; then
-    attention "des conteneurs EduHub tournent déjà — le déploiement les remplacera"
-    docker ps --filter 'name=eduhub-' --format '      {{.Names}}  {{.Status}}'
+# Uniquement les deux conteneurs de la pile de production : sur un poste de
+# développement, « eduhub- » attraperait aussi redis, minio et le postgres local.
+if docker ps --format '{{.Names}}' 2>/dev/null | grep -qE '^eduhub-(api|db)$'; then
+    attention "la pile EduHub tourne déjà — le déploiement la remplacera"
+    docker ps --format '{{.Names}}  {{.Status}}' 2>/dev/null \
+        | grep -E '^eduhub-(api|db) ' | sed 's/^/      /'
 fi
 
 titre "Ressources"
@@ -80,8 +115,9 @@ fi
 
 titre "Pare-feu"
 if command -v ufw >/dev/null 2>&1 && ufw status 2>/dev/null | grep -q '^Status: active'; then
-    attention "ufw est actif — vérifiez que le port ${PORT} est autorisé :"
-    echo "      ufw allow ${PORT}/tcp"
+    attention "ufw est actif — 80 et 443 doivent être autorisés (configurer-nginx.sh"
+    attention "  s'en charge). Le port ${PORT} n'a pas à l'être : il n'écoute que sur"
+    attention "  la boucle locale."
     ufw status numbered 2>/dev/null | sed 's/^/      /' | head -20
 else
     ok "ufw inactif ou absent — aucune règle à ajouter"

@@ -22,10 +22,12 @@ services:
     container_name: eduhub-api
     restart: unless-stopped
     ports:
-      # 8000 est pris par swiftlink et 8080 par lokahome : EDUHUB_PORT vaut 8100
-      # par défaut. Le jour où un nom de domaine et un nginx seront en place,
-      # restreignez la publication à la boucle locale : "127.0.0.1:${EDUHUB_PORT:-8100}:8000".
-      - "${EDUHUB_PORT:-8100}:8000"
+      # Publié sur la boucle locale seulement : c'est nginx qui expose l'API au
+      # monde, en HTTPS, sur eduhub.ezafri.com. Le port n'a donc pas à être
+      # joignable depuis Internet, et il n'y a aucune règle de pare-feu à
+      # ouvrir pour lui. 8000 est de toute façon pris par swiftlink et 8080 par
+      # lokahome ; EDUHUB_PORT vaut 8100.
+      - "127.0.0.1:${EDUHUB_PORT:-8100}:8000"
     env_file:
       - .env.production
     depends_on:

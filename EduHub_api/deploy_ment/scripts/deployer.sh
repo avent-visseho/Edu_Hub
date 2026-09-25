@@ -6,6 +6,7 @@
 #   ./deploy_ment/scripts/deployer.sh deployer      envoi, construction, démarrage, migrations
 #   ./deploy_ment/scripts/deployer.sh migrer        applique les migrations Alembic
 #   ./deploy_ment/scripts/deployer.sh peupler       génère le jeu de démonstration
+#   ./deploy_ment/scripts/deployer.sh https         publie en HTTPS derrière nginx
 #   ./deploy_ment/scripts/deployer.sh etat          statut des conteneurs et ressources
 #   ./deploy_ment/scripts/deployer.sh journaux      journaux en continu
 #   ./deploy_ment/scripts/deployer.sh redemarrer    redémarre l'API
@@ -48,7 +49,7 @@ distant() { ssh "${OPTIONS_SSH[@]}" "${SERVEUR}" "$@"; }
 # ---- Commandes --------------------------------------------------------------
 
 aide() {
-    sed -n '3,16p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'
+    sed -n '3,17p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'
 }
 
 verifier() {
@@ -130,8 +131,16 @@ deployer() {
     echo
     ok "Déploiement terminé."
     echo
-    echo "  Santé        : http://<serveur>:${port}/health"
-    echo "  Documentation: http://<serveur>:${port}/docs"
+    domaine=$(grep -E '^EDUHUB_DOMAINE=' deploy_ment/.env.production | cut -d= -f2- || true)
+    if [ -n "${domaine}" ] && distant "test -d /etc/letsencrypt/live/${domaine}"; then
+        echo "  Santé        : https://${domaine}/health"
+        echo "  Documentation: https://${domaine}/docs"
+    else
+        echo "  L'API n'écoute que sur 127.0.0.1:${port} du serveur : elle n'est pas"
+        echo "  encore joignable depuis Internet. Pour la publier en HTTPS sur"
+        echo "  ${domaine:-votre sous-domaine} :"
+        echo "      $0 https"
+    fi
     echo
     echo "  Si la base est vide, générez le jeu de démonstration :"
     echo "      $0 peupler"
@@ -168,6 +177,32 @@ peupler() {
     echo "      admin.dec.memp@eduhub.bj         (direction des examens)"
     echo "      admin.ddeps.atlantique@eduhub.bj (direction départementale)"
     echo
+}
+
+https() {
+    verifier_serveur_defini https
+    [ -f deploy_ment/.env.production ] \
+        || erreur "deploy_ment/.env.production manquant : le domaine et le port en viennent."
+
+    local domaine port
+    domaine=$(grep -E '^EDUHUB_DOMAINE=' deploy_ment/.env.production | cut -d= -f2- || true)
+    port=$(grep -E '^EDUHUB_PORT=' deploy_ment/.env.production | cut -d= -f2- || true)
+    [ -n "${domaine}" ] \
+        || erreur "EDUHUB_DOMAINE absent de deploy_ment/.env.production."
+
+    titre "Publication de ${domaine} en HTTPS"
+    attention "Cette étape installe nginx et certbot sur le serveur et demande un"
+    attention "certificat à Let's Encrypt. Les autres projets hébergés ne sont pas"
+    attention "touchés, mais le port 80 doit être libre."
+    echo
+    read -r -p "Continuer ? (o/N) " reponse
+    [[ "${reponse}" =~ ^[oO]$ ]] || { info "Abandon."; return; }
+
+    # Le script part en flux sur l'entrée standard : rien à déposer sur le
+    # serveur, et -t pour que certbot puisse poser ses questions.
+    ssh "${OPTIONS_SSH[@]}" "${SERVEUR}" \
+        "EDUHUB_DOMAINE='${domaine}' EDUHUB_PORT='${port:-8100}' bash -s" \
+        < deploy_ment/scripts/configurer-nginx.sh
 }
 
 etat() {
@@ -215,6 +250,7 @@ case "${commande}" in
     deployer)   deployer "$@" ;;
     migrer)     migrer "$@" ;;
     peupler)    peupler "$@" ;;
+    https)      https "$@" ;;
     etat)       etat "$@" ;;
     journaux)   journaux "$@" ;;
     redemarrer) redemarrer "$@" ;;

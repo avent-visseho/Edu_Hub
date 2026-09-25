@@ -226,7 +226,10 @@ docker exec eduhub-postgres psql -U eduhub -d eduhub \
 17. **Infrastructures** : bâtiments, salles et équipements, avec leur état et
     leur niveau d'accessibilité.
 18. **Transport** : suivi des trajets, prochain arrêt, places disponibles.
-19. **Vérification publique** : coller le code d'un diplôme sur `/verification`.
+19. **Référentiels** : les nomenclatures partagées par tout le système. Tenter
+    de retirer un type de salle utilisé par 890 salles est refusé, avec le
+    décompte exact des enregistrements concernés.
+20. **Vérification publique** : coller le code d'un diplôme sur `/verification`.
 
 À tout moment, le bouton **Accessibilité** de l'en-tête permet de basculer en
 contraste élevé, grande police, interface simplifiée, lecture vocale ou

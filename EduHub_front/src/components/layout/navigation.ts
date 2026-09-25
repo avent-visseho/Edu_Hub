@@ -18,6 +18,7 @@ import {
   HeartPulse,
   Home,
   Landmark,
+  Layers,
   Network,
   Languages,
   Library,
@@ -366,6 +367,14 @@ export const NAVIGATION: GroupeNavigation[] = [
         href: '/administration/audit',
         icone: FileSearch,
         permission: 'audit:READ',
+      },
+      {
+        libelle: 'Référentiels',
+        libelleSimple: 'Listes',
+        pictogramme: '🗂️',
+        href: '/administration/referentiels',
+        icone: Layers,
+        permission: 'referentiels:READ',
       },
       {
         libelle: 'Paramètres',

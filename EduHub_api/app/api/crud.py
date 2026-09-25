@@ -11,12 +11,13 @@ jour partielle, suppression, le tout sous contrôle de permissions et journalis�
 import inspect
 import uuid
 from collections.abc import Callable, Sequence
+from copy import copy
 from datetime import date
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, Query, status
-from pydantic import BaseModel
-from sqlalchemy import Select, or_, select
+from pydantic import BaseModel, create_model
+from sqlalchemy import Select, Table, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import ContexteDep, MetadonneesDep, SessionDep
@@ -103,6 +104,36 @@ def construire_dependance_filtres(
     return dependance
 
 
+def colonnes_referencantes(table: Table) -> list[tuple[Table, Any]]:
+    """Colonnes des autres tables portant une clé étrangère vers celle-ci."""
+    liens: list[tuple[Table, Any]] = []
+    for autre in table.metadata.sorted_tables:
+        if autre is table:
+            continue
+        for colonne in autre.columns:
+            if any(cle.column.table is table for cle in colonne.foreign_keys):
+                liens.append((autre, colonne))
+    return liens
+
+
+def schema_partiel(schema: type[BaseModel]) -> type[BaseModel]:
+    """Dérive un schéma dont tous les champs sont facultatifs.
+
+    Une mise à jour partielle ne transmet que ce qui change : exiger les champs
+    obligatoires ferait du PATCH un PUT déguisé. Les contraintes de format sont
+    conservées, seule l'obligation de présence est levée.
+    """
+    champs: dict[str, Any] = {}
+    for nom, info in schema.model_fields.items():
+        facultatif = copy(info)
+        facultatif.default = None
+        facultatif.default_factory = None
+        annotation = info.annotation
+        champs[nom] = (annotation if annotation is None else annotation | None, facultatif)
+
+    return create_model(f"{schema.__name__}Partiel", __base__=schema, **champs)
+
+
 def creer_routeur_crud(
     *,
     modele: type[Base],
@@ -130,6 +161,7 @@ def creer_routeur_crud(
     routeur = APIRouter(prefix=prefixe, tags=[tag])
     constructeur = ConstructeurRequete(ressource, champs_filtrables)
     dependance_filtres = construire_dependance_filtres(champs_filtrables)
+    schema_modification = None if schema_maj is None else schema_partiel(schema_maj)
 
     def _base_statement() -> Select:
         statement = select(modele)
@@ -277,7 +309,7 @@ def creer_routeur_crud(
         )
         async def modifier(
             identifiant: uuid.UUID,
-            donnees: schema_maj,
+            donnees: schema_modification,
             session: SessionDep,
             contexte: ContexteDep,
             metadonnees: MetadonneesDep,
@@ -328,6 +360,29 @@ def creer_routeur_crud(
             objet.supprime_le = datetime.now(UTC)
             message = f"{libelle_singulier.capitalize()} archivé."
         else:
+            # Sans archivage, la suppression est définitive : une entité encore
+            # référencée laisserait des lignes orphelines — un référentiel
+            # retiré viderait silencieusement le type de centaines de salles.
+            usages: dict[str, int] = {}
+            for autre, colonne in colonnes_referencantes(modele.__table__):
+                nombre = int(
+                    (
+                        await session.execute(
+                            select(func.count()).select_from(autre).where(colonne == identifiant)
+                        )
+                    ).scalar_one()
+                )
+                if nombre:
+                    usages[autre.name] = nombre
+
+            if usages:
+                total = sum(usages.values())
+                raise ConflictError(
+                    f"{libelle_singulier.capitalize()} encore utilisé par "
+                    f"{total} enregistrement(s) : suppression refusée.",
+                    details={"references": usages},
+                )
+
             await session.delete(objet)
             message = f"{libelle_singulier.capitalize()} supprimé."
 

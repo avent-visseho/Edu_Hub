@@ -154,6 +154,8 @@ class ParentLecture(SchemaBase):
     email: str | None = None
     adresse: str | None = None
     niveau_alphabetisation: str | None = None
+    nombre_enfants: int = 0
+    enfants_scolarises: list[dict] = Field(default_factory=list)
 
 
 class ParentEcriture(SchemaEntree):

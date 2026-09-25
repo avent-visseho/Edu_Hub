@@ -190,12 +190,32 @@ class Parent(Base, SoftDeleteMixin):
 
     utilisateur: Mapped[Utilisateur | None] = relationship(lazy="selectin")
     enfants: Mapped[list[ApprenantParent]] = relationship(
-        back_populates="parent", cascade="all, delete-orphan"
+        back_populates="parent", cascade="all, delete-orphan", lazy="selectin"
     )
 
     @property
     def nom_complet(self) -> str:
         return f"{self.prenoms} {self.nom}".strip()
+
+    @property
+    def nombre_enfants(self) -> int:
+        return len(self.enfants)
+
+    @property
+    def enfants_scolarises(self) -> list[dict]:
+        """Enfants rattachés, avec le lien de parenté et le rôle de contact."""
+        return [
+            {
+                "id": str(lien.apprenant_id),
+                "nom_complet": lien.apprenant.nom_complet if lien.apprenant else None,
+                "identifiant_educatif": (
+                    lien.apprenant.identifiant_educatif if lien.apprenant else None
+                ),
+                "lien": lien.lien.value,
+                "contact_principal": lien.contact_principal,
+            }
+            for lien in self.enfants
+        ]
 
 
 class ApprenantParent(Base):

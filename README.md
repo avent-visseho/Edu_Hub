@@ -192,58 +192,61 @@ docker exec eduhub-postgres psql -U eduhub -d eduhub \
    moyennes, taux de réussite par session, alertes du moteur de règles.
 3. **Apprenants** → ouvrir un dossier : parcours, bulletins, examens, diplômes,
    assiduité, bourses, transport, projets, stages, compétences.
-4. **Classes** → choisir une classe : emploi du temps hebdomadaire, assiduité,
+4. **Annuaire** : parents et tuteurs avec les enfants qu'ils suivent et leur
+   qualité de contact principal, puis personnels non enseignants par catégorie
+   et par établissement.
+5. **Classes** → choisir une classe : emploi du temps hebdomadaire, assiduité,
    puis *Générer les bulletins* — moyennes pondérées, rangs et appréciations
    sont recalculés en direct.
-5. **Classes** → *Faire l'appel* : feuille d'appel d'une séance, présents,
+6. **Classes** → *Faire l'appel* : feuille d'appel d'une séance, présents,
    retards et absences justifiées ou non ; la synthèse d'assiduité suit.
-6. **Inscriptions** : répartition des dossiers par étape, puis ouvrir une
+7. **Inscriptions** : répartition des dossiers par étape, puis ouvrir une
    inscription pour appliquer une transition — seules les actions autorisées
    depuis l'étape courante sont proposées, et chacune est historisée.
-7. **Évaluations** → ouvrir une évaluation : saisie des notes élève par élève
+8. **Évaluations** → ouvrir une évaluation : saisie des notes élève par élève
    (absence, non-rendu, dispense, fraude), statistiques en direct, puis la
    chaîne de validation enseignant → établissement → publication.
-8. **Bulletins** : les bulletins générés attendent leur publication — le filtre
+9. **Bulletins** : les bulletins générés attendent leur publication — le filtre
    *En attente de publication* les isole, la fiche les publie, et *Imprimer*
    produit le PDF officiel avec QR code. La fiche d'une classe exporte ses
    bulletins en CSV et montre les conseils de classe tenus.
-9. **Sessions d'examen** → ouvrir une session : répartition des candidats par
+10. **Sessions d'examen** → ouvrir une session : répartition des candidats par
    centre et par salle, convocations, copies anonymées, délibération avec
    repêchage, publication des résultats, délivrance des diplômes.
-10. **Centres de composition** → ouvrir un centre : salles, plages de places,
+11. **Centres de composition** → ouvrir un centre : salles, plages de places,
    liste d'émargement exportable en CSV.
-11. **Candidats** → ouvrir un dossier : pièces jointes et leur vérification,
+12. **Candidats** → ouvrir un dossier : pièces jointes et leur vérification,
     affectation de composition, notes aux épreuves, décision du jury, actions
     de workflow autorisées et historique des transitions.
-12. **Contentieux** : recours déposés après publication, et leur instruction.
-13. **Barre de recherche de l'en-tête** : taper un nom, un identifiant éducatif
+13. **Contentieux** : recours déposés après publication, et leur instruction.
+14. **Barre de recherche de l'en-tête** : taper un nom, un identifiant éducatif
     ou un nom d'école remonte apprenants, enseignants, établissements, diplômes
     et projets ensemble ; les flèches et la touche Entrée mènent à la fiche.
-14. **Recherche avancée** : constructeur visuel, onglet *Question en français*
+15. **Recherche avancée** : constructeur visuel, onglet *Question en français*
     — « Montre-moi les élèves des CEG ayant au moins 17 de moyenne en
     mathématiques. » — puis *Requêtes enregistrées*, où les sept exemples de la
     spécification s'exécutent en un clic. Toute requête construite peut être
     enregistrée, et tout résultat exporté en CSV.
-15. **Correction des copies** : choisir une épreuve, suivre l'avancement des
+16. **Correction des copies** : choisir une épreuve, suivre l'avancement des
     correcteurs, noter des copies anonymées en première ou en seconde lecture —
     un écart de trois points déclenche une troisième correction — puis lire les
     notes définitives, rattachées au candidat une fois la correction faite.
-16. **Jurys et surveillance** : composition des jurys de délibération, ajout
+17. **Jurys et surveillance** : composition des jurys de délibération, ajout
     d'un membre, et agents affectés aux centres par rôle.
-17. **Gouvernance** : organigramme ministère → direction → direction
+18. **Gouvernance** : organigramme ministère → direction → direction
     départementale, règles métier et bouton *Simuler* qui les confronte aux
     données réelles sans rien modifier, alertes et leur traitement.
-18. **Cartographie** : implantation nationale des établissements.
-19. **Infrastructures** : bâtiments, salles et équipements, avec leur état et
+19. **Cartographie** : implantation nationale des établissements.
+20. **Infrastructures** : bâtiments, salles et équipements, avec leur état et
     leur niveau d'accessibilité.
-20. **Transport** : suivi des trajets, prochain arrêt, places disponibles.
-21. **Référentiels** : les nomenclatures partagées par tout le système. Tenter
+21. **Transport** : suivi des trajets, prochain arrêt, places disponibles.
+22. **Référentiels** : les nomenclatures partagées par tout le système. Tenter
     de retirer un type de salle utilisé par 890 salles est refusé, avec le
     décompte exact des enregistrements concernés.
-22. **Comptes et rôles** → ouvrir un compte : rôles exercés et leur portée,
+23. **Comptes et rôles** → ouvrir un compte : rôles exercés et leur portée,
     attribution d'un rôle dans un périmètre, permissions effectives recalculées
     à chaque changement, réinitialisation du mot de passe.
-23. **Vérification publique** : coller le code d'un diplôme sur `/verification`.
+24. **Vérification publique** : coller le code d'un diplôme sur `/verification`.
 
 À tout moment, le bouton **Accessibilité** de l'en-tête permet de basculer en
 contraste élevé, grande police, interface simplifiée, lecture vocale ou

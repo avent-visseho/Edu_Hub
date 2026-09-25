@@ -4,6 +4,7 @@ import {
   BarChart3,
   BedDouble,
   BookOpen,
+  BookUser,
   Briefcase,
   Bus,
   Building2,
@@ -117,6 +118,14 @@ export const NAVIGATION: GroupeNavigation[] = [
         href: '/enseignants',
         icone: UserSquare2,
         permission: 'enseignants:READ',
+      },
+      {
+        libelle: 'Annuaire',
+        libelleSimple: 'Contacts',
+        pictogramme: '📇',
+        href: '/annuaire',
+        icone: BookUser,
+        permission: 'parents:READ',
       },
       {
         libelle: 'Établissements',

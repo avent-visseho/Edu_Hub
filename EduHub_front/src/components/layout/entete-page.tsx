@@ -2,6 +2,7 @@
 
 import type { ReactNode } from 'react';
 
+import { libelleEntree, NAVIGATION } from '@/components/layout/navigation';
 import { useSession } from '@/lib/session';
 import { cn } from '@/lib/utils';
 
@@ -30,16 +31,33 @@ export function EntetePage({
   personnel?: { titre: string; description?: ReactNode };
 }) {
   const { utilisateur } = useSession();
-  const adapte = personnel && utilisateur?.niveau_scope === 'PERSONNEL' ? personnel : null;
+  const portePersonnelle = utilisateur?.niveau_scope === 'PERSONNEL';
+  const adapte = personnel && portePersonnelle ? personnel : null;
   const titreAffiche = adapte?.titre ?? titre;
   const descriptionAffichee = adapte ? adapte.description : description;
 
+  // Le fil d'Ariane des pages de détail remonte vers la liste : il doit porter
+  // le même nom qu'elle. Sans cela, l'élève lit « Mon dossier » dans le menu et
+  // « Apprenants » au-dessus de sa propre fiche.
+  const filAffiche = portePersonnelle
+    ? fil?.map((element) => {
+        const entree = NAVIGATION.flatMap((groupe) => groupe.entrees).find(
+          (candidat) => candidat.href === element.href,
+        );
+        if (!entree) return element;
+        return {
+          ...element,
+          libelle: libelleEntree(entree, utilisateur.niveau_scope, utilisateur.roles),
+        };
+      })
+    : fil;
+
   return (
     <div className={cn('mb-6', className)}>
-      {fil && fil.length > 0 ? (
+      {filAffiche && filAffiche.length > 0 ? (
         <nav aria-label="Fil d'Ariane" className="mb-2">
           <ol className="flex flex-wrap items-center gap-1.5 text-sm texte-doux">
-            {fil.map((element, index) => (
+            {filAffiche.map((element, index) => (
               <li key={`${element.libelle}-${index}`} className="flex items-center gap-1.5">
                 {index > 0 ? <span aria-hidden>/</span> : null}
                 {element.href ? (

@@ -19,6 +19,7 @@ from app.engines.analytics import (
 )
 from app.engines.audit import journaliser
 from app.engines.espace_personnel import (
+    evolution_moyennes,
     indicateurs_eleve,
     indicateurs_enseignant,
     indicateurs_etablissement,
@@ -288,6 +289,7 @@ async def mon_tableau(session: SessionDep, contexte: ContexteDep) -> TableauBord
     """
     perimetre = await resoudre_perimetre(session, contexte)
     roles = contexte.roles
+    graphiques: dict[str, list[dict]] = {}
 
     if roles & {"SCHOOL_ADMIN", "SCHOOL_STAFF"}:
         indicateurs = await indicateurs_etablissement(session, perimetre)
@@ -297,9 +299,11 @@ async def mon_tableau(session: SessionDep, contexte: ContexteDep) -> TableauBord
         perimetre_code, libelle = "ENSEIGNANT", "Mes classes"
     elif "PARENT" in roles:
         indicateurs = await indicateurs_parent(session, perimetre)
+        graphiques["evolution_moyennes"] = await evolution_moyennes(session, perimetre.apprenants)
         perimetre_code, libelle = "PARENT", "Mes enfants"
     elif perimetre.apprenants:
         indicateurs = await indicateurs_eleve(session, perimetre)
+        graphiques["evolution_moyennes"] = await evolution_moyennes(session, perimetre.apprenants)
         perimetre_code, libelle = "ELEVE", "Ma scolarité"
     else:
         indicateurs = []
@@ -309,7 +313,7 @@ async def mon_tableau(session: SessionDep, contexte: ContexteDep) -> TableauBord
         perimetre=perimetre_code,
         perimetre_libelle=libelle,
         indicateurs=[IndicateurReponse(**indicateur.en_dict()) for indicateur in indicateurs],
-        graphiques={},
+        graphiques=graphiques,
         alertes=[],
     )
 

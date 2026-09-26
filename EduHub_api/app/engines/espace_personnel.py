@@ -26,7 +26,7 @@ from app.models.apprenant import Apprenant
 from app.models.evaluation import Bulletin, Evaluation
 from app.models.pedagogie import Presence
 from app.models.personnel import Enseignant
-from app.models.scolarite import Classe, Inscription
+from app.models.scolarite import Classe, Inscription, Periode
 
 #: Statuts comptés comme une absence. Le retard n'en est pas une : l'élève a
 #: bien assisté au cours, et l'agréger fausserait la lecture du taux.
@@ -72,6 +72,40 @@ async def _taux_presence(session: AsyncSession, apprenants: set[uuid.UUID]) -> f
 
 def _compter(modele: type, condition) -> Select:
     return select(func.count()).select_from(modele).where(condition)
+
+
+async def evolution_moyennes(
+    session: AsyncSession, apprenants: set[uuid.UUID]
+) -> list[dict[str, object]]:
+    """Moyenne générale période par période, pour situer une progression.
+
+    Un chiffre isolé ne dit pas grand-chose : savoir qu'on est passé de 9 à 12
+    en dit plus que la valeur seule. Les bulletins sont rendus dans l'ordre où
+    ils ont été établis, moyenne de la classe comprise pour donner un repère.
+    """
+    if not apprenants:
+        return []
+    lignes = await session.execute(
+        select(
+            Periode.libelle,
+            Bulletin.moyenne_generale,
+            Bulletin.moyenne_classe,
+            Bulletin.rang,
+        )
+        .join(Periode, Periode.id == Bulletin.periode_id)
+        .where(Bulletin.apprenant_id.in_(apprenants), Bulletin.moyenne_generale.isnot(None))
+        .order_by(Periode.numero, Bulletin.created_at)
+        .limit(12)
+    )
+    return [
+        {
+            "periode": libelle,
+            "ma_moyenne": round(moyenne, 2),
+            "moyenne_classe": round(moyenne_classe, 2) if moyenne_classe is not None else None,
+            "rang": rang,
+        }
+        for libelle, moyenne, moyenne_classe, rang in lignes
+    ]
 
 
 async def indicateurs_eleve(

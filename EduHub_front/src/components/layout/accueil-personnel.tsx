@@ -5,6 +5,7 @@ import Link from 'next/link';
 
 import { libelleEntree, NAVIGATION } from '@/components/layout/navigation';
 import { EntetePage } from '@/components/layout/entete-page';
+import { GraphiqueLignes } from '@/components/graphiques';
 import { Indicateur } from '@/components/ui/donnees';
 import { Carte, CorpsCarte, EnteteCarte, Squelette } from '@/components/ui/primitives';
 import { api } from '@/lib/api';
@@ -46,6 +47,9 @@ export function AccueilPersonnel() {
     queryFn: () => api.get<TableauBord>('/tableaux-de-bord/mon-tableau'),
   });
 
+  const evolution = (tableau.data?.graphiques?.evolution_moyennes ?? []) as Array<
+    Record<string, unknown>
+  >;
   const roles = utilisateur?.roles ?? [];
   const introduction =
     roles.map((role) => INTRODUCTIONS[role]).find(Boolean) ??
@@ -88,6 +92,31 @@ export function AccueilPersonnel() {
             />
           ))}
         </div>
+      )}
+
+      {/*
+        Un chiffre isolé ne situe pas : savoir qu'on est passé de 9 à 12 en dit
+        plus que la valeur seule. La moyenne de la classe sert de repère.
+      */}
+      {evolution.length > 0 && (
+        <Carte className="mb-4">
+          <EnteteCarte
+            titre="Évolution des moyennes"
+            description="Moyenne générale par période, comparée à celle de la classe."
+          />
+          <CorpsCarte>
+            <GraphiqueLignes
+              donnees={evolution}
+              cleAbscisse="periode"
+              series={[
+                { cle: 'ma_moyenne', libelle: 'Moyenne obtenue' },
+                { cle: 'moyenne_classe', libelle: 'Moyenne de la classe' },
+              ]}
+              titre="Évolution des moyennes par période"
+              unite="/20"
+            />
+          </CorpsCarte>
+        </Carte>
       )}
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">

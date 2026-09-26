@@ -333,3 +333,21 @@ class TestRapports:
             await client.get(f"/api/v1/rapports/{identifiant}/pdf", headers=directeur)
         ).status_code == 404
 
+
+class TestChiffresPublics:
+    """Les chiffres de l'accueil sont ouverts, mais restent des totaux."""
+
+    async def test_accessible_sans_jeton(self, client: AsyncClient) -> None:
+        reponse = await client.get("/api/v1/public/chiffres")
+        assert reponse.status_code == 200
+        corps = reponse.json()
+        assert set(corps) == {
+            "apprenants",
+            "enseignants",
+            "etablissements",
+            "communes_couvertes",
+            "departements",
+            "communes",
+            "sessions_publiees",
+        }
+        assert all(isinstance(valeur, int) and valeur >= 0 for valeur in corps.values())

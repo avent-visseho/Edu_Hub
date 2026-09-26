@@ -10,7 +10,9 @@ from sqlalchemy import func, or_, select
 
 from app.api.deps import SessionDep
 from app.core.exceptions import NotFoundError
+from app.models.apprenant import Apprenant
 from app.models.diplome import Attestation, DiplomeDelivre, StatutDiplome, VerificationDocument
+from app.models.etablissement import Etablissement
 from app.models.evaluation import Bulletin
 from app.models.examen import (
     Candidat,
@@ -20,6 +22,8 @@ from app.models.examen import (
     ResultatExamen,
     SessionExamen,
 )
+from app.models.personnel import Enseignant
+from app.models.referentiel import Commune, Departement
 from app.models.scolarite import Serie
 from app.schemas.examen import ResultatPublic, VerificationDiplomeReponse
 from app.services import examens as service
@@ -319,4 +323,64 @@ async def options_accessibilite() -> dict:
             {"cle": "braille", "libelle": "Sujets en braille"},
             {"cle": "interprete", "libelle": "Interprète en langue des signes"},
         ],
+    }
+
+
+@router.get(
+    "/chiffres",
+    summary="Chiffres clés du système éducatif",
+    description=(
+        "Compte les entités couvertes par la plateforme. Ne renvoie que des totaux : "
+        "aucune donnée nominative ne transite par ce point d'entrée, qui est ouvert."
+    ),
+)
+async def chiffres_cles(session: SessionDep) -> dict:
+    """Totaux affichés sur la page d'accueil publique.
+
+    Les six comptages tiennent en une seule aller-retour : les additionner côté
+    base coûte moins qu'une requête par entité, et la page d'accueil est la plus
+    demandée du service.
+    """
+    stmt = select(
+        select(func.count())
+        .select_from(Apprenant)
+        .where(Apprenant.supprime.is_(False))
+        .scalar_subquery(),
+        select(func.count())
+        .select_from(Enseignant)
+        .where(Enseignant.supprime.is_(False))
+        .scalar_subquery(),
+        select(func.count())
+        .select_from(Etablissement)
+        .where(Etablissement.supprime.is_(False))
+        .scalar_subquery(),
+        select(func.count(func.distinct(Etablissement.commune_id)))
+        .select_from(Etablissement)
+        .where(Etablissement.supprime.is_(False), Etablissement.commune_id.isnot(None))
+        .scalar_subquery(),
+        select(func.count()).select_from(Departement).scalar_subquery(),
+        select(func.count()).select_from(Commune).scalar_subquery(),
+        select(func.count())
+        .select_from(SessionExamen)
+        .where(SessionExamen.resultats_publies_le.isnot(None))
+        .scalar_subquery(),
+    )
+    (
+        apprenants,
+        enseignants,
+        etablissements,
+        communes_couvertes,
+        departements,
+        communes,
+        sessions_publiees_,
+    ) = (await session.execute(stmt)).one()
+
+    return {
+        "apprenants": apprenants,
+        "enseignants": enseignants,
+        "etablissements": etablissements,
+        "communes_couvertes": communes_couvertes,
+        "departements": departements,
+        "communes": communes,
+        "sessions_publiees": sessions_publiees_,
     }

@@ -12,7 +12,12 @@ from app.api.deps import ContexteDep, MetadonneesDep, SessionDep
 from app.core.enums import Action
 from app.core.exceptions import BusinessRuleError
 from app.engines.audit import journaliser
-from app.engines.portee import Portee, exiger_classe_dans_la_portee
+from app.engines.portee import (
+    Portee,
+    exiger_apprenant_dans_la_portee,
+    exiger_classe_dans_la_portee,
+    exiger_evaluation_dans_la_portee,
+)
 from app.engines.reporting import exporter_csv
 from app.engines.search import DescripteurChamp
 from app.models.apprenant import Apprenant
@@ -197,6 +202,7 @@ async def lister_notes(
     identifiant: uuid.UUID, session: SessionDep, contexte: ContexteDep
 ) -> list[Note]:
     contexte.exiger("notes", Action.READ)
+    await exiger_evaluation_dans_la_portee(session, contexte, identifiant)
     stmt = (
         select(Note)
         .join(Apprenant, Apprenant.id == Note.apprenant_id)
@@ -481,6 +487,9 @@ async def moyennes_apprenant(
     periode_id: Annotated[uuid.UUID | None, Query()] = None,
 ) -> list[MoyenneMatiereLecture]:
     contexte.exiger("notes", Action.READ)
+    # Les moyennes prolongent la fiche d'un apprenant : sans cadrage,
+    # « notes:READ » ouvrait celles de n'importe quel élève du pays.
+    await exiger_apprenant_dans_la_portee(session, contexte, identifiant)
     stmt = (
         select(MoyenneMatiere, Matiere)
         .join(Matiere, Matiere.id == MoyenneMatiere.matiere_id)

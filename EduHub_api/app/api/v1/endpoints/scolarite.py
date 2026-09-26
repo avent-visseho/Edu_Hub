@@ -14,7 +14,12 @@ from app.core.enums import Action
 from app.core.exceptions import BusinessRuleError, ConflictError
 from app.engines import workflow
 from app.engines.audit import journaliser
-from app.engines.portee import Portee, exiger_pilotage
+from app.engines.portee import (
+    Portee,
+    exiger_classe_dans_la_portee,
+    exiger_pilotage,
+    exiger_seance_dans_la_portee,
+)
 from app.engines.search import DescripteurChamp
 from app.models.apprenant import Apprenant
 from app.models.pedagogie import (
@@ -475,6 +480,7 @@ async def presences_seance(
     identifiant: uuid.UUID, session: SessionDep, contexte: ContexteDep
 ) -> list[Presence]:
     contexte.exiger("presences", Action.READ)
+    await exiger_seance_dans_la_portee(session, contexte, identifiant)
     stmt = select(Presence).where(Presence.seance_id == identifiant)
     return list((await session.execute(stmt)).scalars())
 
@@ -495,6 +501,7 @@ async def seances_classe(
     limite: Annotated[int, Query(ge=1, le=200)] = 60,
 ) -> list[dict]:
     contexte.exiger("presences", Action.READ)
+    await exiger_classe_dans_la_portee(session, contexte, identifiant)
 
     # Comptages de présences agrégés en sous-requête : une seule requête suffit.
     saisies = (
@@ -574,6 +581,7 @@ async def assiduite_classe(
     periode_id: Annotated[uuid.UUID | None, Query()] = None,
 ) -> list[dict]:
     contexte.exiger("presences", Action.READ)
+    await exiger_classe_dans_la_portee(session, contexte, identifiant)
     stmt = (
         select(SyntheseAssiduite, Apprenant)
         .join(Apprenant, Apprenant.id == SyntheseAssiduite.apprenant_id)

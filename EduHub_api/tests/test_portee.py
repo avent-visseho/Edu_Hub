@@ -101,6 +101,53 @@ class TestAccesDirect:
         assert reponse.status_code == 200
 
 
+class TestSousRessources:
+    """Les points d'entrée qui prolongent une fiche héritent du même cadrage.
+
+    Ils ne passent pas par la fabrique CRUD et n'héritent donc d'aucune portée :
+    chacun doit vérifier le périmètre lui-même. « notes:READ » ouvrait les
+    moyennes de n'importe quel élève du pays, et « presences:READ » l'assiduité
+    de n'importe quelle classe.
+    """
+
+    async def test_moyennes_d_un_autre_eleve_introuvables(
+        self, client: AsyncClient, eleve: dict[str, str], entetes: dict[str, str]
+    ) -> None:
+        tous = await client.get("/api/v1/apprenants", headers=entetes, params={"size": 20})
+        miens = await client.get("/api/v1/apprenants", headers=eleve, params={"size": 20})
+        identifiants = {ligne["id"] for ligne in miens.json()["items"]}
+        etranger = next(
+            ligne["id"] for ligne in tous.json()["items"] if ligne["id"] not in identifiants
+        )
+        sien = next(iter(identifiants))
+
+        assert (
+            await client.get(f"/api/v1/apprenants/{sien}/moyennes", headers=eleve)
+        ).status_code == 200
+        assert (
+            await client.get(f"/api/v1/apprenants/{etranger}/moyennes", headers=eleve)
+        ).status_code == 404
+
+    async def test_assiduite_d_une_classe_etrangere_introuvable(
+        self, client: AsyncClient, directeur: dict[str, str], entetes: dict[str, str]
+    ) -> None:
+        toutes = await client.get("/api/v1/classes", headers=entetes, params={"size": 20})
+        siennes = await client.get("/api/v1/classes", headers=directeur, params={"size": 20})
+        identifiants = {ligne["id"] for ligne in siennes.json()["items"]}
+        etrangere = next(
+            ligne["id"] for ligne in toutes.json()["items"] if ligne["id"] not in identifiants
+        )
+        sienne = next(iter(identifiants))
+
+        for suffixe in ("assiduite", "seances"):
+            assert (
+                await client.get(f"/api/v1/classes/{sienne}/{suffixe}", headers=directeur)
+            ).status_code == 200
+            assert (
+                await client.get(f"/api/v1/classes/{etrangere}/{suffixe}", headers=directeur)
+            ).status_code == 404
+
+
 class TestRechercheAvancee:
     """La recherche avancée ne contourne pas le périmètre."""
 

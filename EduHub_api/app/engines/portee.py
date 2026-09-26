@@ -30,7 +30,9 @@ from app.core.enums import NiveauScope
 from app.core.exceptions import NotFoundError, PermissionDeniedError
 from app.engines.identity import ContexteUtilisateur
 from app.models.apprenant import Apprenant, ApprenantParent, Parent
+from app.models.evaluation import Evaluation
 from app.models.examen import Candidat
+from app.models.pedagogie import Seance
 from app.models.personnel import Enseignant
 from app.models.scolarite import Classe, Inscription
 
@@ -229,6 +231,74 @@ def exiger_pilotage(contexte: ContexteUtilisateur) -> None:
             "Cette vue couvre l'ensemble du territoire ; votre périmètre est plus restreint.",
             details={"niveau": contexte.niveau_max.value},
         )
+
+
+async def exiger_apprenant_dans_la_portee(
+    session: AsyncSession,
+    contexte: ContexteUtilisateur,
+    apprenant_id: uuid.UUID,
+) -> None:
+    """Refuse l'accès aux données d'un apprenant hors du périmètre.
+
+    Les points d'entrée qui prolongent une fiche — moyennes, assiduité — ne
+    passent pas par la fabrique et n'héritent donc d'aucun cadrage. Sans cette
+    vérification, « notes:READ » suffisait à lire les moyennes de n'importe
+    quel élève du pays.
+    """
+    if contexte.est_omnipotent:
+        return
+    if contexte.niveau_max not in (NiveauScope.PERSONNEL, NiveauScope.ETABLISSEMENT):
+        return
+
+    perimetre = await resoudre_perimetre(session, contexte)
+    if contexte.niveau_max is NiveauScope.ETABLISSEMENT:
+        autorise = await session.scalar(
+            select(Inscription.apprenant_id).where(
+                Inscription.apprenant_id == apprenant_id,
+                Inscription.etablissement_id.in_(perimetre.etablissements or {uuid.uuid4()}),
+            )
+        )
+    else:
+        autorise = apprenant_id if apprenant_id in perimetre.apprenants else None
+
+    if autorise is None:
+        raise NotFoundError("Apprenant introuvable.", details={"id": str(apprenant_id)})
+
+
+async def exiger_evaluation_dans_la_portee(
+    session: AsyncSession,
+    contexte: ContexteUtilisateur,
+    evaluation_id: uuid.UUID,
+) -> None:
+    """Refuse l'accès à une évaluation dont la classe est hors du périmètre."""
+    if contexte.est_omnipotent:
+        return
+    if contexte.niveau_max not in (NiveauScope.PERSONNEL, NiveauScope.ETABLISSEMENT):
+        return
+
+    classe_id = await session.scalar(
+        select(Evaluation.classe_id).where(Evaluation.id == evaluation_id)
+    )
+    if classe_id is None:
+        raise NotFoundError("Évaluation introuvable.", details={"id": str(evaluation_id)})
+    await exiger_classe_dans_la_portee(session, contexte, classe_id)
+
+
+async def exiger_seance_dans_la_portee(
+    session: AsyncSession,
+    contexte: ContexteUtilisateur,
+    seance_id: uuid.UUID,
+) -> None:
+    """Refuse l'accès à une séance dont la classe est hors du périmètre."""
+    if contexte.est_omnipotent:
+        return
+    if contexte.niveau_max not in (NiveauScope.PERSONNEL, NiveauScope.ETABLISSEMENT):
+        return
+
+    classe_id = await session.scalar(select(Seance.classe_id).where(Seance.id == seance_id))
+    if classe_id is None:
+        raise NotFoundError("Séance introuvable.", details={"id": str(seance_id)})
+    await exiger_classe_dans_la_portee(session, contexte, classe_id)
 
 
 async def exiger_classe_dans_la_portee(

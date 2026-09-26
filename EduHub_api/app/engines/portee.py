@@ -35,6 +35,7 @@ from app.models.examen import Candidat
 from app.models.pedagogie import Seance
 from app.models.personnel import Enseignant
 from app.models.scolarite import Classe, Inscription
+from app.models.systeme import Rapport
 
 
 @dataclass(slots=True)
@@ -329,6 +330,37 @@ async def exiger_classe_dans_la_portee(
 
     if autorisee is None:
         raise NotFoundError("Classe introuvable.", details={"id": str(classe_id)})
+
+
+async def exiger_rapport_dans_la_portee(
+    session: AsyncSession,
+    contexte: ContexteUtilisateur,
+    rapport_id: uuid.UUID,
+) -> None:
+    """Refuse le téléchargement d'un rapport hors du périmètre de l'appelant.
+
+    « rapports:PRINT » est accordé jusqu'au chef d'établissement, parce qu'il
+    doit pouvoir imprimer le rapport de son école. Mais un rapport national est
+    un rapport comme un autre dans la table : sans ce contrôle, la même
+    permission suffisait à sortir les chiffres du pays en PDF.
+
+    Un rapport sans établissement est nécessairement d'un niveau supérieur ;
+    il est donc refusé aux périmètres restreints.
+    """
+    if contexte.est_omnipotent:
+        return
+    if contexte.niveau_max not in (NiveauScope.PERSONNEL, NiveauScope.ETABLISSEMENT):
+        return
+
+    perimetre = await resoudre_perimetre(session, contexte)
+    autorise = await session.scalar(
+        select(Rapport.id).where(
+            Rapport.id == rapport_id,
+            Rapport.etablissement_id.in_(perimetre.etablissements or {uuid.uuid4()}),
+        )
+    )
+    if autorise is None:
+        raise NotFoundError("Rapport introuvable.", details={"id": str(rapport_id)})
 
 
 def condition_portee(

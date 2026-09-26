@@ -10,7 +10,7 @@ from sqlalchemy.orm import selectinload
 
 from app.api.crud import creer_routeur_crud, obtenir_ou_404
 from app.api.deps import ContexteDep, MetadonneesDep, SessionDep
-from app.core.enums import Action
+from app.core.enums import Action, NiveauScope
 from app.core.exceptions import BusinessRuleError, ConflictError, NotFoundError
 from app.engines import workflow
 from app.engines.analytics import resultats_par_departement, resultats_par_etablissement
@@ -1268,8 +1268,17 @@ async def saisir_notes_examen(
 async def notes_epreuve(
     identifiant: uuid.UUID, session: SessionDep, contexte: ContexteDep
 ) -> list[NoteExamen]:
+    """Notes d'une épreuve, cadrées sur le périmètre de l'appelant.
+
+    « copies:READ » est aussi accordé au correcteur, qui doit relire ce qu'il a
+    saisi — mais il reste au niveau personnel et n'a pas à voir l'ensemble des
+    notes de l'épreuve. On restreint donc aux notes qu'il a lui-même portées,
+    plutôt que de lui refuser le point d'entrée.
+    """
     contexte.exiger("copies", Action.READ)
     stmt = select(NoteExamen).where(NoteExamen.epreuve_id == identifiant)
+    if not contexte.est_omnipotent and contexte.niveau_max is NiveauScope.PERSONNEL:
+        stmt = stmt.where(NoteExamen.saisie_par_id == contexte.id)
     return list((await session.execute(stmt)).scalars())
 
 

@@ -28,7 +28,12 @@ from app.engines.espace_personnel import (
     prochaines_evaluations,
     repartition_par_niveau,
 )
-from app.engines.portee import Portee, exiger_pilotage, resoudre_perimetre
+from app.engines.portee import (
+    Portee,
+    exiger_pilotage,
+    exiger_rapport_dans_la_portee,
+    resoudre_perimetre,
+)
 from app.engines.reporting import BlocTableau, EnTeteDocument, exporter_csv, generer_document
 from app.engines.search import Conjonction, Critere, DescripteurChamp, Operateur
 from app.models.apprenant import Apprenant
@@ -969,6 +974,7 @@ async def rapport_pdf(
     identifiant: uuid.UUID, session: SessionDep, contexte: ContexteDep
 ) -> Response:
     contexte.exiger("rapports", Action.PRINT)
+    await exiger_rapport_dans_la_portee(session, contexte, identifiant)
     rapport = await obtenir_ou_404(session, Rapport, identifiant, "Rapport")
 
     sections: list = []

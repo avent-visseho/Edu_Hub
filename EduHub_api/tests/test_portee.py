@@ -304,3 +304,32 @@ class TestTableauParRole:
         siennes = await client.get("/api/v1/classes", headers=directeur, params={"size": 200})
         libelles = {ligne["libelle"] for ligne in siennes.json()["items"]}
         assert classes_du_graphique <= libelles, "des classes d'un autre établissement apparaissent"
+
+
+class TestRapports:
+    """Un rapport porte un périmètre : le télécharger doit le respecter."""
+
+    async def test_rapport_national_refuse_au_directeur(
+        self, client: AsyncClient, directeur: dict[str, str], entetes: dict[str, str]
+    ) -> None:
+        """« rapports:PRINT » ne suffit pas à sortir les chiffres du pays.
+
+        Le chef d'établissement dispose de la permission parce qu'il imprime le
+        rapport de son école ; un rapport sans établissement est d'un niveau
+        supérieur et doit lui rester fermé.
+        """
+        cree = await client.post(
+            "/api/v1/rapports",
+            headers=entetes,
+            json={"type_rapport": "NATIONAL", "titre": "Rapport national de contrôle"},
+        )
+        assert cree.status_code in (200, 201), cree.text
+        identifiant = cree.json()["id"]
+
+        assert (
+            await client.get(f"/api/v1/rapports/{identifiant}/pdf", headers=entetes)
+        ).status_code == 200
+        assert (
+            await client.get(f"/api/v1/rapports/{identifiant}/pdf", headers=directeur)
+        ).status_code == 404
+

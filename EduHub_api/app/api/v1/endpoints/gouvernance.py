@@ -18,7 +18,13 @@ from app.engines.analytics import (
     tableau_bord_national,
 )
 from app.engines.audit import journaliser
-from app.engines.portee import Portee
+from app.engines.espace_personnel import (
+    indicateurs_eleve,
+    indicateurs_enseignant,
+    indicateurs_etablissement,
+    indicateurs_parent,
+)
+from app.engines.portee import Portee, resoudre_perimetre
 from app.engines.reporting import BlocTableau, EnTeteDocument, exporter_csv, generer_document
 from app.engines.search import Conjonction, Critere, DescripteurChamp, Operateur
 from app.models.apprenant import Apprenant
@@ -259,6 +265,53 @@ async def synthese_territoriale(
             )
         )
     return syntheses
+
+
+@router.get(
+    "/tableaux-de-bord/mon-tableau",
+    response_model=TableauBord,
+    tags=["Gouvernance"],
+    summary="Tableau de bord propre au rôle de l'utilisateur",
+    description=(
+        "Indicateurs correspondant au rôle et au périmètre de l'appelant : sa moyenne "
+        "et son assiduité pour un élève, ses enfants pour un parent, ses classes pour "
+        "un enseignant, son établissement pour un chef d'établissement."
+    ),
+)
+async def mon_tableau(session: SessionDep, contexte: ContexteDep) -> TableauBord:
+    """Compose le tableau de bord de celui qui le demande.
+
+    Le tableau national répond à la question d'un ministère. Celui-ci répond à
+    celle d'un élève ou d'un enseignant, qui n'ont que faire des effectifs du
+    pays. Aucun droit particulier n'est exigé : chacun a accès à ce qui le
+    concerne, et le périmètre s'en charge.
+    """
+    perimetre = await resoudre_perimetre(session, contexte)
+    roles = contexte.roles
+
+    if roles & {"SCHOOL_ADMIN", "SCHOOL_STAFF"}:
+        indicateurs = await indicateurs_etablissement(session, perimetre)
+        perimetre_code, libelle = "ETABLISSEMENT", "Mon établissement"
+    elif "TEACHER" in roles:
+        indicateurs = await indicateurs_enseignant(session, contexte, perimetre)
+        perimetre_code, libelle = "ENSEIGNANT", "Mes classes"
+    elif "PARENT" in roles:
+        indicateurs = await indicateurs_parent(session, perimetre)
+        perimetre_code, libelle = "PARENT", "Mes enfants"
+    elif perimetre.apprenants:
+        indicateurs = await indicateurs_eleve(session, perimetre)
+        perimetre_code, libelle = "ELEVE", "Ma scolarité"
+    else:
+        indicateurs = []
+        perimetre_code, libelle = "PERSONNEL", "Mon espace"
+
+    return TableauBord(
+        perimetre=perimetre_code,
+        perimetre_libelle=libelle,
+        indicateurs=[IndicateurReponse(**indicateur.en_dict()) for indicateur in indicateurs],
+        graphiques={},
+        alertes=[],
+    )
 
 
 @router.get(

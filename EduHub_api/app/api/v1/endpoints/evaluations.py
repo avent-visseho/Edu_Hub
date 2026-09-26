@@ -253,7 +253,11 @@ router.include_router(evaluations)
 
 bulletins = creer_routeur_crud(
     modele=Bulletin,
-    portee=Portee(apprenant="apprenant_id", classe="classe_id"),
+    # Le bulletin appartient à son élève, pas à sa classe : le rattacher à la
+    # classe en ouvrirait la lecture à tous ses camarades. L'établissement suffit
+    # aux rôles qui doivent en consulter plusieurs, et n'est pas partagé avec
+    # les usagers personnels.
+    portee=Portee(apprenant="apprenant_id", etablissement="etablissement_id"),
     schema_lecture=BulletinLecture,
     schema_creation=None,
     schema_maj=None,

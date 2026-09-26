@@ -26,7 +26,7 @@ from app.models.apprenant import Apprenant
 from app.models.evaluation import Bulletin, Evaluation
 from app.models.pedagogie import Presence
 from app.models.personnel import Enseignant
-from app.models.scolarite import Classe, Inscription, Niveau, Periode
+from app.models.scolarite import Classe, Inscription, Matiere, Niveau, Periode
 
 #: Statuts comptés comme une absence. Le retard n'en est pas une : l'élève a
 #: bien assisté au cours, et l'agréger fausserait la lecture du taux.
@@ -189,6 +189,42 @@ async def indicateurs_parent(
             ]
         )
     return indicateurs
+
+
+async def prochaines_evaluations(
+    session: AsyncSession, classes: set[uuid.UUID]
+) -> list[dict[str, object]]:
+    """Les devoirs à venir dans les classes de l'élève.
+
+    Un compteur annonçant « dix-huit évaluations à venir » n'aide personne à
+    s'organiser : c'est la matière et la date qui comptent. On s'arrête à six,
+    au-delà l'horizon cesse d'être utile.
+    """
+    if not classes:
+        return []
+    lignes = await session.execute(
+        select(
+            Evaluation.intitule,
+            Evaluation.date_evaluation,
+            Matiere.libelle,
+            Evaluation.type_evaluation,
+            Evaluation.coefficient,
+        )
+        .join(Matiere, Matiere.id == Evaluation.matiere_id)
+        .where(Evaluation.classe_id.in_(classes), Evaluation.date_evaluation >= date.today())
+        .order_by(Evaluation.date_evaluation)
+        .limit(6)
+    )
+    return [
+        {
+            "intitule": intitule,
+            "date": echeance.isoformat(),
+            "matiere": matiere,
+            "type": type_evaluation.value if hasattr(type_evaluation, "value") else type_evaluation,
+            "coefficient": coefficient,
+        }
+        for intitule, echeance, matiere, type_evaluation, coefficient in lignes
+    ]
 
 
 async def repartition_par_niveau(

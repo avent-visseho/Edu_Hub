@@ -7,9 +7,10 @@ import { libelleEntree, NAVIGATION } from '@/components/layout/navigation';
 import { EntetePage } from '@/components/layout/entete-page';
 import { GraphiqueBarres, GraphiqueLignes } from '@/components/graphiques';
 import { Indicateur } from '@/components/ui/donnees';
-import { Carte, CorpsCarte, EnteteCarte, Squelette } from '@/components/ui/primitives';
+import { Badge, Carte, CorpsCarte, EnteteCarte, Squelette } from '@/components/ui/primitives';
 import { api } from '@/lib/api';
 import { useSession } from '@/lib/session';
+import { formaterDate, humaniser } from '@/lib/utils';
 import type { TableauBord } from '@/types/api';
 
 /** Phrase d'accueil propre au rôle, pour situer d'emblée ce qu'on peut faire. */
@@ -55,6 +56,13 @@ export function AccueilPersonnel() {
   const moyennesParClasse = (graphiques.moyennes_par_classe ?? []) as Array<
     Record<string, unknown>
   >;
+  const prochaines = (graphiques.prochaines_evaluations ?? []) as Array<{
+    intitule: string;
+    date: string;
+    matiere: string;
+    type: string;
+    coefficient: number;
+  }>;
   const roles = utilisateur?.roles ?? [];
   const introduction =
     roles.map((role) => INTRODUCTIONS[role]).find(Boolean) ??
@@ -121,6 +129,36 @@ export function AccueilPersonnel() {
               unite="/20"
             />
           </CorpsCarte>
+        </Carte>
+      )}
+
+      {/*
+        « Dix-huit évaluations à venir » n'aide pas à s'organiser : ce sont la
+        matière et la date qui comptent.
+      */}
+      {prochaines.length > 0 && (
+        <Carte className="mb-4">
+          <EnteteCarte
+            titre="Prochaines évaluations"
+            description="Les devoirs annoncés dans vos classes, du plus proche au plus lointain."
+          />
+          <ul className="divide-y">
+            {prochaines.map((evaluation) => (
+              <li
+                key={`${evaluation.date}-${evaluation.matiere}-${evaluation.intitule}`}
+                className="flex flex-wrap items-baseline justify-between gap-2 px-5 py-2.5 text-sm"
+              >
+                <span className="min-w-0">
+                  <span className="font-medium">{evaluation.matiere}</span>
+                  <span className="texte-doux"> — {evaluation.intitule}</span>
+                </span>
+                <span className="flex items-center gap-2 text-xs texte-doux">
+                  {humaniser(evaluation.type)}
+                  <Badge ton="neutre">{formaterDate(evaluation.date)}</Badge>
+                </span>
+              </li>
+            ))}
+          </ul>
         </Carte>
       )}
 

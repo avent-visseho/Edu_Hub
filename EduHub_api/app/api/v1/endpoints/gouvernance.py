@@ -25,6 +25,7 @@ from app.engines.espace_personnel import (
     indicateurs_etablissement,
     indicateurs_parent,
     moyennes_par_classe,
+    prochaines_evaluations,
     repartition_par_niveau,
 )
 from app.engines.portee import Portee, resoudre_perimetre
@@ -311,10 +312,16 @@ async def mon_tableau(session: SessionDep, contexte: ContexteDep) -> TableauBord
     elif "PARENT" in roles:
         indicateurs = await indicateurs_parent(session, perimetre)
         graphiques["evolution_moyennes"] = await evolution_moyennes(session, perimetre.apprenants)
+        graphiques["prochaines_evaluations"] = await prochaines_evaluations(
+            session, perimetre.classes
+        )
         perimetre_code, libelle = "PARENT", "Mes enfants"
     elif perimetre.apprenants:
         indicateurs = await indicateurs_eleve(session, perimetre)
         graphiques["evolution_moyennes"] = await evolution_moyennes(session, perimetre.apprenants)
+        graphiques["prochaines_evaluations"] = await prochaines_evaluations(
+            session, perimetre.classes
+        )
         perimetre_code, libelle = "ELEVE", "Ma scolarité"
     else:
         indicateurs = []

@@ -1,0 +1,220 @@
+===============================================================================
+  EduHub - Enregistrements DNS a configurer chez Hostinger
+  Domaine concerne : ezafri.com
+  Document etabli le 26 septembre 2026
+===============================================================================
+
+CE QU'IL Y A A FAIRE, EN UNE PHRASE
+-----------------------------------
+
+Deux enregistrements DNS dans la zone du domaine ezafri.com :
+un a REMPLACER (eduhub), un a CREER (api).
+
+Il n'y a AUCUN sous-domaine a creer au sens de l'hebergement Hostinger.
+Tout se passe uniquement dans l'editeur de zone DNS. Ce point est important,
+il est detaille plus bas.
+
+Duree estimee : dix minutes, plus le temps de propagation.
+
+
+-------------------------------------------------------------------------------
+  TROIS CHOSES A NE SURTOUT PAS FAIRE
+-------------------------------------------------------------------------------
+
+1. NE PAS CHANGER LES SERVEURS DE NOMS
+
+   Vercel propose, comme alternative, de remplacer les serveurs de noms du
+   domaine par ns1.vercel-dns.com et ns2.vercel-dns.com.
+
+   IL NE FAUT PAS LE FAIRE.
+
+   Cela deplacerait toute la zone ezafri.com chez Vercel. Consequences
+   immediates : le site sur ezafri.com et www.ezafri.com cesserait de
+   repondre, et surtout les ADRESSES E-MAIL du domaine tomberaient - le
+   domaine utilise bien la messagerie Hostinger (enregistrements MX vers
+   mx1.hostinger.com et mx2.hostinger.com).
+
+   Les serveurs de noms doivent rester ceux d'Hostinger :
+       ns1.dns-parking.com
+       ns2.dns-parking.com
+
+2. NE PAS PASSER PAR LA RUBRIQUE "SOUS-DOMAINES" DE L'HEBERGEMENT
+
+   Dans hPanel, il existe une section qui permet de creer un sous-domaine
+   rattache a l'hebergement web. Elle cree automatiquement un enregistrement
+   pointant vers les serveurs d'Hostinger, ce qui est exactement l'inverse de
+   ce que nous voulons.
+
+   Tout doit se faire dans l'EDITEUR DE ZONE DNS, decrit ci-dessous.
+
+3. NE PAS TOUCHER AUX AUTRES ENREGISTREMENTS
+
+   La liste de ce qui doit rester intact figure a la fin du document.
+
+
+-------------------------------------------------------------------------------
+  OU ALLER
+-------------------------------------------------------------------------------
+
+   hPanel Hostinger
+     -> Domaines
+       -> ezafri.com
+         -> DNS / Serveurs de noms
+           -> Gerer les enregistrements DNS
+
+   On doit y voir la liste des enregistrements (A, CNAME, MX, TXT...).
+   C'est le bon endroit.
+
+
+-------------------------------------------------------------------------------
+  ETAPE 1 sur 2 : LE SOUS-DOMAINE eduhub  (site web, heberge chez Vercel)
+-------------------------------------------------------------------------------
+
+Ce sous-domaine EXISTE DEJA et pointe au mauvais endroit. Il ne s'agit donc
+pas de le creer, mais de remplacer ce qu'il contient.
+
+  1a. SUPPRIMER d'abord
+
+      Reperer TOUS les enregistrements dont le nom est "eduhub".
+      Il s'agit aujourd'hui d'enregistrements de type A, qui pointent vers
+      l'hebergement Hostinger.
+
+      Les supprimer tous.
+
+      POURQUOI C'EST OBLIGATOIRE : un enregistrement CNAME ne peut pas
+      coexister avec un enregistrement A portant le meme nom. C'est une regle
+      du protocole DNS, pas une limitation d'Hostinger. Si l'on ajoute le
+      CNAME sans retirer les A au prealable, soit Hostinger refusera
+      l'enregistrement, soit le sous-domaine continuera de pointer vers
+      l'ancienne destination, et la configuration restera invalide cote
+      Vercel.
+
+  1b. AJOUTER ensuite
+
+      +---------------------+-------------------------------------------------+
+      | Type                | CNAME                                           |
+      | Nom (ou Hote)       | eduhub                                          |
+      | Pointe vers (Cible) | 86cb9fb30dffb438.vercel-dns-017.com             |
+      | TTL                 | 300  (ou la valeur par defaut proposee)         |
+      +---------------------+-------------------------------------------------+
+
+      ATTENTION AU CHAMP "NOM" : il faut ecrire eduhub, et RIEN D'AUTRE.
+      Pas eduhub.ezafri.com. Hostinger ajoute le domaine tout seul. Saisir le
+      nom complet produirait eduhub.ezafri.com.ezafri.com, qui ne sert a rien.
+
+      ATTENTION AU POINT FINAL : la cible peut s'afficher ailleurs avec un
+      point a la fin (86cb9fb30dffb438.vercel-dns-017.com.). Les deux formes
+      sont equivalentes. Si Hostinger refuse le point final, le retirer.
+
+      La valeur ci-dessus a ete verifiee : elle repond correctement.
+
+
+-------------------------------------------------------------------------------
+  ETAPE 2 sur 2 : LE SOUS-DOMAINE api  (interface de programmation, serveur)
+-------------------------------------------------------------------------------
+
+Celui-la n'existe pas du tout. Rien a supprimer, il suffit de l'ajouter.
+Il ne rentre en conflit avec aucun enregistrement existant.
+
+      +---------------------+-------------------------------------------------+
+      | Type                | A                                               |
+      | Nom (ou Hote)       | api                                             |
+      | Pointe vers (Cible) | 185.194.217.12                                  |
+      | TTL                 | 300  (ou la valeur par defaut proposee)         |
+      +---------------------+-------------------------------------------------+
+
+      Meme remarque sur le champ "Nom" : ecrire api, et rien d'autre.
+
+      Noter la difference avec l'etape 1 : ici c'est un enregistrement de type
+      A vers une adresse IP, et non un CNAME. C'est normal, il s'agit d'un
+      serveur dedie et non d'un hebergeur mutualise.
+
+
+-------------------------------------------------------------------------------
+  RECAPITULATIF
+-------------------------------------------------------------------------------
+
+   Ce qui doit figurer dans la zone a la fin de l'operation :
+
+      Type    Nom       Valeur
+      ------  --------  ---------------------------------------
+      CNAME   eduhub    86cb9fb30dffb438.vercel-dns-017.com
+      A       api       185.194.217.12
+
+   Et il ne doit plus rester AUCUN enregistrement de type A nomme "eduhub".
+
+
+-------------------------------------------------------------------------------
+  CE QU'IL NE FAUT PAS TOUCHER
+-------------------------------------------------------------------------------
+
+   Tout le reste de la zone doit rester exactement en l'etat, notamment :
+
+      - les enregistrements A du domaine lui-meme (nom vide ou "@"),
+        qui font fonctionner ezafri.com ;
+      - l'enregistrement de www, qui fait fonctionner www.ezafri.com ;
+      - les enregistrements MX vers mx1.hostinger.com et mx2.hostinger.com,
+        qui font fonctionner la MESSAGERIE du domaine ;
+      - les enregistrements TXT, souvent lies a la validation de la
+        messagerie (SPF, DKIM). Les supprimer ferait classer les e-mails
+        sortants en indesirables.
+
+   En resume : on ne touche qu'a "eduhub" et a "api". Rien d'autre.
+
+
+-------------------------------------------------------------------------------
+  VERIFICATION
+-------------------------------------------------------------------------------
+
+   La propagation prend de quelques minutes a quelques heures. Pour verifier,
+   depuis un terminal :
+
+       dig +short CNAME eduhub.ezafri.com
+   attendu :
+       86cb9fb30dffb438.vercel-dns-017.com.
+
+       dig +short api.ezafri.com
+   attendu :
+       185.194.217.12
+
+   Sans terminal sous la main, le site https://dnschecker.org permet la meme
+   verification depuis un navigateur : saisir le sous-domaine, choisir le type
+   d'enregistrement (CNAME ou A).
+
+   Tant que ces commandes renvoient autre chose, c'est que la propagation
+   n'est pas terminee. Inutile de modifier quoi que ce soit dans l'intervalle,
+   il suffit d'attendre.
+
+
+-------------------------------------------------------------------------------
+  CE QU'IL FAUT SIGNALER UNE FOIS TERMINE
+-------------------------------------------------------------------------------
+
+   Repondre simplement :
+
+      - les deux enregistrements ont ete crees, oui ou non ;
+      - les anciens enregistrements A de "eduhub" ont bien ete supprimes,
+        oui ou non ;
+      - le resultat des deux commandes de verification ci-dessus ;
+      - toute difficulte rencontree (un champ refuse, un message d'erreur,
+        une rubrique introuvable), avec le message exact.
+
+   En cas de doute sur un ecran, une capture d'ecran de la liste des
+   enregistrements DNS avant modification est le plus utile.
+
+
+-------------------------------------------------------------------------------
+  CE QUI SE PASSERA ENSUITE  (pour information, rien a faire)
+-------------------------------------------------------------------------------
+
+   Une fois le CNAME propage, Vercel detectera seul la configuration, la
+   passera en "Valid Configuration" et emettra le certificat HTTPS du
+   sous-domaine eduhub.ezafri.com.
+
+   Une fois l'enregistrement A propage, le certificat HTTPS de
+   api.ezafri.com sera demande depuis le serveur, en une commande.
+
+   Il restera enfin a indiquer a l'application web l'adresse de son
+   interface de programmation, et l'ensemble sera fonctionnel.
+
+===============================================================================

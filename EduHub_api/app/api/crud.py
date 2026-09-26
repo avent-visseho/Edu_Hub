@@ -22,11 +22,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import ContexteDep, MetadonneesDep, SessionDep
 from app.core.database import Base
-from app.core.enums import Action
+from app.core.enums import Action, NiveauScope
 from app.core.exceptions import ConflictError, NotFoundError
 from app.core.pagination import Page, PageParams, PageParamsDep, paginate
 from app.engines.audit import journaliser
 from app.engines.identity import ContexteUtilisateur
+from app.engines.portee import Portee, appliquer_portee, resoudre_perimetre
 from app.engines.search import (
     Conjonction,
     ConstructeurRequete,
@@ -66,6 +67,10 @@ def appliquer_recherche(statement: Select, modele: type[Base], champs: Sequence[
 
 # Paramètres de pagination déjà consommés par la liste : un champ déclaré qui
 # porterait l'un de ces noms ne peut pas devenir un filtre de requête.
+#: Niveaux pour lesquels une restriction de portée a un sens. Au-dessus, le rôle
+#: a vocation à voir l'ensemble et résoudre le périmètre serait du gaspillage.
+_NIVEAUX_RESTREINTS = frozenset({NiveauScope.PERSONNEL, NiveauScope.ETABLISSEMENT})
+
 NOMS_RESERVES = frozenset({"page", "size", "sort_by", "sort_dir", "q"})
 
 _TYPES_FILTRE: dict[str, type] = {
@@ -151,12 +156,18 @@ def creer_routeur_crud(
     contrainte_unicite: str | None = "code",
     precharger: Callable[[Select], Select] | None = None,
     lecture_publique: bool = False,
+    portee: Portee | None = None,
 ) -> APIRouter:
     """Construit un routeur REST complet pour une entité.
 
     `champs_filtrables` alimente à la fois le point d'entrée `/champs` — que
     l'interface utilise pour bâtir son constructeur de requêtes — et le filtrage
     avancé exposé sur `/recherche`.
+
+    `portee` déclare comment l'entité se rattache à la personne qui la consulte,
+    et restreint en conséquence ce que voient les rôles personnels et
+    d'établissement. Une entité qui n'en déclare aucune leur reste fermée : on
+    préfère une liste vide, qui se remarque, à une fuite qui ne se remarque pas.
     """
     routeur = APIRouter(prefix=prefixe, tags=[tag])
     constructeur = ConstructeurRequete(ressource, champs_filtrables)
@@ -173,6 +184,39 @@ def creer_routeur_crud(
         for cle, valeur in filtres.items():
             statement = statement.where(constructeur.champs[cle].colonne == valeur)
         return statement
+
+    async def _restreindre(
+        statement: Select, session: AsyncSession, contexte: ContexteUtilisateur
+    ) -> Select:
+        """Restreint la requête au périmètre de l'appelant.
+
+        Le périmètre n'est résolu que pour les rôles qui en ont besoin : au
+        niveau direction et au-dessus, la question ne se pose pas et les
+        requêtes de résolution seraient du gaspillage à chaque appel.
+        """
+        if contexte.est_omnipotent or contexte.niveau_max not in _NIVEAUX_RESTREINTS:
+            return statement
+        perimetre = await resoudre_perimetre(session, contexte)
+        return appliquer_portee(statement, modele, portee, contexte, perimetre)
+
+    async def _exiger_dans_la_portee(
+        objet: Any, session: AsyncSession, contexte: ContexteUtilisateur
+    ) -> None:
+        """Refuse l'accès à une ligne située hors du périmètre.
+
+        On renvoie un 404 et non un 403 : répondre « interdit » confirmerait
+        l'existence de la ligne, ce qui renseigne déjà sur autrui.
+        """
+        if contexte.est_omnipotent or contexte.niveau_max not in _NIVEAUX_RESTREINTS:
+            return
+        perimetre = await resoudre_perimetre(session, contexte)
+        verification = appliquer_portee(
+            select(modele.id).where(modele.id == objet.id), modele, portee, contexte, perimetre
+        )
+        if await session.scalar(verification) is None:
+            raise NotFoundError(
+                f"{libelle_singulier.capitalize()} introuvable.", details={"id": str(objet.id)}
+            )
 
     def _trier(statement: Select, params: PageParams) -> Select:
         champ = params.sort_by or tri_defaut
@@ -201,6 +245,7 @@ def creer_routeur_crud(
         if q:
             statement = appliquer_recherche(statement, modele, champs_recherche, q)
         statement = _filtrer(statement, filtres)
+        statement = await _restreindre(statement, session, contexte)
         statement = _trier(statement, params)
         lignes, total = await paginate(session, statement, params)
         return Page.build([schema_lecture.model_validate(ligne) for ligne in lignes], total, params)
@@ -233,6 +278,7 @@ def creer_routeur_crud(
             criteres: list[Critere] = criteres_depuis_dict(filtre.criteres)
             statement = constructeur.appliquer(_base_statement(), criteres, filtre.conjonction)
             statement = constructeur.trier(statement, filtre.tri, filtre.sens)
+            statement = await _restreindre(statement, session, contexte)
             lignes, total = await paginate(session, statement, params)
             return Page.build(
                 [schema_lecture.model_validate(ligne) for ligne in lignes], total, params
@@ -248,7 +294,11 @@ def creer_routeur_crud(
     async def detail(identifiant: uuid.UUID, session: SessionDep, contexte: ContexteDep) -> Any:
         if not lecture_publique:
             contexte.exiger(ressource, Action.READ)
-        return await obtenir_ou_404(session, modele, identifiant, libelle_singulier.capitalize())
+        objet = await obtenir_ou_404(
+            session, modele, identifiant, libelle_singulier.capitalize()
+        )
+        await _exiger_dans_la_portee(objet, session, contexte)
+        return objet
 
     # ---------- Création ----------
 

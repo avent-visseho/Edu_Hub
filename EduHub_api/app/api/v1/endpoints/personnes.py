@@ -15,6 +15,7 @@ from app.core.enums import Action, RoleCode
 from app.core.exceptions import ConflictError, NotFoundError
 from app.core.security import hash_password
 from app.engines.audit import journaliser
+from app.engines.portee import Portee
 from app.engines.search import DescripteurChamp
 from app.models.apprenant import Apprenant, ApprenantParent, Parent
 from app.models.diplome import DiplomeDelivre
@@ -78,6 +79,7 @@ CHAMPS_APPRENANT = (
 
 apprenants = creer_routeur_crud(
     modele=Apprenant,
+    portee=Portee(est_apprenant=True),
     schema_lecture=ApprenantLecture,
     schema_creation=None,
     schema_maj=ApprenantMiseAJour,

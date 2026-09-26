@@ -20,11 +20,12 @@ désignent donc le même compte.
 
 from __future__ import annotations
 
-from sqlalchemy import select, text, update
+from sqlalchemy import func, select, text, update
 
 from app.core.enums import RoleCode
 from app.core.logging import get_logger
 from app.models.identity import Role, Utilisateur, UtilisateurRole
+from app.models.scolarite import Classe
 from app.seed.contexte import ContexteSeed
 
 logger = get_logger("seed")
@@ -59,13 +60,35 @@ async def generer(ctx: ContexteSeed) -> None:
 
 
 async def _premier_compte(ctx: ContexteSeed, role_code: RoleCode) -> object | None:
-    """Compte le plus ancien alphabétiquement pour ce rôle, pour un choix stable."""
-    requete = (
-        select(Utilisateur.id)
-        .join(UtilisateurRole, UtilisateurRole.utilisateur_id == Utilisateur.id)
-        .join(Role, Role.id == UtilisateurRole.role_id)
-        .where(Role.code == role_code.value)
-        .order_by(Utilisateur.email)
-        .limit(1)
-    )
+    """Compte retenu pour ce rôle : le mieux pourvu, à défaut le premier.
+
+    Pour un chef d'établissement, le tri alphabétique tombait sur un centre
+    d'alphabétisation sans aucune classe : la démonstration n'y montrait rien.
+    On privilégie donc l'établissement qui compte le plus de classes, et l'on
+    départage par l'adresse pour rester déterministe.
+    """
+    if role_code is RoleCode.SCHOOL_ADMIN:
+        classes = (
+            select(Classe.etablissement_id, func.count().label("total"))
+            .group_by(Classe.etablissement_id)
+            .subquery()
+        )
+        requete = (
+            select(Utilisateur.id)
+            .join(UtilisateurRole, UtilisateurRole.utilisateur_id == Utilisateur.id)
+            .join(Role, Role.id == UtilisateurRole.role_id)
+            .outerjoin(classes, classes.c.etablissement_id == UtilisateurRole.etablissement_id)
+            .where(Role.code == role_code.value)
+            .order_by(func.coalesce(classes.c.total, 0).desc(), Utilisateur.email)
+            .limit(1)
+        )
+    else:
+        requete = (
+            select(Utilisateur.id)
+            .join(UtilisateurRole, UtilisateurRole.utilisateur_id == Utilisateur.id)
+            .join(Role, Role.id == UtilisateurRole.role_id)
+            .where(Role.code == role_code.value)
+            .order_by(Utilisateur.email)
+            .limit(1)
+        )
     return (await ctx.session.execute(requete)).scalar_one_or_none()

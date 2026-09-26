@@ -12,6 +12,7 @@ from app.api.deps import ContexteDep, MetadonneesDep, SessionDep
 from app.core.enums import Action
 from app.core.exceptions import BusinessRuleError
 from app.engines.audit import journaliser
+from app.engines.portee import Portee
 from app.engines.reporting import exporter_csv
 from app.engines.search import DescripteurChamp
 from app.models.apprenant import Apprenant
@@ -251,6 +252,7 @@ router.include_router(evaluations)
 
 bulletins = creer_routeur_crud(
     modele=Bulletin,
+    portee=Portee(apprenant="apprenant_id", classe="classe_id"),
     schema_lecture=BulletinLecture,
     schema_creation=None,
     schema_maj=None,

@@ -14,6 +14,7 @@ from app.core.enums import Action
 from app.core.exceptions import BusinessRuleError, ConflictError
 from app.engines import workflow
 from app.engines.audit import journaliser
+from app.engines.portee import Portee
 from app.engines.search import DescripteurChamp
 from app.models.apprenant import Apprenant
 from app.models.pedagogie import (
@@ -96,6 +97,7 @@ router.include_router(annees)
 
 classes = creer_routeur_crud(
     modele=Classe,
+    portee=Portee(classe="id", etablissement="etablissement_id"),
     schema_lecture=ClasseLecture,
     schema_creation=ClasseEcriture,
     schema_maj=ClasseMiseAJour,
@@ -178,6 +180,7 @@ router.include_router(classes)
 
 inscriptions = creer_routeur_crud(
     modele=Inscription,
+    portee=Portee(apprenant="apprenant_id", etablissement="etablissement_id"),
     schema_lecture=InscriptionLecture,
     schema_creation=None,
     schema_maj=None,

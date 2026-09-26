@@ -49,10 +49,14 @@ const HABILLAGE: Record<string, { icone: React.ReactNode; pictogramme: string }>
 export default function PageTableauDeBord() {
   const { utilisateur, peut } = useSession();
 
-  // Les indicateurs nationaux relèvent du pilotage. Un élève, un parent ou un
-  // enseignant n'y a pas droit : leur demander la requête ne produirait qu'une
-  // erreur de permission en guise de page d'accueil.
-  const pilotage = peut('analytics', 'READ');
+  // Le tableau national consolide les chiffres du pays : il répond à la
+  // question d'un ministère ou d'une direction. Un chef d'établissement veut
+  // voir son école, un enseignant ses classes, un élève sa scolarité — d'où
+  // l'aiguillage sur la portée du compte plutôt que sur la seule permission.
+  const pilotage =
+    peut('analytics', 'READ') &&
+    utilisateur?.niveau_scope !== 'PERSONNEL' &&
+    utilisateur?.niveau_scope !== 'ETABLISSEMENT';
 
   const tableau = useQuery({
     queryKey: ['tableau-bord-national'],

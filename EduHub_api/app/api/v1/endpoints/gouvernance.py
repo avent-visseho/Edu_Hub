@@ -24,6 +24,8 @@ from app.engines.espace_personnel import (
     indicateurs_enseignant,
     indicateurs_etablissement,
     indicateurs_parent,
+    moyennes_par_classe,
+    repartition_par_niveau,
 )
 from app.engines.portee import Portee, resoudre_perimetre
 from app.engines.reporting import BlocTableau, EnTeteDocument, exporter_csv, generer_document
@@ -293,9 +295,18 @@ async def mon_tableau(session: SessionDep, contexte: ContexteDep) -> TableauBord
 
     if roles & {"SCHOOL_ADMIN", "SCHOOL_STAFF"}:
         indicateurs = await indicateurs_etablissement(session, perimetre)
+        graphiques["effectifs_par_niveau"] = await repartition_par_niveau(
+            session, perimetre.etablissements
+        )
+        graphiques["moyennes_par_classe"] = await moyennes_par_classe(
+            session, perimetre.etablissements
+        )
         perimetre_code, libelle = "ETABLISSEMENT", "Mon établissement"
     elif "TEACHER" in roles:
         indicateurs = await indicateurs_enseignant(session, contexte, perimetre)
+        graphiques["moyennes_par_classe"] = await moyennes_par_classe(
+            session, perimetre.etablissements
+        )
         perimetre_code, libelle = "ENSEIGNANT", "Mes classes"
     elif "PARENT" in roles:
         indicateurs = await indicateurs_parent(session, perimetre)

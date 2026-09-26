@@ -26,7 +26,7 @@ from app.models.apprenant import Apprenant
 from app.models.evaluation import Bulletin, Evaluation
 from app.models.pedagogie import Presence
 from app.models.personnel import Enseignant
-from app.models.scolarite import Classe, Inscription, Periode
+from app.models.scolarite import Classe, Inscription, Niveau, Periode
 
 #: Statuts comptés comme une absence. Le retard n'en est pas une : l'élève a
 #: bien assisté au cours, et l'agréger fausserait la lecture du taux.
@@ -153,6 +153,45 @@ async def indicateurs_parent(
         Indicateur("taux_presence", "Assiduité", presence or 0, "%"),
         Indicateur("bulletins", "Bulletins disponibles", bulletins or 0),
     ]
+
+
+async def repartition_par_niveau(
+    session: AsyncSession, etablissements: set[uuid.UUID]
+) -> list[dict[str, object]]:
+    """Effectif par niveau dans l'établissement, pour voir où se concentre la charge."""
+    if not etablissements:
+        return []
+    lignes = await session.execute(
+        select(Niveau.libelle, func.count(func.distinct(Inscription.apprenant_id)))
+        .select_from(Inscription)
+        .join(Classe, Classe.id == Inscription.classe_id)
+        .join(Niveau, Niveau.id == Classe.niveau_id)
+        .where(Inscription.etablissement_id.in_(etablissements))
+        .group_by(Niveau.libelle, Niveau.rang)
+        .order_by(Niveau.rang)
+    )
+    return [{"categorie": libelle, "effectif": total} for libelle, total in lignes]
+
+
+async def moyennes_par_classe(
+    session: AsyncSession, etablissements: set[uuid.UUID]
+) -> list[dict[str, object]]:
+    """Moyenne de chaque classe, pour repérer celles qui décrochent."""
+    if not etablissements:
+        return []
+    lignes = await session.execute(
+        select(Classe.libelle, func.avg(Bulletin.moyenne_generale))
+        .select_from(Bulletin)
+        .join(Classe, Classe.id == Bulletin.classe_id)
+        .where(
+            Bulletin.etablissement_id.in_(etablissements),
+            Bulletin.moyenne_generale.isnot(None),
+        )
+        .group_by(Classe.libelle)
+        .order_by(func.avg(Bulletin.moyenne_generale))
+        .limit(15)
+    )
+    return [{"classe": libelle, "moyenne": round(float(moyenne), 2)} for libelle, moyenne in lignes]
 
 
 async def indicateurs_enseignant(

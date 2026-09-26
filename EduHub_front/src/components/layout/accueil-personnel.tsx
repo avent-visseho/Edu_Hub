@@ -5,7 +5,7 @@ import Link from 'next/link';
 
 import { libelleEntree, NAVIGATION } from '@/components/layout/navigation';
 import { EntetePage } from '@/components/layout/entete-page';
-import { GraphiqueLignes } from '@/components/graphiques';
+import { GraphiqueBarres, GraphiqueLignes } from '@/components/graphiques';
 import { Indicateur } from '@/components/ui/donnees';
 import { Carte, CorpsCarte, EnteteCarte, Squelette } from '@/components/ui/primitives';
 import { api } from '@/lib/api';
@@ -47,7 +47,12 @@ export function AccueilPersonnel() {
     queryFn: () => api.get<TableauBord>('/tableaux-de-bord/mon-tableau'),
   });
 
-  const evolution = (tableau.data?.graphiques?.evolution_moyennes ?? []) as Array<
+  const graphiques = tableau.data?.graphiques ?? {};
+  const evolution = (graphiques.evolution_moyennes ?? []) as Array<Record<string, unknown>>;
+  const effectifsParNiveau = (graphiques.effectifs_par_niveau ?? []) as Array<
+    Record<string, unknown>
+  >;
+  const moyennesParClasse = (graphiques.moyennes_par_classe ?? []) as Array<
     Record<string, unknown>
   >;
   const roles = utilisateur?.roles ?? [];
@@ -117,6 +122,44 @@ export function AccueilPersonnel() {
             />
           </CorpsCarte>
         </Carte>
+      )}
+
+      {(effectifsParNiveau.length > 0 || moyennesParClasse.length > 0) && (
+        <div className="mb-4 grid gap-4 xl:grid-cols-2">
+          {effectifsParNiveau.length > 0 && (
+            <Carte>
+              <EnteteCarte
+                titre="Effectifs par niveau"
+                description="Où se concentrent les élèves de l'établissement."
+              />
+              <CorpsCarte>
+                <GraphiqueBarres
+                  donnees={effectifsParNiveau}
+                  cleAbscisse="categorie"
+                  series={[{ cle: 'effectif', libelle: 'Élèves' }]}
+                  titre="Effectifs par niveau"
+                />
+              </CorpsCarte>
+            </Carte>
+          )}
+          {moyennesParClasse.length > 0 && (
+            <Carte>
+              <EnteteCarte
+                titre="Moyennes par classe"
+                description="Classées de la plus faible à la plus élevée, pour repérer celles qui décrochent."
+              />
+              <CorpsCarte>
+                <GraphiqueBarres
+                  donnees={moyennesParClasse}
+                  cleAbscisse="classe"
+                  series={[{ cle: 'moyenne', libelle: 'Moyenne' }]}
+                  titre="Moyennes par classe"
+                  unite="/20"
+                />
+              </CorpsCarte>
+            </Carte>
+          )}
+        </div>
       )}
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">

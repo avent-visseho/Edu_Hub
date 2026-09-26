@@ -1,11 +1,11 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import { ArrowLeft, Award, Search, Volume2 } from 'lucide-react';
+import { Award, Search, Volume2 } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
 
-import { BarreAccessibilite } from '@/components/layout/barre-accessibilite';
+import { EntetePublique } from '@/components/layout/entete-publique';
 import {
   Badge,
   Bouton,
@@ -67,17 +67,7 @@ export default function PageResultatsPublics() {
 
   return (
     <div className="min-h-screen">
-      <header className="border-b">
-        <div className="mx-auto flex max-w-4xl items-center justify-between gap-4 px-4 py-4 sm:px-6">
-          <Link
-            href="/"
-            className="inline-flex items-center gap-2 text-sm font-medium hover:underline"
-          >
-            <ArrowLeft size={17} aria-hidden /> Accueil
-          </Link>
-          <BarreAccessibilite />
-        </div>
-      </header>
+      <EntetePublique />
 
       <main className="mx-auto max-w-4xl px-4 py-10 sm:px-6">
         <h1 className="text-3xl font-semibold tracking-tight">Résultats des examens</h1>

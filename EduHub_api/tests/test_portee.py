@@ -178,3 +178,32 @@ class TestTableauParRole:
     ) -> None:
         reponse = await client.get("/api/v1/tableaux-de-bord/national", headers=eleve)
         assert reponse.status_code == 403
+
+    async def test_graphiques_propres_a_chaque_portee(
+        self, client: AsyncClient, eleve: dict[str, str], directeur: dict[str, str]
+    ) -> None:
+        """Les graphiques diffèrent autant que les indicateurs.
+
+        L'élève suit sa progression, l'établissement observe sa répartition :
+        rien ne justifierait de leur servir les mêmes courbes.
+        """
+        sien = await client.get("/api/v1/tableaux-de-bord/mon-tableau", headers=eleve)
+        ecole = await client.get("/api/v1/tableaux-de-bord/mon-tableau", headers=directeur)
+
+        assert "evolution_moyennes" in sien.json()["graphiques"]
+        graphiques_ecole = ecole.json()["graphiques"]
+        assert {"effectifs_par_niveau", "moyennes_par_classe"} <= set(graphiques_ecole)
+        assert "evolution_moyennes" not in graphiques_ecole
+
+    async def test_moyennes_par_classe_restent_dans_l_etablissement(
+        self, client: AsyncClient, directeur: dict[str, str], entetes: dict[str, str]
+    ) -> None:
+        """Le graphique ne doit pas déborder sur les classes des autres écoles."""
+        reponse = await client.get("/api/v1/tableaux-de-bord/mon-tableau", headers=directeur)
+        classes_du_graphique = {
+            point["classe"] for point in reponse.json()["graphiques"]["moyennes_par_classe"]
+        }
+
+        siennes = await client.get("/api/v1/classes", headers=directeur, params={"size": 200})
+        libelles = {ligne["libelle"] for ligne in siennes.json()["items"]}
+        assert classes_du_graphique <= libelles, "des classes d'un autre établissement apparaissent"

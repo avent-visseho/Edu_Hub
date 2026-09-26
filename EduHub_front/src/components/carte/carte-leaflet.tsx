@@ -5,8 +5,9 @@ import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import Link from 'next/link';
 import { useEffect, useMemo, useRef } from 'react';
-import { CircleMarker, MapContainer, Popup, TileLayer, Tooltip, useMap } from 'react-leaflet';
+import { CircleMarker, MapContainer, Polygon, Popup, TileLayer, Tooltip, useMap } from 'react-leaflet';
 
+import { EMPRISE_BENIN, FRONTIERE_BENIN } from '@/data/frontiere-benin';
 import { formaterNombre, humaniser } from '@/lib/utils';
 
 export interface PointCarte {
@@ -44,10 +45,62 @@ export const COULEURS_TYPE: Record<string, string> = {
 
 export const COULEUR_DEFAUT = '#4b5563';
 
-/** Le Bénin, comme cadrage de repli quand aucun point n'est affiché. */
+/**
+ * Libellés des types d'établissement. Les codes sont des sigles : les passer
+ * par humaniser() produirait « Epp » ou « Ceg », ce qui est pire que le sigle
+ * brut. On les nomme donc en toutes lettres, ce qui rend la légende lisible
+ * pour qui ne connaît pas la nomenclature.
+ */
+export const LIBELLES_TYPE: Record<string, string> = {
+  EM: 'École maternelle',
+  EPP: 'École primaire publique',
+  EPRIV: 'École primaire privée',
+  CEG: "Collège d'enseignement général",
+  LYCEE: "Lycée d'enseignement général",
+  CS: 'Complexe scolaire privé',
+  LT: 'Lycée technique',
+  CFP: 'Centre de formation professionnelle',
+  UNIV: 'Université',
+  ENS: 'École normale supérieure',
+  IUT: 'Institut universitaire de technologie',
+  CAL: "Centre d'alphabétisation",
+};
+
+/** Libellé d'un type, ou le sigle lui-même s'il est inconnu. */
+export function libelleType(code: string | null): string {
+  if (!code) return '—';
+  return LIBELLES_TYPE[code] ?? code;
+}
+
+/** Emprise du pays, cadrage de repli quand aucun point n'est affiché. */
 const BENIN: L.LatLngBoundsExpression = [
-  [6.2, 0.77],
-  [12.4, 3.85],
+  [EMPRISE_BENIN.latMin, EMPRISE_BENIN.lonMin],
+  [EMPRISE_BENIN.latMax, EMPRISE_BENIN.lonMax],
+];
+
+/**
+ * Limite de déplacement : l'emprise du pays, élargie d'un demi-degré pour que
+ * les bords restent atteignables sans buter contre la limite.
+ */
+const LIMITES: L.LatLngBoundsExpression = [
+  [EMPRISE_BENIN.latMin - 0.5, EMPRISE_BENIN.lonMin - 0.5],
+  [EMPRISE_BENIN.latMax + 0.5, EMPRISE_BENIN.lonMax + 0.5],
+];
+
+/** La frontière, en (latitude, longitude) : l'ordre inverse du GeoJSON. */
+const CONTOUR: L.LatLngExpression[] = FRONTIERE_BENIN.map(([lon, lat]) => [lat, lon]);
+
+/**
+ * Cadre englobant le monde entier, qui sert d'anneau extérieur au masque. Le
+ * pays en forme la découpe : Leaflet interprète le second anneau d'un polygone
+ * comme un trou, si bien que tout le voisinage se retrouve couvert et que seul
+ * le Bénin laisse voir le fond de carte.
+ */
+const MONDE: L.LatLngExpression[] = [
+  [-90, -200],
+  [-90, 200],
+  [90, 200],
+  [90, -200],
 ];
 
 /**
@@ -103,6 +156,12 @@ export default function CarteLeaflet({ points, survole }: Proprietes) {
   return (
     <MapContainer
       bounds={BENIN}
+      maxBounds={LIMITES}
+      // Sans viscosité, on peut tirer la carte hors des limites puis la laisser
+      // revenir en arrière ; la valeur maximale la retient franchement.
+      maxBoundsViscosity={1}
+      minZoom={6}
+      maxZoom={17}
       scrollWheelZoom
       className="h-[30rem] w-full rounded-lg border md:h-[34rem]"
       // Le conteneur porte son propre rôle : Leaflet n'en ajoute pas, et un
@@ -115,6 +174,40 @@ export default function CarteLeaflet({ points, survole }: Proprietes) {
         url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">Contributeurs OpenStreetMap</a>'
         maxZoom={19}
+      />
+
+      {/*
+        Masque du voisinage : un polygone couvrant le monde, percé à la forme du
+        pays. Les États limitrophes et le golfe de Guinée disparaissent sous un
+        aplat, sans que le fond de carte ait besoin d'être découpé — ce qu'on ne
+        saurait pas faire avec des tuiles matricielles.
+      */}
+      {/*
+        « interactive » se passe en propriété directe et non dans pathOptions :
+        react-leaflet applique ce dernier par setStyle(), qui ne connaît que les
+        options de tracé. Placé au mauvais endroit, il est ignoré en silence et
+        le masque continue d'intercepter survol et clic sur toute la surface.
+      */}
+      <Polygon
+        positions={[MONDE, CONTOUR]}
+        interactive={false}
+        pathOptions={{
+          fillColor: '#f2f4f7',
+          fillOpacity: 0.96,
+          stroke: false,
+        }}
+      />
+
+      {/* Le tracé de la frontière, par-dessus le masque. */}
+      <Polygon
+        positions={CONTOUR}
+        interactive={false}
+        pathOptions={{
+          color: '#1f2937',
+          weight: 1.4,
+          opacity: 0.75,
+          fill: false,
+        }}
       />
 
       <Recadrage points={ordonnes} />
@@ -141,7 +234,7 @@ export default function CarteLeaflet({ points, survole }: Proprietes) {
                   {[point.commune, point.departement].filter(Boolean).join(' · ')}
                 </p>
                 <p className="text-[0.8em]">
-                  {humaniser(point.type ?? '')}
+                  {libelleType(point.type)}
                   {point.effectif ? ` — ${formaterNombre(point.effectif)} apprenants` : ''}
                 </p>
               </div>
@@ -152,7 +245,7 @@ export default function CarteLeaflet({ points, survole }: Proprietes) {
                 <p className="font-semibold">{point.libelle}</p>
                 <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-0.5 text-[0.85em]">
                   <dt className="opacity-70">Type</dt>
-                  <dd>{humaniser(point.type ?? '—')}</dd>
+                  <dd>{libelleType(point.type)}</dd>
                   <dt className="opacity-70">Statut</dt>
                   <dd>{point.statut ?? '—'}</dd>
                   <dt className="opacity-70">Commune</dt>

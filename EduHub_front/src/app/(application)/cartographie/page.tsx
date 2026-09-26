@@ -10,6 +10,7 @@ import { EntetePage } from '@/components/layout/entete-page';
 import {
   COULEUR_DEFAUT,
   COULEURS_TYPE,
+  libelleType,
   type PointCarte,
 } from '@/components/carte/carte-leaflet';
 import {
@@ -23,7 +24,7 @@ import {
   Selection,
 } from '@/components/ui/primitives';
 import { api } from '@/lib/api';
-import { formaterNombre, humaniser } from '@/lib/utils';
+import { formaterNombre } from '@/lib/utils';
 
 /**
  * Leaflet manipule `window` dès son chargement : rendu côté serveur impossible.
@@ -121,7 +122,7 @@ export default function PageCartographie() {
               onChange={(evenement) => setType(evenement.target.value)}
               options={[
                 { valeur: '', libelle: 'Tous les types' },
-                ...types.map((valeur) => ({ valeur, libelle: humaniser(valeur) })),
+                ...types.map((valeur) => ({ valeur, libelle: libelleType(valeur) })),
               ]}
               className="h-11"
             />
@@ -157,7 +158,7 @@ export default function PageCartographie() {
                     className="h-3 w-3 shrink-0 rounded-full border border-white"
                     style={{ backgroundColor: COULEURS_TYPE[valeur] ?? COULEUR_DEFAUT }}
                   />
-                  {humaniser(valeur)}
+                  {libelleType(valeur)}
                 </li>
               ))}
             </ul>

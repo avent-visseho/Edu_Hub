@@ -50,6 +50,32 @@ export interface EntreeNavigation {
   icone: LucideIcon;
   /** Permission requise, au format `ressource:action`. */
   permission?: string;
+  /**
+   * Libellé employé pour les comptes dont la portée est personnelle.
+   *
+   * « Apprenants » décrit un registre national ; pour l'élève qui n'y trouve
+   * que sa propre fiche, « Mon dossier » dit la vérité de ce qu'il ouvre. Les
+   * clés sont des codes de rôle, avec « PERSONNEL » comme valeur de repli.
+   */
+  libellePersonnel?: Record<string, string>;
+}
+
+/**
+ * Libellé d'une entrée pour un compte donné.
+ *
+ * Les comptes à portée personnelle ne voient que leurs propres données :
+ * « Apprenants » décrit un registre national là où l'élève n'ouvrira que sa
+ * fiche. La barre latérale et l'accueil personnel s'appuient tous deux sur
+ * cette fonction, afin de ne pas diverger.
+ */
+export function libelleEntree(
+  entree: EntreeNavigation,
+  niveauScope: string,
+  roles: string[],
+): string {
+  if (niveauScope !== 'PERSONNEL' || !entree.libellePersonnel) return entree.libelle;
+  const parRole = roles.map((role) => entree.libellePersonnel?.[role]).find(Boolean);
+  return parRole ?? entree.libellePersonnel.PERSONNEL ?? entree.libelle;
 }
 
 export interface GroupeNavigation {
@@ -108,6 +134,7 @@ export const NAVIGATION: GroupeNavigation[] = [
         libelleSimple: 'Élèves',
         pictogramme: '🧑‍🎓',
         href: '/apprenants',
+        libellePersonnel: { PERSONNEL: 'Mon dossier', PARENT: 'Mes enfants' },
         icone: Users,
         permission: 'apprenants:READ',
       },
@@ -148,6 +175,7 @@ export const NAVIGATION: GroupeNavigation[] = [
         libelleSimple: 'Classes',
         pictogramme: '📚',
         href: '/classes',
+        libellePersonnel: { PERSONNEL: 'Ma classe' },
         icone: BookOpen,
         permission: 'classes:READ',
       },
@@ -156,6 +184,7 @@ export const NAVIGATION: GroupeNavigation[] = [
         libelleSimple: 'Inscrire',
         pictogramme: '📋',
         href: '/inscriptions',
+        libellePersonnel: { PERSONNEL: 'Mon inscription' },
         icone: ClipboardPen,
         permission: 'inscriptions:READ',
       },
@@ -172,6 +201,7 @@ export const NAVIGATION: GroupeNavigation[] = [
         libelleSimple: 'Notes',
         pictogramme: '📝',
         href: '/bulletins',
+        libellePersonnel: { PERSONNEL: 'Mes bulletins', PARENT: 'Bulletins de mes enfants' },
         icone: FileText,
         permission: 'bulletins:READ',
       },
@@ -241,6 +271,7 @@ export const NAVIGATION: GroupeNavigation[] = [
         libelleSimple: 'Résultats',
         pictogramme: '🏆',
         href: '/resultats',
+        libellePersonnel: { PERSONNEL: 'Mes résultats' },
         icone: Award,
         permission: 'resultats:READ',
       },
@@ -270,6 +301,7 @@ export const NAVIGATION: GroupeNavigation[] = [
         libelleSimple: 'Après le bac',
         pictogramme: '🧭',
         href: '/orientation',
+        libellePersonnel: { PERSONNEL: 'Mon orientation' },
         icone: Compass,
         permission: 'orientation:READ',
       },
@@ -278,6 +310,7 @@ export const NAVIGATION: GroupeNavigation[] = [
         libelleSimple: 'Projets',
         pictogramme: '💡',
         href: '/projets',
+        libellePersonnel: { PERSONNEL: 'Mes projets' },
         icone: Lightbulb,
         permission: 'projets:READ',
       },
@@ -286,6 +319,7 @@ export const NAVIGATION: GroupeNavigation[] = [
         libelleSimple: 'Travail',
         pictogramme: '💼',
         href: '/emploi',
+        libellePersonnel: { PERSONNEL: 'Mes candidatures' },
         icone: Briefcase,
         permission: 'emploi:READ',
       },
@@ -307,6 +341,7 @@ export const NAVIGATION: GroupeNavigation[] = [
         libelleSimple: 'Bourses',
         pictogramme: '💶',
         href: '/bourses',
+        libellePersonnel: { PERSONNEL: 'Mes bourses' },
         icone: Landmark,
         permission: 'bourses:READ',
       },
@@ -315,6 +350,7 @@ export const NAVIGATION: GroupeNavigation[] = [
         libelleSimple: 'Bus',
         pictogramme: '🚌',
         href: '/transport',
+        libellePersonnel: { PERSONNEL: 'Mon transport' },
         icone: Bus,
         permission: 'transport:READ',
       },
@@ -323,6 +359,7 @@ export const NAVIGATION: GroupeNavigation[] = [
         libelleSimple: 'Chambres',
         pictogramme: '🛏️',
         href: '/logement',
+        libellePersonnel: { PERSONNEL: 'Mon logement' },
         icone: BedDouble,
         permission: 'logement:READ',
       },
@@ -347,6 +384,7 @@ export const NAVIGATION: GroupeNavigation[] = [
         libelleSimple: 'Livres',
         pictogramme: '📖',
         href: '/bibliotheque',
+        libellePersonnel: { PERSONNEL: 'Mes emprunts' },
         icone: Library,
         permission: 'bibliotheque:READ',
       },

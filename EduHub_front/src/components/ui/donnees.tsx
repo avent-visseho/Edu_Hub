@@ -31,7 +31,15 @@ export function Indicateur({
   className?: string;
 }) {
   const { modeSimplifie, lectureVocale, lire } = useAccessibilite();
-  const affichage = typeof valeur === 'number' ? formaterNombre(valeur) : valeur;
+  // Une moyenne sur vingt perd son sens arrondie à l'unité, mais un effectif
+  // n'a que faire de décimales : on n'affiche que celles que la valeur porte
+  // réellement. D'où « 12 000 élèves », « 7,36 sur 20 » et « 83,3 % ».
+  const decimales = (() => {
+    if (typeof valeur !== 'number') return 0;
+    if (Number.isInteger(valeur)) return 0;
+    return Number.isInteger(valeur * 10) ? 1 : 2;
+  })();
+  const affichage = typeof valeur === 'number' ? formaterNombre(valeur, decimales) : valeur;
 
   return (
     <div className={cn('surface rounded-xl p-4 shadow-carte', className)}>

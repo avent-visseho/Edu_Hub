@@ -3,7 +3,7 @@
 import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
 
-import { NAVIGATION } from '@/components/layout/navigation';
+import { libelleEntree, NAVIGATION } from '@/components/layout/navigation';
 import { EntetePage } from '@/components/layout/entete-page';
 import { Indicateur } from '@/components/ui/donnees';
 import { Carte, CorpsCarte, EnteteCarte, Squelette } from '@/components/ui/primitives';
@@ -105,7 +105,7 @@ export function AccueilPersonnel() {
                         className="flex items-center gap-2.5 rounded-lg px-2 py-2 text-sm transition hover:bg-[rgb(var(--fond-doux))]"
                       >
                         <Icone size={18} aria-hidden className="shrink-0 texte-doux" />
-                        {entree.libelle}
+                        {libelleEntree(entree, utilisateur?.niveau_scope ?? '', roles)}
                       </Link>
                     </li>
                   );

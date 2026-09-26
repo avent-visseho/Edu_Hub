@@ -11,7 +11,7 @@ import { cn, initiales } from '@/lib/utils';
 
 import { Bouton } from '../ui/primitives';
 import { BarreAccessibilite } from './barre-accessibilite';
-import { NAVIGATION } from './navigation';
+import { libelleEntree, NAVIGATION } from './navigation';
 import { RechercheGlobale } from './recherche-globale';
 
 /**
@@ -57,11 +57,16 @@ export function Coquille({ children }: { children: ReactNode }) {
 
   const groupes = NAVIGATION.map((groupe) => ({
     ...groupe,
-    entrees: groupe.entrees.filter((entree) => {
-      if (!entree.permission) return true;
-      const [ressource, action] = entree.permission.split(':');
-      return peut(ressource, action);
-    }),
+    entrees: groupe.entrees
+      .filter((entree) => {
+        if (!entree.permission) return true;
+        const [ressource, action] = entree.permission.split(':');
+        return peut(ressource, action);
+      })
+      .map((entree) => ({
+        ...entree,
+        libelle: libelleEntree(entree, utilisateur.niveau_scope, utilisateur.roles),
+      })),
   })).filter((groupe) => groupe.entrees.length > 0);
 
   const navigation = (

@@ -13,6 +13,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import SeedScale
 from app.core.logging import get_logger
+from app.seed.frontiere import dans_le_pays
 from app.seed.scolaire import NOMS, PRENOMS_FEMININS, PRENOMS_MASCULINS
 
 logger = get_logger("seed")
@@ -114,11 +115,29 @@ class ContexteSeed:
         return debut + timedelta(days=self.rng.randint(0, max(ecart, 0)))
 
     def coordonnees(self, latitude: float, longitude: float, rayon: float = 0.25):
-        """Position géographique dispersée autour d'un point de référence."""
-        return (
-            round(latitude + self.rng.uniform(-rayon, rayon), 6),
-            round(longitude + self.rng.uniform(-rayon, rayon), 6),
-        )
+        """Position dispersée autour d'un point de référence, dans le pays.
+
+        Le tirage uniforme dans un carré ne connaît pas les frontières : autour
+        de Cotonou il tombe dans le golfe de Guinée, à l'ouest il déborde au
+        Togo. On retire donc tant que le point n'est pas sur le territoire, en
+        resserrant progressivement le rayon pour que la boucle converge même
+        lorsque le point de référence est lui-même proche d'une côte ou d'une
+        frontière.
+
+        Après vingt essais infructueux — le cas ne se présente pas avec les
+        chefs-lieux actuels, mais un point de référence mal placé le
+        provoquerait — on rend le point de référence lui-même plutôt que de
+        boucler sans fin.
+        """
+        for essai in range(20):
+            portee = rayon * (1 - essai / 25)
+            candidat = (
+                round(latitude + self.rng.uniform(-portee, portee), 6),
+                round(longitude + self.rng.uniform(-portee, portee), 6),
+            )
+            if dans_le_pays(*candidat):
+                return candidat
+        return (round(latitude, 6), round(longitude, 6))
 
     # ---------- Identités ----------
 

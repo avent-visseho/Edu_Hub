@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 
+import { AccueilPersonnel } from '@/components/layout/accueil-personnel';
 import { EntetePage } from '@/components/layout/entete-page';
 import { GraphiqueBarres, GraphiqueSecteurs } from '@/components/graphiques';
 import { Indicateur } from '@/components/ui/donnees';
@@ -46,13 +47,20 @@ const HABILLAGE: Record<string, { icone: React.ReactNode; pictogramme: string }>
 };
 
 export default function PageTableauDeBord() {
-  const { utilisateur } = useSession();
+  const { utilisateur, peut } = useSession();
+
+  // Les indicateurs nationaux relèvent du pilotage. Un élève, un parent ou un
+  // enseignant n'y a pas droit : leur demander la requête ne produirait qu'une
+  // erreur de permission en guise de page d'accueil.
+  const pilotage = peut('analytics', 'READ');
 
   const tableau = useQuery({
     queryKey: ['tableau-bord-national'],
     queryFn: () => api.get<TableauBord>('/tableaux-de-bord/national'),
+    enabled: pilotage,
   });
 
+  if (!pilotage) return <AccueilPersonnel />;
   if (tableau.isLoading) return <Chargement libelle="Consolidation des indicateurs…" />;
   if (tableau.isError) return <MessageErreur erreur={tableau.error} />;
 

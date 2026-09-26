@@ -12,11 +12,22 @@ import { api, ErreurApi } from '@/lib/api';
 import { useSession } from '@/lib/session';
 
 /** Comptes de démonstration, pour entrer dans la plateforme sans préparation. */
+/**
+ * Comptes proposés, du sommet de la chaîne jusqu'à la salle de classe. Les
+ * quatre derniers ne sont pas des comptes créés pour la vitrine : ce sont de
+ * vrais comptes du jeu de données — l'élève est inscrit dans sa classe,
+ * l'enseignant garde ses matières, le parent ses enfants — auxquels le
+ * générateur donne une adresse mémorable.
+ */
 const COMPTES_DEMO = [
   { role: 'Super administrateur', email: 'super.admin@eduhub.bj', pictogramme: '🛡️' },
   { role: 'Ministère (MEMP)', email: 'admin.memp@eduhub.bj', pictogramme: '🏛️' },
   { role: 'Direction des examens', email: 'admin.dec.memp@eduhub.bj', pictogramme: '🎓' },
   { role: 'Direction départementale', email: 'admin.ddeps.atlantique@eduhub.bj', pictogramme: '📍' },
+  { role: "Chef d'établissement", email: 'directeur@eduhub.bj', pictogramme: '🏫' },
+  { role: 'Enseignant', email: 'enseignant@eduhub.bj', pictogramme: '👩🏾‍🏫' },
+  { role: 'Élève', email: 'eleve@eduhub.bj', pictogramme: '🎒' },
+  { role: "Parent d'élève", email: 'parent@eduhub.bj', pictogramme: '👨🏾‍👩🏾‍👦🏾' },
   { role: 'Compte de démonstration', email: 'demo@education.local', pictogramme: '👁️' },
 ];
 
@@ -154,7 +165,7 @@ export default function PageConnexion() {
               </p>
             ) : null}
 
-            <Bouton type="submit" chargement={envoi} taille="lg" className="w-full">
+            <Bouton type="submit" chargement={envoi} taille="lg" className="h-14 w-full text-lg">
               Se connecter
               <ArrowRight size={18} aria-hidden />
             </Bouton>
@@ -164,13 +175,19 @@ export default function PageConnexion() {
             <h3 id="comptes-demo" className="mb-2 text-sm font-medium texte-doux">
               Comptes de démonstration — mot de passe {MOT_DE_PASSE_DEMO}
             </h3>
-            <ul className="space-y-1.5">
+            {/*
+              Disposition en ligne qui repasse d'elle-même : neuf comptes
+              empilés poussaient le reste de la page hors de l'écran. Chaque
+              bouton garde une largeur minimale pour que l'adresse reste
+              lisible, et s'étire pour remplir sa ligne.
+            */}
+            <ul className="flex flex-wrap gap-2">
               {COMPTES_DEMO.map((compte) => (
-                <li key={compte.email}>
+                <li key={compte.email} className="min-w-[13.5rem] flex-1">
                   <button
                     type="button"
                     onClick={() => remplir(compte.email)}
-                    className="flex w-full items-center gap-3 rounded-lg border px-3 py-2.5 text-left transition hover:bg-[rgb(var(--fond-doux))]"
+                    className="flex h-full w-full items-center gap-2.5 rounded-lg border px-3 py-2 text-left transition hover:bg-[rgb(var(--fond-doux))]"
                   >
                     <span aria-hidden className="text-lg">
                       {compte.pictogramme}

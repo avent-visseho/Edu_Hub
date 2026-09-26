@@ -107,8 +107,8 @@ export default function Accueil() {
           </h1>
           <p className="mt-5 max-w-2xl text-lg texte-doux">
             EduHub relie apprenants, enseignants, établissements, directions départementales,
-            directions des examens et ministères dans une même chaîne de données cohérente —
-            pensée pour être utilisable par tous, y compris en connexion limitée.
+            directions des examens et ministères dans une même chaîne de données cohérente — pensée
+            pour être utilisable par tous, y compris en connexion limitée.
           </p>
 
           <div className="mt-8 flex flex-wrap gap-3">
@@ -152,12 +152,12 @@ export default function Accueil() {
               </h2>
               <p className="mt-3 texte-doux">
                 Contraste élevé, grande police, lecture vocale, navigation clavier complète,
-                interface simplifiée à pictogrammes pour les personnes peu alphabétisées, et
-                mode économie de données qui remplace les graphiques par des tableaux lisibles.
+                interface simplifiée à pictogrammes pour les personnes peu alphabétisées, et mode
+                économie de données qui remplace les graphiques par des tableaux lisibles.
               </p>
               <p className="mt-3 texte-doux">
-                Côté examens, les aménagements suivent le candidat : tiers temps, salle
-                aménagée, secrétaire, sujets en braille ou interprète en langue des signes.
+                Côté examens, les aménagements suivent le candidat : tiers temps, salle aménagée,
+                secrétaire, sujets en braille ou interprète en langue des signes.
               </p>
             </div>
             <div>

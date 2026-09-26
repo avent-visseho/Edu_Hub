@@ -56,7 +56,10 @@ export default function PageServiceEnseignant() {
   return (
     <>
       <EntetePage
-        fil={[{ libelle: 'Enseignants', href: '/enseignants' }, { libelle: enseignant.nom_complet }]}
+        fil={[
+          { libelle: 'Enseignants', href: '/enseignants' },
+          { libelle: enseignant.nom_complet },
+        ]}
         titre={enseignant.nom_complet}
         description={
           <span className="flex flex-wrap items-center gap-2">
@@ -107,10 +110,7 @@ export default function PageServiceEnseignant() {
           {donnees.matieres.length > 0 ? (
             <ul className="divide-y">
               {donnees.matieres.map((matiere) => (
-                <li
-                  key={matiere.id}
-                  className="flex items-center justify-between gap-2 px-5 py-3"
-                >
+                <li key={matiere.id} className="flex items-center justify-between gap-2 px-5 py-3">
                   <span className="min-w-0">
                     <span className="block truncate font-medium">{matiere.libelle}</span>
                     <span className="block font-mono text-xs texte-doux">{matiere.code}</span>

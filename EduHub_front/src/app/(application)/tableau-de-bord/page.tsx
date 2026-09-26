@@ -163,10 +163,7 @@ export default function PageTableauDeBord() {
         </Carte>
 
         <Carte>
-          <EnteteCarte
-            titre="Inclusion"
-            description="Apprenants déclarant un besoin spécifique."
-          />
+          <EnteteCarte titre="Inclusion" description="Apprenants déclarant un besoin spécifique." />
           <CorpsCarte>
             {inclusion.length > 0 ? (
               <GraphiqueSecteurs

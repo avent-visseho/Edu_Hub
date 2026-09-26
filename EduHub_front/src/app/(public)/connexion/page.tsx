@@ -48,9 +48,10 @@ export default function PageConnexion() {
   // se lit avant même d'avoir un compte.
   const accessibilite = useQuery({
     queryKey: ['options-accessibilite'],
-    queryFn: () => api.get<OptionsAccessibilite>('/public/accessibilite', undefined, {
-      publique: true,
-    }),
+    queryFn: () =>
+      api.get<OptionsAccessibilite>('/public/accessibilite', undefined, {
+        publique: true,
+      }),
   });
 
   const [email, setEmail] = useState('');
@@ -105,8 +106,8 @@ export default function PageConnexion() {
             Toute la vie éducative dans un système unique.
           </h1>
           <p className="mt-4 max-w-md opacity-90">
-            Scolarité, examens et concours, diplômes vérifiables, vie étudiante, projets, stages
-            et gouvernance — reliés de bout en bout.
+            Scolarité, examens et concours, diplômes vérifiables, vie étudiante, projets, stages et
+            gouvernance — reliés de bout en bout.
           </p>
         </div>
 
@@ -214,10 +215,7 @@ export default function PageConnexion() {
                   ...accessibilite.data.audio,
                   ...accessibilite.data.navigation,
                 ].map((option) => (
-                  <li
-                    key={option.cle}
-                    className="surface-douce rounded-full px-3 py-1 text-xs"
-                  >
+                  <li key={option.cle} className="surface-douce rounded-full px-3 py-1 text-xs">
                     {option.libelle}
                   </li>
                 ))}
@@ -229,7 +227,10 @@ export default function PageConnexion() {
           ) : null}
 
           <nav className="mt-8 flex flex-wrap gap-4 text-sm" aria-label="Services publics">
-            <Link href="/resultats-publics" className="inline-flex items-center gap-1.5 hover:underline">
+            <Link
+              href="/resultats-publics"
+              className="inline-flex items-center gap-1.5 hover:underline"
+            >
               <Mail size={15} aria-hidden /> Consulter un résultat
             </Link>
             <Link href="/verification" className="inline-flex items-center gap-1.5 hover:underline">

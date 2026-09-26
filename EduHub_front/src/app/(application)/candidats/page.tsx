@@ -214,9 +214,7 @@ export default function PageCandidats() {
               <div className="min-w-0">
                 <p className="font-mono text-xs">{candidat.numero_candidat}</p>
                 {candidat.numero_table ? (
-                  <p className="font-mono text-xs texte-doux">
-                    Table {candidat.numero_table}
-                  </p>
+                  <p className="font-mono text-xs texte-doux">Table {candidat.numero_table}</p>
                 ) : null}
               </div>
             ),

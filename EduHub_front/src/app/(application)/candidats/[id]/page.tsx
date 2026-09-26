@@ -156,7 +156,9 @@ export default function PageDossierCandidat() {
   function signaler(erreurBrute: unknown) {
     setMessage(null);
     setErreur(
-      erreurBrute instanceof ErreurApi ? erreurBrute.message : "L'action n'a pas pu être appliquée.",
+      erreurBrute instanceof ErreurApi
+        ? erreurBrute.message
+        : "L'action n'a pas pu être appliquée.",
     );
   }
 
@@ -291,7 +293,9 @@ export default function PageDossierCandidat() {
                 {
                   terme: 'Besoin spécifique',
                   valeur:
-                    candidat.type_handicap === 'AUCUN' ? 'Aucun' : humaniser(candidat.type_handicap),
+                    candidat.type_handicap === 'AUCUN'
+                      ? 'Aucun'
+                      : humaniser(candidat.type_handicap),
                 },
               ]}
             />
@@ -514,7 +518,9 @@ export default function PageDossierCandidat() {
                 cle: 'statut',
                 entete: 'Statut',
                 secondaire: true,
-                rendu: (note) => <Badge ton={tonDuStatut(note.statut)}>{humaniser(note.statut)}</Badge>,
+                rendu: (note) => (
+                  <Badge ton={tonDuStatut(note.statut)}>{humaniser(note.statut)}</Badge>
+                ),
               },
             ]}
           />

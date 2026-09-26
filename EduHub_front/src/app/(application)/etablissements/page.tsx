@@ -105,7 +105,11 @@ export default function PageEtablissements() {
             alignement: 'centre',
             secondaire: true,
             rendu: (etablissement) =>
-              etablissement.est_centre_examen ? <Badge ton="info">Oui</Badge> : <span className="texte-doux">—</span>,
+              etablissement.est_centre_examen ? (
+                <Badge ton="info">Oui</Badge>
+              ) : (
+                <span className="texte-doux">—</span>
+              ),
           },
         ]}
       />

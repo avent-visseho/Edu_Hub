@@ -84,13 +84,7 @@ interface StatistiquesScolarite {
 }
 
 /** Étapes du workflow d'inscription, dans l'ordre de la chaîne. */
-const ETAPES = [
-  'DEMANDE',
-  'DOSSIER_DEPOSE',
-  'EN_VERIFICATION',
-  'VALIDEE',
-  'INSCRIT',
-];
+const ETAPES = ['DEMANDE', 'DOSSIER_DEPOSE', 'EN_VERIFICATION', 'VALIDEE', 'INSCRIT'];
 
 const SORTIES = ['REJETEE', 'TRANSFERE', 'ABANDON', 'EXCLU'];
 
@@ -262,7 +256,10 @@ export default function PageInscriptions() {
         </Carte>
 
         <Carte>
-          <EnteteCarte titre="Sorties de parcours" description="Rejets, transferts, abandons et exclusions." />
+          <EnteteCarte
+            titre="Sorties de parcours"
+            description="Rejets, transferts, abandons et exclusions."
+          />
           <CorpsCarte className="space-y-3">
             {SORTIES.map((sortie) => (
               <Jauge
@@ -364,7 +361,9 @@ export default function PageInscriptions() {
             secondaire: true,
             rendu: (inscription) => (
               <span className="min-w-0">
-                <span className="block truncate">{inscription.classe_libelle ?? 'Sans classe'}</span>
+                <span className="block truncate">
+                  {inscription.classe_libelle ?? 'Sans classe'}
+                </span>
                 <span className="block truncate text-xs texte-doux">
                   {inscription.etablissement_nom ?? '—'}
                 </span>

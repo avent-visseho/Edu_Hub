@@ -138,9 +138,7 @@ export default function PageContentieux() {
             }
           />
           <CorpsCarte className="space-y-4">
-            <p className="rounded-lg surface-douce px-3 py-2.5 text-sm">
-              {enInstruction.expose}
-            </p>
+            <p className="rounded-lg surface-douce px-3 py-2.5 text-sm">{enInstruction.expose}</p>
             <div className="grid gap-4 sm:grid-cols-3">
               <Selection
                 etiquette="Décision"
@@ -217,9 +215,7 @@ export default function PageContentieux() {
             cle: 'type',
             entete: 'Motif',
             secondaire: true,
-            rendu: (dossier) => (
-              <Badge ton="neutre">{humaniser(dossier.type_contentieux)}</Badge>
-            ),
+            rendu: (dossier) => <Badge ton="neutre">{humaniser(dossier.type_contentieux)}</Badge>,
           },
           {
             cle: 'depot',

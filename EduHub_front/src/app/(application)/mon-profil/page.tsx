@@ -296,7 +296,11 @@ export default function PageProfil() {
                 </p>
               ) : null}
 
-              <Bouton type="submit" chargement={changement.isPending} disabled={motsDePasseDifferents}>
+              <Bouton
+                type="submit"
+                chargement={changement.isPending}
+                disabled={motsDePasseDifferents}
+              >
                 Modifier le mot de passe
               </Bouton>
             </form>

@@ -210,9 +210,7 @@ export default function PageComptes() {
               Masquer
             </Bouton>
           </p>
-          <p className="mt-1 texte-doux">
-            La personne devra le changer à sa première connexion.
-          </p>
+          <p className="mt-1 texte-doux">La personne devra le changer à sa première connexion.</p>
         </div>
       ) : null}
 
@@ -254,9 +252,7 @@ export default function PageComptes() {
                 ].map((entree) => (
                   <div key={entree.terme} className="flex items-center justify-between gap-2">
                     <dt className="texte-doux">{entree.terme}</dt>
-                    <dd className="font-semibold tabular-nums">
-                      {formaterNombre(entree.valeur)}
-                    </dd>
+                    <dd className="font-semibold tabular-nums">{formaterNombre(entree.valeur)}</dd>
                   </div>
                 ))}
               </dl>

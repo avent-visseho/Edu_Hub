@@ -412,11 +412,7 @@ export default function PageGouvernance() {
                     <span className="font-medium">{declenchement.libelle}</span>
                     <span className="font-mono text-xs texte-doux">{declenchement.regle}</span>
                     {declenchement.applicable ? (
-                      <Badge
-                        ton={
-                          (declenchement.occurrences ?? 0) > 0 ? 'alerte' : 'succes'
-                        }
-                      >
+                      <Badge ton={(declenchement.occurrences ?? 0) > 0 ? 'alerte' : 'succes'}>
                         {formaterNombre(declenchement.occurrences ?? 0)} occurrence(s)
                       </Badge>
                     ) : (

@@ -83,8 +83,7 @@ export default function PageSaisieNotes() {
   const apprenants = useQuery({
     queryKey: ['classe-apprenants', evaluation.data?.classe_id],
     enabled: Boolean(evaluation.data?.classe_id),
-    queryFn: () =>
-      api.get<ApprenantClasse[]>(`/classes/${evaluation.data!.classe_id}/apprenants`),
+    queryFn: () => api.get<ApprenantClasse[]>(`/classes/${evaluation.data!.classe_id}/apprenants`),
   });
 
   const notes = useQuery({
@@ -160,7 +159,10 @@ export default function PageSaisieNotes() {
   const verrouillee = ['VALIDEE_ETABLISSEMENT', 'PUBLIEE'].includes(donnees.statut);
   const liste = apprenants.data ?? [];
 
-  function modifier(apprenantId: string, modifications: Partial<{ valeur: string; statut: string }>) {
+  function modifier(
+    apprenantId: string,
+    modifications: Partial<{ valeur: string; statut: string }>,
+  ) {
     setSaisies((precedentes) => {
       const courante = precedentes[apprenantId] ?? { valeur: '', statut: 'SAISIE' };
       return { ...precedentes, [apprenantId]: { ...courante, ...modifications } };
@@ -225,7 +227,7 @@ export default function PageSaisieNotes() {
                 }
               >
                 {donnees.statut === 'VALIDEE_ENSEIGNANT'
-                  ? "Valider (établissement)"
+                  ? 'Valider (établissement)'
                   : donnees.statut === 'VALIDEE_ETABLISSEMENT'
                     ? 'Publier les notes'
                     : 'Valider (enseignant)'}
@@ -360,8 +362,7 @@ export default function PageSaisieNotes() {
                           onChange={(evenement) =>
                             modifier(apprenant.id, {
                               statut: evenement.target.value,
-                              valeur:
-                                evenement.target.value === 'SAISIE' ? saisie.valeur : '',
+                              valeur: evenement.target.value === 'SAISIE' ? saisie.valeur : '',
                             })
                           }
                           className="rounded-lg border bg-[rgb(var(--fond-carte))] px-2 py-1.5 text-sm disabled:opacity-50"

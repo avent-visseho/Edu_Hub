@@ -6,7 +6,15 @@ import Link from 'next/link';
 import { useState } from 'react';
 
 import { BarreAccessibilite } from '@/components/layout/barre-accessibilite';
-import { Badge, Bouton, Carte, Champ, CorpsCarte, Selection, tonDuStatut } from '@/components/ui/primitives';
+import {
+  Badge,
+  Bouton,
+  Carte,
+  Champ,
+  CorpsCarte,
+  Selection,
+  tonDuStatut,
+} from '@/components/ui/primitives';
 import { ListeDescriptive } from '@/components/ui/donnees';
 import { ErreurApi, api } from '@/lib/api';
 import { useAccessibilite } from '@/lib/accessibilite';
@@ -61,7 +69,10 @@ export default function PageResultatsPublics() {
     <div className="min-h-screen">
       <header className="border-b">
         <div className="mx-auto flex max-w-4xl items-center justify-between gap-4 px-4 py-4 sm:px-6">
-          <Link href="/" className="inline-flex items-center gap-2 text-sm font-medium hover:underline">
+          <Link
+            href="/"
+            className="inline-flex items-center gap-2 text-sm font-medium hover:underline"
+          >
             <ArrowLeft size={17} aria-hidden /> Accueil
           </Link>
           <BarreAccessibilite />
@@ -128,9 +139,7 @@ export default function PageResultatsPublics() {
           <Carte className="mt-6 animate-apparition">
             <div
               className={`rounded-t-xl px-5 py-4 ${
-                admis
-                  ? 'bg-[rgb(var(--succes))]/12'
-                  : 'bg-[rgb(var(--danger))]/10'
+                admis ? 'bg-[rgb(var(--succes))]/12' : 'bg-[rgb(var(--danger))]/10'
               }`}
             >
               <div className="flex flex-wrap items-center justify-between gap-3">

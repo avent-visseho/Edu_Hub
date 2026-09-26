@@ -55,7 +55,9 @@ export default function PageEnseignants() {
           {
             cle: 'matricule',
             entete: 'Matricule',
-            rendu: (enseignant) => <span className="font-mono text-xs">{enseignant.matricule}</span>,
+            rendu: (enseignant) => (
+              <span className="font-mono text-xs">{enseignant.matricule}</span>
+            ),
           },
           {
             cle: 'nom',

@@ -96,9 +96,9 @@ export default function PageCorrection() {
   const [restantes, setRestantes] = useState(true);
   const [secondeLecture, setSecondeLecture] = useState(false);
   const [saisies, setSaisies] = useState<Record<string, string>>({});
-  const [notesSaisies, setNotesSaisies] = useState<Record<string, { valeur: string; statut: string }>>(
-    {},
-  );
+  const [notesSaisies, setNotesSaisies] = useState<
+    Record<string, { valeur: string; statut: string }>
+  >({});
   const [message, setMessage] = useState<string | null>(null);
   const [erreur, setErreur] = useState<string | null>(null);
 
@@ -115,8 +115,7 @@ export default function PageCorrection() {
 
   const correcteurs = useQuery({
     queryKey: ['correcteurs-epreuve', epreuveId],
-    queryFn: () =>
-      api.get<Page<Correcteur>>('/correcteurs', { epreuve_id: epreuveId, size: 100 }),
+    queryFn: () => api.get<Page<Correcteur>>('/correcteurs', { epreuve_id: epreuveId, size: 100 }),
     enabled: Boolean(epreuveId),
   });
 
@@ -170,16 +169,12 @@ export default function PageCorrection() {
 
   const corriger = useMutation({
     mutationFn: (variables: { copie: string; note: number }) =>
-      api.post<Copie>(
-        `/copies/${variables.copie}/corriger`,
-        undefined,
-        {
-          parametres: {
-            note: variables.note,
-            second_correcteur: secondeLecture ? 'true' : 'false',
-          },
+      api.post<Copie>(`/copies/${variables.copie}/corriger`, undefined, {
+        parametres: {
+          note: variables.note,
+          second_correcteur: secondeLecture ? 'true' : 'false',
         },
-      ),
+      }),
     onSuccess: (copie) => {
       setErreur(null);
       setMessage(
@@ -516,7 +511,9 @@ export default function PageCorrection() {
                       <Bouton
                         taille="sm"
                         variante="secondaire"
-                        disabled={!autorise || saisies[copie.id] === undefined || saisies[copie.id] === ''}
+                        disabled={
+                          !autorise || saisies[copie.id] === undefined || saisies[copie.id] === ''
+                        }
                         chargement={corriger.isPending && corriger.variables?.copie === copie.id}
                         onClick={() =>
                           corriger.mutate({ copie: copie.id, note: Number(saisies[copie.id]) })

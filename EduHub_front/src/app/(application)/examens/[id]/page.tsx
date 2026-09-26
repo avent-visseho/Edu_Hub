@@ -227,7 +227,12 @@ export default function PagePilotageSession() {
 
       {/* Indicateurs */}
       <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
-        <Indicateur libelle="Inscrits" valeur={session.nombre_inscrits} icone={<Users size={18} />} pictogramme="🧾" />
+        <Indicateur
+          libelle="Inscrits"
+          valeur={session.nombre_inscrits}
+          icone={<Users size={18} />}
+          pictogramme="🧾"
+        />
         <Indicateur libelle="Présents" valeur={session.nombre_presents} pictogramme="✅" />
         <Indicateur libelle="Absents" valeur={session.nombre_absents} pictogramme="🚫" />
         <Indicateur libelle="Admis" valeur={session.nombre_admis} pictogramme="🏆" />

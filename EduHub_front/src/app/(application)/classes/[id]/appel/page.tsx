@@ -122,7 +122,9 @@ export default function PageAppelClasse() {
   // La saisie repart des présences déjà enregistrées, complétées par « Présent ».
   useEffect(() => {
     if (!effectif.data) return;
-    const deja = new Map((presences.data ?? []).map((presence) => [presence.apprenant_id, presence]));
+    const deja = new Map(
+      (presences.data ?? []).map((presence) => [presence.apprenant_id, presence]),
+    );
     const initiales: Record<string, Ligne> = {};
     for (const apprenant of effectif.data) {
       const presence = deja.get(apprenant.id);

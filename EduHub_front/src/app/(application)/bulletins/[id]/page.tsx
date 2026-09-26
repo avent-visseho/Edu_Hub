@@ -264,9 +264,7 @@ export default function PageBulletin() {
           {donnees.code_verification ? (
             <Carte>
               <CorpsCarte className="text-center">
-                <p className="text-xs uppercase tracking-wide texte-doux">
-                  Code de vérification
-                </p>
+                <p className="text-xs uppercase tracking-wide texte-doux">Code de vérification</p>
                 <p className="mt-1 break-all font-mono text-sm font-semibold">
                   {donnees.code_verification}
                 </p>

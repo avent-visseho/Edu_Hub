@@ -138,9 +138,7 @@ export default function PageDetailClasse() {
   const annee = useQuery({
     queryKey: ['annee-courante'],
     queryFn: () =>
-      api.get<{ id: string; libelle: string; periodes: Periode[] }>(
-        '/annees-academiques/courante',
-      ),
+      api.get<{ id: string; libelle: string; periodes: Periode[] }>('/annees-academiques/courante'),
   });
 
   const periodeActive = periodeId || annee.data?.periodes[0]?.id || '';
@@ -275,7 +273,10 @@ export default function PageDetailClasse() {
   return (
     <>
       <EntetePage
-        fil={[{ libelle: 'Classes', href: '/classes' }, { libelle: stats?.classe_libelle ?? 'Classe' }]}
+        fil={[
+          { libelle: 'Classes', href: '/classes' },
+          { libelle: stats?.classe_libelle ?? 'Classe' },
+        ]}
         titre={stats?.classe_libelle ?? 'Classe'}
         description={`${apprenants.data?.length ?? 0} apprenant(s) inscrit(s).`}
         actions={
@@ -421,8 +422,8 @@ export default function PageDetailClasse() {
           }
           libelleEnseignant={(id) =>
             id
-              ? (enseignants.data?.items.find((enseignant) => enseignant.id === id)
-                  ?.nom_complet ?? null)
+              ? (enseignants.data?.items.find((enseignant) => enseignant.id === id)?.nom_complet ??
+                null)
               : null
           }
         />

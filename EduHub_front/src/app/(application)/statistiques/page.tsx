@@ -150,7 +150,10 @@ export default function PageStatistiques() {
               className="h-11"
             />
             {peut('rapports', 'CREATE') ? (
-              <Bouton onClick={() => void genererRapport()} icone={<FileDown size={17} aria-hidden />}>
+              <Bouton
+                onClick={() => void genererRapport()}
+                icone={<FileDown size={17} aria-hidden />}
+              >
                 Produire un rapport
               </Bouton>
             ) : null}
@@ -288,7 +291,7 @@ export default function PageStatistiques() {
           titre="Synthèse territoriale"
           description={
             sessionId
-              ? "Résultats de la session sélectionnée, département par département."
+              ? 'Résultats de la session sélectionnée, département par département.'
               : 'Effectifs par département. Sélectionnez une session pour afficher les résultats.'
           }
         />

@@ -103,7 +103,13 @@ interface Dossier {
     taux_presence: number;
   } | null;
   bourses: Array<{ numero: string; statut: string; montant_attribue: number }>;
-  projets: Array<{ id: string; titre: string; domaine: string | null; role: string; statut: string }>;
+  projets: Array<{
+    id: string;
+    titre: string;
+    domaine: string | null;
+    role: string;
+    statut: string;
+  }>;
   stages: Array<{
     reference: string;
     sujet: string;
@@ -139,10 +145,7 @@ export default function PageDossierApprenant() {
   return (
     <>
       <EntetePage
-        fil={[
-          { libelle: 'Apprenants', href: '/apprenants' },
-          { libelle: apprenant.nom_complet },
-        ]}
+        fil={[{ libelle: 'Apprenants', href: '/apprenants' }, { libelle: apprenant.nom_complet }]}
         titre={apprenant.nom_complet}
         description={
           <span className="flex flex-wrap items-center gap-2">
@@ -192,12 +195,13 @@ export default function PageDossierApprenant() {
                 },
                 {
                   terme: 'Situation',
-                  valeur: [
-                    apprenant.orphelin ? 'Orphelin' : null,
-                    apprenant.situation_vulnerable ? 'Situation vulnérable' : null,
-                  ]
-                    .filter(Boolean)
-                    .join(' · ') || 'Ordinaire',
+                  valeur:
+                    [
+                      apprenant.orphelin ? 'Orphelin' : null,
+                      apprenant.situation_vulnerable ? 'Situation vulnérable' : null,
+                    ]
+                      .filter(Boolean)
+                      .join(' · ') || 'Ordinaire',
                 },
               ]}
             />
@@ -429,7 +433,12 @@ export default function PageDossierApprenant() {
               rendu: (ligne) =>
                 ligne.rang ? `${ligne.rang} / ${ligne.effectif_classe ?? '—'}` : '—',
             },
-            { cle: 'mention', entete: 'Mention', secondaire: true, rendu: (ligne) => ligne.mention ?? '—' },
+            {
+              cle: 'mention',
+              entete: 'Mention',
+              secondaire: true,
+              rendu: (ligne) => ligne.mention ?? '—',
+            },
             {
               cle: 'decision',
               entete: 'Décision',
@@ -461,7 +470,12 @@ export default function PageDossierApprenant() {
             vide={<EtatVide titre="Aucune candidature" />}
             colonnes={[
               { cle: 'examen', entete: 'Examen', rendu: (ligne) => ligne.examen },
-              { cle: 'serie', entete: 'Série', secondaire: true, rendu: (ligne) => ligne.serie ?? '—' },
+              {
+                cle: 'serie',
+                entete: 'Série',
+                secondaire: true,
+                rendu: (ligne) => ligne.serie ?? '—',
+              },
               {
                 cle: 'moyenne',
                 entete: 'Moyenne',
@@ -490,7 +504,10 @@ export default function PageDossierApprenant() {
           {donnees.diplomes.length > 0 ? (
             <ul className="divide-y">
               {donnees.diplomes.map((diplome) => (
-                <li key={diplome.id} className="flex flex-wrap items-center justify-between gap-3 px-5 py-3.5">
+                <li
+                  key={diplome.id}
+                  className="flex flex-wrap items-center justify-between gap-3 px-5 py-3.5"
+                >
                   <div className="min-w-0">
                     <p className="font-medium">{diplome.intitule}</p>
                     <p className="text-sm texte-doux">

@@ -167,10 +167,7 @@ export default function PageCentre() {
   return (
     <>
       <EntetePage
-        fil={[
-          { libelle: 'Centres de composition', href: '/centres' },
-          { libelle: donnees.nom },
-        ]}
+        fil={[{ libelle: 'Centres de composition', href: '/centres' }, { libelle: donnees.nom }]}
         titre={donnees.nom}
         description={
           <span className="flex flex-wrap items-center gap-2">
@@ -242,7 +239,10 @@ export default function PageCentre() {
             <ListeDescriptive
               colonnes={1}
               entrees={[
-                { terme: 'Code', valeur: <span className="font-mono text-sm">{donnees.code}</span> },
+                {
+                  terme: 'Code',
+                  valeur: <span className="font-mono text-sm">{donnees.code}</span>,
+                },
                 { terme: 'Adresse', valeur: donnees.adresse ?? '—' },
                 { terme: 'Chef de centre', valeur: donnees.chef_centre_nom ?? 'Non désigné' },
                 { terme: 'Téléphone', valeur: donnees.chef_centre_telephone ?? '—' },
@@ -364,7 +364,10 @@ export default function PageCentre() {
                   required
                   value={nouvelleSalle.code}
                   onChange={(evenement) =>
-                    setNouvelleSalle((precedent) => ({ ...precedent, code: evenement.target.value }))
+                    setNouvelleSalle((precedent) => ({
+                      ...precedent,
+                      code: evenement.target.value,
+                    }))
                   }
                 />
                 <Champ

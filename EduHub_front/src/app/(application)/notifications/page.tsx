@@ -48,10 +48,9 @@ export default function PageNotifications() {
   const notifications = useQuery({
     queryKey: ['notifications'],
     queryFn: () =>
-      api.get<{ non_lues: number; notifications: Notification[] }>(
-        '/communication/notifications',
-        { limite: 100 },
-      ),
+      api.get<{ non_lues: number; notifications: Notification[] }>('/communication/notifications', {
+        limite: 100,
+      }),
   });
 
   const annonces = useQuery({

@@ -1,14 +1,7 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import {
-  BookOpen,
-  Download,
-  Headphones,
-  MonitorPlay,
-  Signal,
-  Subtitles,
-} from 'lucide-react';
+import { BookOpen, Download, Headphones, MonitorPlay, Signal, Subtitles } from 'lucide-react';
 import { useState } from 'react';
 
 import { EntetePage } from '@/components/layout/entete-page';
@@ -23,10 +16,7 @@ import {
   EtatVide,
   MessageErreur,
 } from '@/components/ui/primitives';
-import {
-  SelecteurApprenant,
-  type ApprenantChoisi,
-} from '@/components/ui/selecteur-apprenant';
+import { SelecteurApprenant, type ApprenantChoisi } from '@/components/ui/selecteur-apprenant';
 import { useListe } from '@/hooks/useListe';
 import { api } from '@/lib/api';
 import { formaterNombre, formaterNote, humaniser } from '@/lib/utils';
@@ -120,8 +110,7 @@ export default function PageApprentissage() {
   const progression = useQuery({
     queryKey: ['progression-cours', coursId, apprenant?.id],
     enabled: Boolean(coursId) && Boolean(apprenant),
-    queryFn: () =>
-      api.get<Progression>(`/cours/${coursId}/progression/${apprenant!.id}`),
+    queryFn: () => api.get<Progression>(`/cours/${coursId}/progression/${apprenant!.id}`),
   });
 
   const accessibles = cours.items.filter((element) => element.version_audio).length;
@@ -301,9 +290,7 @@ export default function PageApprentissage() {
                                 </Badge>
                               ) : null}
                               {lecon.ressources.length > 0 ? (
-                                <Badge ton="neutre">
-                                  {lecon.ressources.length} ressource(s)
-                                </Badge>
+                                <Badge ton="neutre">{lecon.ressources.length} ressource(s)</Badge>
                               ) : null}
                             </span>
                             {lecon.contenu_simplifie ? (

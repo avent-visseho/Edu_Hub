@@ -59,7 +59,10 @@ interface RequeteEnregistree {
   libelle: string;
   description: string | null;
   entite_cible: string;
-  filtres: { criteres?: Array<{ champ: string; operateur: string; valeur?: unknown }>; conjonction?: string };
+  filtres: {
+    criteres?: Array<{ champ: string; operateur: string; valeur?: unknown }>;
+    conjonction?: string;
+  };
   partagee: boolean;
   requete_naturelle: string | null;
   nombre_executions: number;
@@ -73,9 +76,7 @@ interface CritereSaisi {
 }
 
 export default function PageRecherche() {
-  const [onglet, setOnglet] = useState<'constructeur' | 'naturel' | 'enregistrees'>(
-    'constructeur',
-  );
+  const [onglet, setOnglet] = useState<'constructeur' | 'naturel' | 'enregistrees'>('constructeur');
 
   return (
     <>
@@ -279,7 +280,7 @@ function Constructeur() {
               onChange={(evenement) => setConjonction(evenement.target.value as 'AND' | 'OR')}
               options={[
                 { valeur: 'AND', libelle: 'Toutes les conditions (ET)' },
-                { valeur: 'OR', libelle: "Au moins une condition (OU)" },
+                { valeur: 'OR', libelle: 'Au moins une condition (OU)' },
               ]}
             />
           </div>
@@ -349,13 +350,21 @@ function Constructeur() {
                     <Champ
                       etiquette="Valeur"
                       etiquetteMasquee
-                      type={champ?.type === 'nombre' ? 'number' : champ?.type === 'date' ? 'date' : 'text'}
+                      type={
+                        champ?.type === 'nombre'
+                          ? 'number'
+                          : champ?.type === 'date'
+                            ? 'date'
+                            : 'text'
+                      }
                       value={critere.valeur}
                       onChange={(evenement) =>
                         modifierCritere(critere.id, { valeur: evenement.target.value })
                       }
                       placeholder={
-                        critere.operateur === 'between' ? 'Deux valeurs séparées par une virgule' : 'Valeur'
+                        critere.operateur === 'between'
+                          ? 'Deux valeurs séparées par une virgule'
+                          : 'Valeur'
                       }
                     />
                   )}
@@ -376,7 +385,11 @@ function Constructeur() {
               );
             })}
 
-            <Bouton variante="secondaire" onClick={ajouterCritere} icone={<Plus size={17} aria-hidden />}>
+            <Bouton
+              variante="secondaire"
+              onClick={ajouterCritere}
+              icone={<Plus size={17} aria-hidden />}
+            >
               Ajouter une condition
             </Bouton>
           </div>

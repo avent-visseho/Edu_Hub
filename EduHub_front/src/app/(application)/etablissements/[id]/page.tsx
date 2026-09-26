@@ -106,7 +106,10 @@ export default function PageDetailEtablissement() {
   return (
     <>
       <EntetePage
-        fil={[{ libelle: 'Établissements', href: '/etablissements' }, { libelle: etablissement.nom }]}
+        fil={[
+          { libelle: 'Établissements', href: '/etablissements' },
+          { libelle: etablissement.nom },
+        ]}
         titre={etablissement.nom}
         description={
           <span className="flex flex-wrap items-center gap-2">
@@ -238,9 +241,23 @@ export default function PageDetailEtablissement() {
           onLigneClic={(classe) => router.push(`/classes/${classe.id}`)}
           vide={<EtatVide titre="Aucune classe enregistrée" />}
           colonnes={[
-            { cle: 'libelle', entete: 'Classe', rendu: (classe) => <span className="font-medium">{classe.libelle}</span> },
-            { cle: 'niveau', entete: 'Niveau', secondaire: true, rendu: (classe) => classe.niveau ?? '—' },
-            { cle: 'serie', entete: 'Série', secondaire: true, rendu: (classe) => classe.serie ?? '—' },
+            {
+              cle: 'libelle',
+              entete: 'Classe',
+              rendu: (classe) => <span className="font-medium">{classe.libelle}</span>,
+            },
+            {
+              cle: 'niveau',
+              entete: 'Niveau',
+              secondaire: true,
+              rendu: (classe) => classe.niveau ?? '—',
+            },
+            {
+              cle: 'serie',
+              entete: 'Série',
+              secondaire: true,
+              rendu: (classe) => classe.serie ?? '—',
+            },
             {
               cle: 'effectif',
               entete: 'Effectif',

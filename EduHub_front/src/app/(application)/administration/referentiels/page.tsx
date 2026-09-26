@@ -76,7 +76,11 @@ const GROUPES: Array<{ titre: string; referentiels: Referentiel[] }> = [
   {
     titre: 'Structure du système éducatif',
     referentiels: [
-      { cle: 'ordres-enseignement', libelle: "Ordres d'enseignement", chemin: '/ordres-enseignement' },
+      {
+        cle: 'ordres-enseignement',
+        libelle: "Ordres d'enseignement",
+        chemin: '/ordres-enseignement',
+      },
       { cle: 'cycles', libelle: 'Cycles', chemin: '/cycles' },
       {
         cle: 'niveaux',
@@ -94,7 +98,9 @@ const GROUPES: Array<{ titre: string; referentiels: Referentiel[] }> = [
         cle: 'filieres',
         libelle: 'Filières',
         chemin: '/filieres',
-        colonnes: [{ cle: 'duree_annees', entete: 'Durée', rendu: (e) => `${texte(e.duree_annees)} an(s)` }],
+        colonnes: [
+          { cle: 'duree_annees', entete: 'Durée', rendu: (e) => `${texte(e.duree_annees)} an(s)` },
+        ],
       },
       {
         cle: 'matieres',
@@ -103,7 +109,11 @@ const GROUPES: Array<{ titre: string; referentiels: Referentiel[] }> = [
         colonnes: [
           { cle: 'domaine', entete: 'Domaine', rendu: (e) => texte(e.domaine) },
           { cle: 'coefficient_defaut', entete: 'Coef.', rendu: (e) => texte(e.coefficient_defaut) },
-          { cle: 'volume_horaire_defaut', entete: 'Volume', rendu: (e) => `${texte(e.volume_horaire_defaut)} h` },
+          {
+            cle: 'volume_horaire_defaut',
+            entete: 'Volume',
+            rendu: (e) => `${texte(e.volume_horaire_defaut)} h`,
+          },
         ],
       },
     ],
@@ -111,8 +121,16 @@ const GROUPES: Array<{ titre: string; referentiels: Referentiel[] }> = [
   {
     titre: 'Établissements',
     referentiels: [
-      { cle: 'types-etablissement', libelle: "Types d'établissement", chemin: '/types-etablissement' },
-      { cle: 'statuts-etablissement', libelle: "Statuts d'établissement", chemin: '/statuts-etablissement' },
+      {
+        cle: 'types-etablissement',
+        libelle: "Types d'établissement",
+        chemin: '/types-etablissement',
+      },
+      {
+        cle: 'statuts-etablissement',
+        libelle: "Statuts d'établissement",
+        chemin: '/statuts-etablissement',
+      },
       { cle: 'types-salle', libelle: 'Types de salle', chemin: '/types-salle' },
     ],
   },
@@ -123,7 +141,9 @@ const GROUPES: Array<{ titre: string; referentiels: Referentiel[] }> = [
         cle: 'types-examen',
         libelle: "Types d'examen",
         chemin: '/types-examen',
-        colonnes: [{ cle: 'est_concours', entete: 'Concours', rendu: (e) => texte(e.est_concours) }],
+        colonnes: [
+          { cle: 'est_concours', entete: 'Concours', rendu: (e) => texte(e.est_concours) },
+        ],
       },
       {
         cle: 'diplomes-referentiel',
@@ -142,8 +162,16 @@ const GROUPES: Array<{ titre: string; referentiels: Referentiel[] }> = [
         libelle: 'Types de document',
         chemin: '/types-document',
         colonnes: [
-          { cle: 'extensions_autorisees', entete: 'Extensions', rendu: (e) => texte(e.extensions_autorisees) },
-          { cle: 'taille_max_ko', entete: 'Taille max.', rendu: (e) => `${texte(e.taille_max_ko)} Ko` },
+          {
+            cle: 'extensions_autorisees',
+            entete: 'Extensions',
+            rendu: (e) => texte(e.extensions_autorisees),
+          },
+          {
+            cle: 'taille_max_ko',
+            entete: 'Taille max.',
+            rendu: (e) => `${texte(e.taille_max_ko)} Ko`,
+          },
         ],
       },
     ],
@@ -286,10 +314,7 @@ export default function PageReferentiels() {
   const [message, setMessage] = useState<string | null>(null);
   const [erreur, setErreur] = useState<string | null>(null);
 
-  const referentiel = useMemo(
-    () => TOUS.find((element) => element.cle === cle) ?? TOUS[0],
-    [cle],
-  );
+  const referentiel = useMemo(() => TOUS.find((element) => element.cle === cle) ?? TOUS[0], [cle]);
 
   const taille = 25;
   const liste = useQuery({
@@ -440,9 +465,7 @@ export default function PageReferentiels() {
             }
             disabled={!peut('referentiels', 'DELETE') || supprimer.isPending}
             onClick={() =>
-              aConfirmer === element.id
-                ? supprimer.mutate(element)
-                : setAConfirmer(element.id)
+              aConfirmer === element.id ? supprimer.mutate(element) : setAConfirmer(element.id)
             }
             icone={<Trash2 size={15} aria-hidden />}
           >
@@ -635,8 +658,8 @@ export default function PageReferentiels() {
 
           {creationPossible ? null : peutEcrire ? (
             <p className="mt-3 text-sm texte-doux">
-              « {referentiel.libelle} » porte des attributs propres : la création se fait par
-              import ou par l&apos;API, cet écran en assure la consultation et l&apos;activation.
+              « {referentiel.libelle} » porte des attributs propres : la création se fait par import
+              ou par l&apos;API, cet écran en assure la consultation et l&apos;activation.
             </p>
           ) : null}
         </div>

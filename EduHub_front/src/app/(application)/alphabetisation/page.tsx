@@ -65,8 +65,7 @@ export default function PageAlphabetisation() {
 
   const centres = useQuery({
     queryKey: ['centres-alphabetisation'],
-    queryFn: () =>
-      api.get<Page<CentreAlphabetisation>>('/alphabetisation/centres', { size: 100 }),
+    queryFn: () => api.get<Page<CentreAlphabetisation>>('/alphabetisation/centres', { size: 100 }),
   });
 
   const actif = centreId ?? centres.data?.items[0]?.id ?? null;
@@ -161,8 +160,8 @@ export default function PageAlphabetisation() {
                       <span className="min-w-0">
                         <span className="block truncate text-sm font-medium">{element.nom}</span>
                         <span className="block truncate text-xs texte-doux">
-                          {element.nombre_apprenants} apprenant(s) ·{' '}
-                          {element.nombre_formateurs} formateur(s)
+                          {element.nombre_apprenants} apprenant(s) · {element.nombre_formateurs}{' '}
+                          formateur(s)
                         </span>
                       </span>
                       <Badge ton="neutre">{element.langue_enseignement}</Badge>

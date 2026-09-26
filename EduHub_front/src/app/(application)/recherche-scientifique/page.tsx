@@ -7,13 +7,7 @@ import { useState } from 'react';
 import { EntetePage } from '@/components/layout/entete-page';
 import { Indicateur, Tableau } from '@/components/ui/donnees';
 import { ListeRessource } from '@/components/ui/liste';
-import {
-  Badge,
-  Carte,
-  EnteteCarte,
-  EtatVide,
-  tonDuStatut,
-} from '@/components/ui/primitives';
+import { Badge, Carte, EnteteCarte, EtatVide, tonDuStatut } from '@/components/ui/primitives';
 import { useListe } from '@/hooks/useListe';
 import { api, type Page } from '@/lib/api';
 import { formaterMontant, formaterNombre, humaniser } from '@/lib/utils';
@@ -110,8 +104,7 @@ export default function PageRechercheScientifique() {
   const equipe = useQuery({
     queryKey: ['equipe-laboratoire', actif],
     enabled: Boolean(actif) && onglet === 'laboratoires',
-    queryFn: () =>
-      api.get<Chercheur[]>(`/recherche-scientifique/laboratoires/${actif}/equipe`),
+    queryFn: () => api.get<Chercheur[]>(`/recherche-scientifique/laboratoires/${actif}/equipe`),
   });
 
   const listeChercheurs = useListe<Chercheur>('/recherche-scientifique/chercheurs', {

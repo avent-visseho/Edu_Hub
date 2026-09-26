@@ -24,6 +24,10 @@ export default function PageBulletins() {
       <EntetePage
         titre="Bulletins"
         description="Bulletins calculés par période, avec moyennes pondérées, rangs et décisions du conseil."
+        personnel={{
+          titre: 'Mes bulletins',
+          description: 'Vos bulletins de fin de période : moyennes, rangs et décisions du conseil.',
+        }}
       />
 
       <ListeRessource

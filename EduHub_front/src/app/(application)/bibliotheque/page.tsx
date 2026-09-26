@@ -81,6 +81,10 @@ export default function PageBibliotheque() {
       <EntetePage
         titre="Bibliothèque"
         description="Catalogue des ouvrages, avec leurs formats accessibles — audio, braille, gros caractères — et suivi des prêts."
+        personnel={{
+          titre: 'Mes emprunts',
+          description: 'Vos emprunts en cours et le fonds consultable.',
+        }}
       />
 
       {journal ? (
@@ -110,7 +114,11 @@ export default function PageBibliotheque() {
         />
       </div>
 
-      <div role="tablist" aria-label="Section de la bibliothèque" className="mb-4 flex flex-wrap gap-2">
+      <div
+        role="tablist"
+        aria-label="Section de la bibliothèque"
+        className="mb-4 flex flex-wrap gap-2"
+      >
         {(
           [
             { cle: 'catalogue', libelle: 'Catalogue', icone: BookOpen },

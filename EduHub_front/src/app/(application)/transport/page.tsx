@@ -127,6 +127,10 @@ export default function PageTransport() {
       <EntetePage
         titre="Transport scolaire et universitaire"
         description="Lignes, arrêts, véhicules et suivi des trajets en temps réel."
+        personnel={{
+          titre: 'Mon transport',
+          description: 'Votre abonnement et les lignes desservant votre établissement.',
+        }}
       />
 
       <div className="grid gap-4 xl:grid-cols-[20rem_1fr]">
@@ -210,9 +214,7 @@ export default function PageTransport() {
                       <div className="min-w-0">
                         <p className="flex flex-wrap items-center gap-2 font-medium">
                           Bus {trajet.vehicule ?? '—'}
-                          <Badge ton={tonDuStatut(trajet.statut)}>
-                            {humaniser(trajet.statut)}
-                          </Badge>
+                          <Badge ton={tonDuStatut(trajet.statut)}>{humaniser(trajet.statut)}</Badge>
                           {trajet.retard_minutes > 0 ? (
                             <Badge ton="alerte">+{trajet.retard_minutes} min</Badge>
                           ) : null}
@@ -348,9 +350,7 @@ export default function PageTransport() {
                   entete: 'État',
                   rendu: (vehicule) => (
                     <span className="flex flex-wrap gap-1.5">
-                      <Badge ton={tonDuStatut(vehicule.statut)}>
-                        {humaniser(vehicule.statut)}
-                      </Badge>
+                      <Badge ton={tonDuStatut(vehicule.statut)}>{humaniser(vehicule.statut)}</Badge>
                       {vehicule.climatise ? <Badge ton="neutre">Climatisé</Badge> : null}
                     </span>
                   ),
@@ -392,9 +392,7 @@ export default function PageTransport() {
               entete: 'Abonné',
               rendu: (abonnement) => (
                 <span className="min-w-0">
-                  <span className="block truncate font-medium">
-                    {abonnement.abonne_nom ?? '—'}
-                  </span>
+                  <span className="block truncate font-medium">{abonnement.abonne_nom ?? '—'}</span>
                   <span className="block font-mono text-xs texte-doux">
                     {abonnement.numero_carte}
                   </span>

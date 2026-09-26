@@ -43,6 +43,11 @@ export default function PageResultats() {
       <EntetePage
         titre="Résultats d'examen"
         description="Résultats délibérés, avec moyennes, mentions, rangs et repêchages du jury."
+        personnel={{
+          titre: 'Mes résultats',
+          description:
+            'Vos résultats aux examens et concours, une fois les délibérations publiées.',
+        }}
         actions={
           sessionId ? (
             <Bouton

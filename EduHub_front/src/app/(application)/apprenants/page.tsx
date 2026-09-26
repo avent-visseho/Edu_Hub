@@ -18,6 +18,10 @@ export default function PageApprenants() {
       <EntetePage
         titre="Apprenants"
         description="Élèves et étudiants inscrits dans le système, identifiés par leur identifiant éducatif national."
+        personnel={{
+          titre: 'Mon dossier',
+          description: 'Votre fiche scolaire : état civil, inscription et parcours.',
+        }}
       />
 
       <ListeRessource
@@ -48,9 +52,7 @@ export default function PageApprenants() {
           {
             cle: 'nom',
             entete: 'Nom et prénoms',
-            rendu: (apprenant) => (
-              <span className="font-medium">{apprenant.nom_complet}</span>
-            ),
+            rendu: (apprenant) => <span className="font-medium">{apprenant.nom_complet}</span>,
           },
           {
             cle: 'sexe',

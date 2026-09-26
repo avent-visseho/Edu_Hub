@@ -17,10 +17,7 @@ import {
   Selection,
   tonDuStatut,
 } from '@/components/ui/primitives';
-import {
-  SelecteurApprenant,
-  type ApprenantChoisi,
-} from '@/components/ui/selecteur-apprenant';
+import { SelecteurApprenant, type ApprenantChoisi } from '@/components/ui/selecteur-apprenant';
 import { useListe } from '@/hooks/useListe';
 import { api, ErreurApi } from '@/lib/api';
 import { useSession } from '@/lib/session';
@@ -85,6 +82,7 @@ export default function PageProjets() {
       <EntetePage
         titre="Projets collaboratifs"
         description="Initiatives portées par les apprenants, les enseignants et les partenaires, avec leur état d'avancement."
+        personnel={{ titre: 'Mes projets', description: 'Les projets auxquels vous participez.' }}
       />
 
       <ListeRessource
@@ -122,7 +120,8 @@ export default function PageProjets() {
             cle: 'domaine',
             entete: 'Domaine',
             secondaire: true,
-            rendu: (projet) => (projet.domaine ? <Badge ton="neutre">{projet.domaine}</Badge> : '—'),
+            rendu: (projet) =>
+              projet.domaine ? <Badge ton="neutre">{projet.domaine}</Badge> : '—',
           },
           {
             cle: 'avancement',

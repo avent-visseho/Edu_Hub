@@ -1,5 +1,8 @@
+'use client';
+
 import type { ReactNode } from 'react';
 
+import { useSession } from '@/lib/session';
 import { cn } from '@/lib/utils';
 
 /** En-tête de page : titre, description et actions contextuelles. */
@@ -9,6 +12,7 @@ export function EntetePage({
   actions,
   fil,
   className,
+  personnel,
 }: {
   titre: string;
   description?: ReactNode;
@@ -16,7 +20,20 @@ export function EntetePage({
   /** Fil d'Ariane, du plus général au plus précis. */
   fil?: Array<{ libelle: string; href?: string }>;
   className?: string;
+  /**
+   * Titre et description employés pour les comptes à portée personnelle.
+   *
+   * La même page sert au ministère et à l'élève, mais elle ne montre pas la
+   * même chose : annoncer « Élèves et étudiants inscrits dans le système » à
+   * qui n'y verra que sa propre fiche serait trompeur.
+   */
+  personnel?: { titre: string; description?: ReactNode };
 }) {
+  const { utilisateur } = useSession();
+  const adapte = personnel && utilisateur?.niveau_scope === 'PERSONNEL' ? personnel : null;
+  const titreAffiche = adapte?.titre ?? titre;
+  const descriptionAffichee = adapte ? adapte.description : description;
+
   return (
     <div className={cn('mb-6', className)}>
       {fil && fil.length > 0 ? (
@@ -40,9 +57,9 @@ export function EntetePage({
 
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="min-w-0">
-          <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">{titre}</h1>
-          {description ? (
-            <div className="mt-1.5 max-w-3xl text-sm texte-doux">{description}</div>
+          <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">{titreAffiche}</h1>
+          {descriptionAffichee ? (
+            <div className="mt-1.5 max-w-3xl text-sm texte-doux">{descriptionAffichee}</div>
           ) : null}
         </div>
         {actions ? <div className="flex flex-wrap items-center gap-2">{actions}</div> : null}

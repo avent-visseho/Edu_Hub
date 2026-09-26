@@ -18,6 +18,11 @@ export default function PageClasses() {
       <EntetePage
         titre="Classes"
         description="Divisions ouvertes pour l'année académique en cours, avec leur effectif et leur moyenne."
+        personnel={{
+          titre: 'Ma classe',
+          description:
+            'La division dans laquelle vous êtes inscrit, avec son effectif et sa moyenne.',
+        }}
       />
 
       <ListeRessource

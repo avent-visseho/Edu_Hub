@@ -74,6 +74,10 @@ export default function PageBourses() {
       <EntetePage
         titre="Bourses et aides sociales"
         description="Programmes ouverts, candidatures et attributions — y compris les dispositifs réservés à l'inclusion."
+        personnel={{
+          titre: 'Mes bourses',
+          description: "Vos demandes de bourse et d'aide sociale, et leur suivi.",
+        }}
       />
 
       <section className="mb-6" aria-labelledby="programmes">
@@ -86,9 +90,7 @@ export default function PageBourses() {
               <EnteteCarte
                 titre={<span className="text-base">{programme.intitule}</span>}
                 description={`${formaterMontant(programme.montant_mensuel)} par mois sur ${programme.duree_mois} mois.`}
-                action={
-                  programme.reserve_handicap ? <Badge ton="info">Inclusion</Badge> : null
-                }
+                action={programme.reserve_handicap ? <Badge ton="info">Inclusion</Badge> : null}
               />
               <CorpsCarte className="space-y-3 p-4">
                 <Jauge
@@ -133,9 +135,7 @@ export default function PageBourses() {
           {
             cle: 'numero',
             entete: 'Numéro',
-            rendu: (candidature) => (
-              <span className="font-mono text-xs">{candidature.numero}</span>
-            ),
+            rendu: (candidature) => <span className="font-mono text-xs">{candidature.numero}</span>,
           },
           {
             cle: 'moyenne',
@@ -169,9 +169,7 @@ export default function PageBourses() {
             cle: 'statut',
             entete: 'Statut',
             rendu: (candidature) => (
-              <Badge ton={tonDuStatut(candidature.statut)}>
-                {humaniser(candidature.statut)}
-              </Badge>
+              <Badge ton={tonDuStatut(candidature.statut)}>{humaniser(candidature.statut)}</Badge>
             ),
           },
         ]}
@@ -236,7 +234,9 @@ export default function PageBourses() {
                   <span className="min-w-0">
                     <span className="block">{formaterDate(aide.date_demande)}</span>
                     <span className="block text-xs texte-doux">
-                      {aide.date_attribution ? formaterDate(aide.date_attribution) : 'Non attribuée'}
+                      {aide.date_attribution
+                        ? formaterDate(aide.date_attribution)
+                        : 'Non attribuée'}
                     </span>
                   </span>
                 ),

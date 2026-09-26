@@ -108,6 +108,10 @@ export default function PageEmploi() {
       <EntetePage
         titre="Stages et emploi"
         description="Entreprises partenaires, offres de stage et d'emploi, et suivi des stages conventionnés."
+        personnel={{
+          titre: 'Mes candidatures',
+          description: "Vos candidatures aux offres de stage et d'emploi.",
+        }}
       />
 
       <div className="mb-4 grid grid-cols-2 gap-3 md:grid-cols-4">

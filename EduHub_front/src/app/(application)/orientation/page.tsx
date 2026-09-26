@@ -20,10 +20,7 @@ import {
 } from '@/components/ui/primitives';
 import { ListeRessource } from '@/components/ui/liste';
 import { useListe } from '@/hooks/useListe';
-import {
-  SelecteurApprenant,
-  type ApprenantChoisi,
-} from '@/components/ui/selecteur-apprenant';
+import { SelecteurApprenant, type ApprenantChoisi } from '@/components/ui/selecteur-apprenant';
 import { api, ErreurApi } from '@/lib/api';
 import { useSession } from '@/lib/session';
 import { formaterDate, formaterMontant, formaterNote, formaterPourcentage } from '@/lib/utils';
@@ -130,6 +127,10 @@ export default function PageOrientation() {
       <EntetePage
         titre="Orientation post-baccalauréat"
         description="Campagnes de vœux, offre de formation et affectation des bacheliers par ordre de mérite."
+        personnel={{
+          titre: 'Mon orientation',
+          description: "Vos vœux d'orientation et les formations accessibles.",
+        }}
       />
 
       {message ? (
@@ -153,9 +154,7 @@ export default function PageOrientation() {
         <Indicateur libelle="Places pourvues" valeur={placesPourvues} pictogramme="✅" />
         <Indicateur
           libelle="Taux de remplissage"
-          valeur={formaterPourcentage(
-            placesOffertes ? (placesPourvues * 100) / placesOffertes : 0,
-          )}
+          valeur={formaterPourcentage(placesOffertes ? (placesPourvues * 100) / placesOffertes : 0)}
           pictogramme="📊"
         />
       </div>
@@ -304,9 +303,7 @@ export default function PageOrientation() {
                 valeur={formation.places_pourvues}
                 maximum={formation.places_offertes || 1}
                 etiquette={`${formation.places_pourvues} / ${formation.places_offertes}`}
-                ton={
-                  formation.places_pourvues >= formation.places_offertes ? 'alerte' : 'succes'
-                }
+                ton={formation.places_pourvues >= formation.places_offertes ? 'alerte' : 'succes'}
               />
             ),
           },
@@ -331,7 +328,7 @@ export default function PageOrientation() {
             description={
               campagneChoisie
                 ? `${campagneChoisie.nombre_voeux_max} vœu(x) au plus pour cette campagne, classés par ordre de préférence.`
-                : "Choisissez une campagne : elle fixe le nombre de vœux autorisés."
+                : 'Choisissez une campagne : elle fixe le nombre de vœux autorisés.'
             }
           />
           <CorpsCarte>
@@ -354,11 +351,7 @@ export default function PageOrientation() {
                   })),
                 ]}
               />
-              <SelecteurApprenant
-                etiquette="Candidat"
-                choisi={candidat}
-                onChoisir={setCandidat}
-              />
+              <SelecteurApprenant etiquette="Candidat" choisi={candidat} onChoisir={setCandidat} />
               <Champ
                 etiquette="Moyenne du baccalauréat"
                 type="number"

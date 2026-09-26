@@ -17,10 +17,7 @@ import {
   EtatVide,
   MessageErreur,
 } from '@/components/ui/primitives';
-import {
-  SelecteurApprenant,
-  type ApprenantChoisi,
-} from '@/components/ui/selecteur-apprenant';
+import { SelecteurApprenant, type ApprenantChoisi } from '@/components/ui/selecteur-apprenant';
 import { api, ErreurApi, type Page } from '@/lib/api';
 import { useSession } from '@/lib/session';
 import { formaterMontant, formaterNombre, formaterPourcentage } from '@/lib/utils';
@@ -116,6 +113,10 @@ export default function PageLogement() {
       <EntetePage
         titre="Logement étudiant"
         description="Résidences universitaires et internats : capacité, occupation et accessibilité."
+        personnel={{
+          titre: 'Mon logement',
+          description: 'Votre hébergement et les résidences ouvertes à votre établissement.',
+        }}
       />
 
       <div className="mb-4 grid grid-cols-2 gap-3 md:grid-cols-4">
@@ -172,9 +173,7 @@ export default function PageLogement() {
                         valeur={element.places_occupees}
                         maximum={element.capacite || 1}
                         etiquette={`${element.places_occupees} / ${element.capacite} places`}
-                        ton={
-                          element.places_occupees >= element.capacite ? 'alerte' : 'succes'
-                        }
+                        ton={element.places_occupees >= element.capacite ? 'alerte' : 'succes'}
                       />
                     </span>
                   </button>
@@ -206,9 +205,7 @@ export default function PageLogement() {
                     </div>
                     <div>
                       <dt className="texte-doux">Occupées</dt>
-                      <dd className="font-semibold">
-                        {formaterNombre(residence.places_occupees)}
-                      </dd>
+                      <dd className="font-semibold">{formaterNombre(residence.places_occupees)}</dd>
                     </div>
                     <div>
                       <dt className="texte-doux">Tarif mensuel</dt>
@@ -247,9 +244,7 @@ export default function PageLogement() {
                     rendu: (chambre) => (
                       <span className="flex items-center gap-2 font-medium">
                         {chambre.numero}
-                        {chambre.accessible_handicap ? (
-                          <Badge ton="info">Accessible</Badge>
-                        ) : null}
+                        {chambre.accessible_handicap ? <Badge ton="info">Accessible</Badge> : null}
                       </span>
                     ),
                   },

@@ -72,8 +72,14 @@ deployer() {
     [ -f deploy_ment/.env.production ] \
         || erreur "deploy_ment/.env.production manquant. Copiez .env.production.example et renseignez-le."
 
-    if grep -q 'CHANGEZ_MOI' deploy_ment/.env.production; then
-        erreur "des valeurs CHANGEZ_MOI subsistent dans deploy_ment/.env.production."
+    # Seules les affectations comptent : le fichier d'exemple mentionne
+    # « CHANGEZ_MOI » dans ses commentaires, qui survivent légitimement à la
+    # copie.
+    restants=$(grep -vE '^\s*#' deploy_ment/.env.production | grep -c 'CHANGEZ_MOI' || true)
+    if [ "${restants}" -gt 0 ]; then
+        attention "valeurs encore à renseigner :"
+        grep -vE '^\s*#' deploy_ment/.env.production | grep -n 'CHANGEZ_MOI' | sed 's/^/      /'
+        erreur "complétez deploy_ment/.env.production avant de déployer."
     fi
 
     # La clé de signature protège tous les jetons : une clé trop courte ruine

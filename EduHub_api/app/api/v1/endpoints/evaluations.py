@@ -61,6 +61,7 @@ router = APIRouter()
 
 evaluations = creer_routeur_crud(
     modele=Evaluation,
+    portee=Portee(classe="classe_id", enseignant="enseignant_id"),
     schema_lecture=EvaluationLecture,
     schema_creation=EvaluationCreation,
     schema_maj=EvaluationMiseAJour,
@@ -576,6 +577,7 @@ async def statistiques_classe(
 router.include_router(
     creer_routeur_crud(
         modele=ConseilClasse,
+        portee=Portee(classe="classe_id"),
         schema_lecture=ConseilClasseLecture,
         schema_creation=None,
         schema_maj=None,

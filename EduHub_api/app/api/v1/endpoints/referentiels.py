@@ -12,6 +12,7 @@ from app.api.crud import creer_routeur_crud, routeur_nomenclature
 from app.api.deps import ContexteDep, SessionDep
 from app.core.enums import Action
 from app.core.pagination import Page, PageParamsDep, paginate
+from app.engines.portee import Portee
 from app.engines.search import DescripteurChamp
 from app.models.referentiel import (
     Arrondissement,
@@ -63,6 +64,7 @@ router.include_router(
         prefixe="/departements",
         tag="Référentiels",
         ressource="referentiels",
+        portee=Portee.ouverte(),
         libelle_singulier="département",
         libelle_pluriel="départements",
         champs_filtrables=(
@@ -82,6 +84,7 @@ router.include_router(
         prefixe="/communes",
         tag="Référentiels",
         ressource="referentiels",
+        portee=Portee.ouverte(),
         libelle_singulier="commune",
         libelle_pluriel="communes",
         champs_filtrables=(
@@ -185,6 +188,7 @@ router.include_router(
         prefixe="/types-examen",
         tag="Référentiels",
         ressource="referentiels",
+        portee=Portee.ouverte(),
         libelle_singulier="type d'examen",
         libelle_pluriel="types d'examen",
     )
@@ -199,6 +203,7 @@ router.include_router(
         prefixe="/types-document",
         tag="Référentiels",
         ressource="referentiels",
+        portee=Portee.ouverte(),
         libelle_singulier="type de document",
         libelle_pluriel="types de document",
     )
@@ -213,6 +218,7 @@ router.include_router(
         prefixe="/diplomes-referentiel",
         tag="Référentiels",
         ressource="referentiels",
+        portee=Portee.ouverte(),
         libelle_singulier="diplôme de référence",
         libelle_pluriel="diplômes de référence",
     )
@@ -232,6 +238,7 @@ router.include_router(
         prefixe="/niveaux",
         tag="Référentiels",
         ressource="referentiels",
+        portee=Portee.ouverte(),
         libelle_singulier="niveau",
         libelle_pluriel="niveaux",
         tri_defaut="rang",
@@ -247,6 +254,7 @@ router.include_router(
         prefixe="/series",
         tag="Référentiels",
         ressource="referentiels",
+        portee=Portee.ouverte(),
         libelle_singulier="série",
         libelle_pluriel="séries",
     )
@@ -261,6 +269,7 @@ router.include_router(
         prefixe="/filieres",
         tag="Référentiels",
         ressource="referentiels",
+        portee=Portee.ouverte(),
         libelle_singulier="filière",
         libelle_pluriel="filières",
     )
@@ -275,6 +284,7 @@ router.include_router(
         prefixe="/matieres",
         tag="Référentiels",
         ressource="referentiels",
+        portee=Portee.ouverte(),
         libelle_singulier="matière",
         libelle_pluriel="matières",
         champs_filtrables=(

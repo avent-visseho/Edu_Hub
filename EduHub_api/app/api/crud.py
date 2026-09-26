@@ -294,9 +294,7 @@ def creer_routeur_crud(
     async def detail(identifiant: uuid.UUID, session: SessionDep, contexte: ContexteDep) -> Any:
         if not lecture_publique:
             contexte.exiger(ressource, Action.READ)
-        objet = await obtenir_ou_404(
-            session, modele, identifiant, libelle_singulier.capitalize()
-        )
+        objet = await obtenir_ou_404(session, modele, identifiant, libelle_singulier.capitalize())
         await _exiger_dans_la_portee(objet, session, contexte)
         return objet
 
@@ -458,7 +456,12 @@ def routeur_nomenclature(
     libelle_singulier: str,
     libelle_pluriel: str,
 ) -> APIRouter:
-    """Raccourci pour les référentiels code/libellé."""
+    """Raccourci pour les référentiels code/libellé.
+
+    Un référentiel décrit des catégories — niveaux, matières, types de salle —
+    et ne contient aucune donnée personnelle. Il reste donc consultable par
+    tous : sans quoi les listes déroulantes se videraient pour les élèves.
+    """
     from app.schemas.base import NomenclatureEcriture, NomenclatureLecture
 
     return creer_routeur_crud(
@@ -472,6 +475,7 @@ def routeur_nomenclature(
         libelle_singulier=libelle_singulier,
         libelle_pluriel=libelle_pluriel,
         tri_defaut="ordre",
+        portee=Portee.ouverte(),
     )
 
 

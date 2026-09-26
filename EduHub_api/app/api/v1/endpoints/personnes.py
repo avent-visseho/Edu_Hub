@@ -443,6 +443,7 @@ router.include_router(apprenants)
 router.include_router(
     creer_routeur_crud(
         modele=Parent,
+        portee=Portee(utilisateur="utilisateur_id"),
         schema_lecture=ParentLecture,
         schema_creation=ParentEcriture,
         schema_maj=ParentEcriture,
@@ -470,6 +471,7 @@ router.include_router(
 
 enseignants = creer_routeur_crud(
     modele=Enseignant,
+    portee=Portee(etablissement="etablissement_principal_id", utilisateur="utilisateur_id"),
     schema_lecture=EnseignantLecture,
     schema_creation=None,
     schema_maj=EnseignantMiseAJour,
@@ -654,6 +656,7 @@ router.include_router(enseignants)
 router.include_router(
     creer_routeur_crud(
         modele=Personnel,
+        portee=Portee(etablissement="etablissement_id", utilisateur="utilisateur_id"),
         schema_lecture=PersonnelLecture,
         schema_creation=PersonnelEcriture,
         schema_maj=PersonnelEcriture,

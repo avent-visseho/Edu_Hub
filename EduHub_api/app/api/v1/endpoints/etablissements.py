@@ -14,6 +14,7 @@ from app.api.deps import ContexteDep, SessionDep
 from app.core.enums import Action
 from app.core.exceptions import PermissionDeniedError
 from app.engines.analytics import statistiques_etablissement
+from app.engines.portee import Portee
 from app.engines.search import DescripteurChamp
 from app.models.etablissement import Batiment, Equipement, Etablissement, Salle
 from app.models.organisation import Structure
@@ -71,6 +72,7 @@ CHAMPS_ETABLISSEMENT = (
 
 structures = creer_routeur_crud(
     modele=Structure,
+    portee=Portee.ouverte(),
     schema_lecture=StructureLecture,
     schema_creation=StructureEcriture,
     schema_maj=StructureEcriture,
@@ -127,6 +129,7 @@ router.include_router(structures)
 
 etablissements = creer_routeur_crud(
     modele=Etablissement,
+    portee=Portee.ouverte(),
     schema_lecture=EtablissementLecture,
     schema_creation=EtablissementCreation,
     schema_maj=EtablissementMiseAJour,
@@ -264,6 +267,7 @@ router.include_router(etablissements)
 router.include_router(
     creer_routeur_crud(
         modele=Batiment,
+        portee=Portee(etablissement="etablissement_id"),
         schema_lecture=BatimentLecture,
         schema_creation=BatimentEcriture,
         schema_maj=BatimentEcriture,
@@ -287,6 +291,7 @@ router.include_router(
 
 salles = creer_routeur_crud(
     modele=Salle,
+    portee=Portee(etablissement="etablissement_id"),
     schema_lecture=SalleLecture,
     schema_creation=SalleEcriture,
     schema_maj=SalleEcriture,
@@ -312,6 +317,7 @@ router.include_router(salles)
 router.include_router(
     creer_routeur_crud(
         modele=Equipement,
+        portee=Portee(etablissement="etablissement_id"),
         schema_lecture=EquipementLecture,
         schema_creation=EquipementEcriture,
         schema_maj=EquipementEcriture,

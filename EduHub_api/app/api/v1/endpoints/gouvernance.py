@@ -18,6 +18,7 @@ from app.engines.analytics import (
     tableau_bord_national,
 )
 from app.engines.audit import journaliser
+from app.engines.portee import Portee
 from app.engines.reporting import BlocTableau, EnTeteDocument, exporter_csv, generer_document
 from app.engines.search import Conjonction, Critere, DescripteurChamp, Operateur
 from app.models.apprenant import Apprenant
@@ -711,6 +712,7 @@ router.include_router(
 
 alertes = creer_routeur_crud(
     modele=Alerte,
+    portee=Portee(etablissement="etablissement_id"),
     schema_lecture=AlerteLecture,
     schema_creation=None,
     schema_maj=None,

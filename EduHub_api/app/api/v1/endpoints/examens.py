@@ -15,6 +15,7 @@ from app.core.exceptions import BusinessRuleError, ConflictError, NotFoundError
 from app.engines import workflow
 from app.engines.analytics import resultats_par_departement, resultats_par_etablissement
 from app.engines.audit import journaliser
+from app.engines.portee import Portee
 from app.engines.reporting import exporter_csv
 from app.engines.search import DescripteurChamp
 from app.models.apprenant import Apprenant
@@ -100,6 +101,7 @@ router = APIRouter()
 router.include_router(
     creer_routeur_crud(
         modele=Examen,
+        portee=Portee.ouverte(),
         schema_lecture=ExamenLecture,
         schema_creation=ExamenEcriture,
         schema_maj=ExamenEcriture,
@@ -130,6 +132,7 @@ router.include_router(
 
 sessions = creer_routeur_crud(
     modele=SessionExamen,
+    portee=Portee.ouverte(),
     schema_lecture=SessionLecture,
     schema_creation=None,
     schema_maj=SessionMiseAJour,
@@ -464,6 +467,7 @@ router.include_router(sessions)
 router.include_router(
     creer_routeur_crud(
         modele=EpreuveExamen,
+        portee=Portee.ouverte(),
         schema_lecture=EpreuveLecture,
         schema_creation=EpreuveEcriture,
         schema_maj=EpreuveEcriture,
@@ -492,6 +496,7 @@ router.include_router(
 
 candidats = creer_routeur_crud(
     modele=Candidat,
+    portee=Portee(apprenant="apprenant_id", etablissement="etablissement_id"),
     schema_lecture=CandidatLecture,
     schema_creation=None,
     schema_maj=CandidatMiseAJour,
@@ -895,6 +900,7 @@ router.include_router(candidats)
 
 centres = creer_routeur_crud(
     modele=CentreComposition,
+    portee=Portee.ouverte(),
     schema_lecture=CentreLecture,
     schema_creation=CentreEcriture,
     schema_maj=CentreEcriture,
@@ -1005,6 +1011,7 @@ router.include_router(centres)
 router.include_router(
     creer_routeur_crud(
         modele=SalleComposition,
+        portee=Portee.ouverte(),
         schema_lecture=SalleCompositionLecture,
         schema_creation=SalleCompositionEcriture,
         schema_maj=SalleCompositionEcriture,
@@ -1028,6 +1035,7 @@ router.include_router(
 router.include_router(
     creer_routeur_crud(
         modele=AffectationSurveillance,
+        portee=Portee(enseignant="enseignant_id"),
         schema_lecture=AffectationSurveillanceLecture,
         schema_creation=AffectationSurveillanceEcriture,
         schema_maj=AffectationSurveillanceEcriture,
@@ -1058,6 +1066,7 @@ router.include_router(
 router.include_router(
     creer_routeur_crud(
         modele=Correcteur,
+        portee=Portee(enseignant="enseignant_id"),
         schema_lecture=CorrecteurLecture,
         schema_creation=None,
         schema_maj=None,
@@ -1085,6 +1094,7 @@ router.include_router(
 
 copies = creer_routeur_crud(
     modele=Copie,
+    portee=Portee(candidat="candidat_id"),
     schema_lecture=CopieLecture,
     schema_creation=None,
     schema_maj=None,
@@ -1269,6 +1279,7 @@ async def notes_epreuve(
 
 jurys = creer_routeur_crud(
     modele=Jury,
+    portee=Portee.ouverte(),
     schema_lecture=JuryLecture,
     schema_creation=JuryEcriture,
     schema_maj=JuryEcriture,
@@ -1332,6 +1343,7 @@ router.include_router(jurys)
 
 resultats = creer_routeur_crud(
     modele=ResultatExamen,
+    portee=Portee(candidat="candidat_id", etablissement="etablissement_id"),
     schema_lecture=ResultatLecture,
     schema_creation=None,
     schema_maj=None,
@@ -1464,6 +1476,7 @@ router.include_router(resultats)
 
 contentieux = creer_routeur_crud(
     modele=Contentieux,
+    portee=Portee(candidat="candidat_id"),
     schema_lecture=ContentieuxLecture,
     schema_creation=None,
     schema_maj=None,
@@ -1586,6 +1599,7 @@ router.include_router(contentieux)
 router.include_router(
     creer_routeur_crud(
         modele=EpreuveArchivee,
+        portee=Portee.ouverte(),
         schema_lecture=ArchiveEpreuveLecture,
         schema_creation=None,
         schema_maj=None,

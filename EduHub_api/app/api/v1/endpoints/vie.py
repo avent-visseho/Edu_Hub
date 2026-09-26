@@ -13,6 +13,7 @@ from app.api.deps import ContexteDep, SessionDep
 from app.core.enums import Action, StatutPaiement
 from app.core.exceptions import BusinessRuleError, ConflictError
 from app.engines import workflow
+from app.engines.portee import Portee
 from app.engines.search import DescripteurChamp
 from app.models.apprenant import Apprenant
 from app.models.apprentissage import (
@@ -130,6 +131,7 @@ router = APIRouter()
 router.include_router(
     creer_routeur_crud(
         modele=Formation,
+        portee=Portee(etablissement="etablissement_id", partage_etablissement=True),
         schema_lecture=FormationLecture,
         schema_creation=FormationEcriture,
         schema_maj=FormationEcriture,
@@ -305,6 +307,7 @@ router.include_router(orientation)
 router.include_router(
     creer_routeur_crud(
         modele=ProgrammeBourse,
+        portee=Portee.ouverte(),
         schema_lecture=ProgrammeBourseLecture,
         schema_creation=ProgrammeBourseEcriture,
         schema_maj=ProgrammeBourseEcriture,
@@ -331,6 +334,7 @@ router.include_router(
 
 bourses = creer_routeur_crud(
     modele=CandidatureBourse,
+    portee=Portee(apprenant="apprenant_id"),
     schema_lecture=CandidatureBourseLecture,
     schema_creation=None,
     schema_maj=None,
@@ -452,6 +456,7 @@ router.include_router(bourses)
 router.include_router(
     creer_routeur_crud(
         modele=AideSociale,
+        portee=Portee(apprenant="apprenant_id"),
         schema_lecture=AideSocialeLecture,
         schema_creation=None,
         schema_maj=None,
@@ -479,6 +484,7 @@ router.include_router(
 
 lignes_transport = creer_routeur_crud(
     modele=LigneTransport,
+    portee=Portee(etablissement="etablissement_id", partage_etablissement=True),
     schema_lecture=LigneTransportLecture,
     schema_creation=LigneTransportEcriture,
     schema_maj=LigneTransportEcriture,
@@ -564,6 +570,7 @@ router.include_router(lignes_transport)
 router.include_router(
     creer_routeur_crud(
         modele=Vehicule,
+        portee=Portee(etablissement="etablissement_id", partage_etablissement=True),
         schema_lecture=VehiculeLecture,
         schema_creation=None,
         schema_maj=None,
@@ -587,6 +594,7 @@ router.include_router(
 
 abonnements = creer_routeur_crud(
     modele=AbonnementTransport,
+    portee=Portee(apprenant="apprenant_id"),
     schema_lecture=AbonnementLecture,
     schema_creation=None,
     schema_maj=None,
@@ -645,6 +653,7 @@ router.include_router(abonnements)
 
 residences = creer_routeur_crud(
     modele=Residence,
+    portee=Portee(etablissement="etablissement_id", partage_etablissement=True),
     schema_lecture=ResidenceLecture,
     schema_creation=None,
     schema_maj=None,
@@ -754,6 +763,7 @@ async def menus(
 router.include_router(
     creer_routeur_crud(
         modele=Livre,
+        portee=Portee.ouverte(),
         schema_lecture=LivreLecture,
         schema_creation=LivreEcriture,
         schema_maj=LivreEcriture,
@@ -782,6 +792,7 @@ router.include_router(
 
 prets = creer_routeur_crud(
     modele=Pret,
+    portee=Portee(apprenant="apprenant_id", enseignant="enseignant_id"),
     schema_lecture=PretLecture,
     schema_creation=None,
     schema_maj=None,
@@ -861,6 +872,7 @@ router.include_router(prets)
 
 cours = creer_routeur_crud(
     modele=Cours,
+    portee=Portee.ouverte(),
     schema_lecture=CoursLecture,
     schema_creation=CoursEcriture,
     schema_maj=CoursEcriture,
@@ -990,6 +1002,7 @@ router.include_router(cours)
 router.include_router(
     creer_routeur_crud(
         modele=RessourcePedagogique,
+        portee=Portee.ouverte(),
         schema_lecture=RessourceLecture,
         schema_creation=None,
         schema_maj=None,
@@ -1025,6 +1038,7 @@ router.include_router(
 
 projets = creer_routeur_crud(
     modele=Projet,
+    portee=Portee(etablissement="etablissement_id", partage_etablissement=True),
     schema_lecture=ProjetLecture,
     schema_creation=ProjetEcriture,
     schema_maj=ProjetEcriture,
@@ -1103,6 +1117,7 @@ router.include_router(projets)
 router.include_router(
     creer_routeur_crud(
         modele=Entreprise,
+        portee=Portee.ouverte(),
         schema_lecture=EntrepriseLecture,
         schema_creation=EntrepriseEcriture,
         schema_maj=EntrepriseEcriture,
@@ -1129,6 +1144,7 @@ router.include_router(
 
 offres = creer_routeur_crud(
     modele=Offre,
+    portee=Portee.ouverte(),
     schema_lecture=OffreLecture,
     schema_creation=None,
     schema_maj=OffreEcriture,
@@ -1179,6 +1195,7 @@ router.include_router(offres)
 
 candidatures_offre = creer_routeur_crud(
     modele=CandidatureOffre,
+    portee=Portee(apprenant="apprenant_id"),
     schema_lecture=CandidatureOffreLecture,
     schema_creation=None,
     schema_maj=None,
@@ -1240,6 +1257,7 @@ router.include_router(candidatures_offre)
 router.include_router(
     creer_routeur_crud(
         modele=Stage,
+        portee=Portee(apprenant="apprenant_id", etablissement="etablissement_id"),
         schema_lecture=StageLecture,
         schema_creation=None,
         schema_maj=None,
@@ -1267,6 +1285,7 @@ router.include_router(
 
 centres_sante = creer_routeur_crud(
     modele=CentreSante,
+    portee=Portee(etablissement="etablissement_id", partage_etablissement=True),
     schema_lecture=CentreSanteLecture,
     schema_creation=CentreSanteEcriture,
     schema_maj=CentreSanteEcriture,
@@ -1331,6 +1350,7 @@ async def campagnes_sante(session: SessionDep, contexte: ContexteDep) -> list[Ca
 
 centres_alphabetisation = creer_routeur_crud(
     modele=CentreAlphabetisation,
+    portee=Portee.ouverte(),
     schema_lecture=CentreAlphabetisationLecture,
     schema_creation=None,
     schema_maj=None,
@@ -1430,6 +1450,7 @@ async def statistiques_alphabetisation(session: SessionDep, contexte: ContexteDe
 
 laboratoires = creer_routeur_crud(
     modele=Laboratoire,
+    portee=Portee(etablissement="etablissement_id", partage_etablissement=True),
     schema_lecture=LaboratoireLecture,
     schema_creation=None,
     schema_maj=None,
@@ -1473,6 +1494,7 @@ router.include_router(laboratoires)
 router.include_router(
     creer_routeur_crud(
         modele=Chercheur,
+        portee=Portee(enseignant="enseignant_id", utilisateur="utilisateur_id"),
         schema_lecture=ChercheurLecture,
         schema_creation=None,
         schema_maj=None,
@@ -1500,6 +1522,7 @@ router.include_router(
 router.include_router(
     creer_routeur_crud(
         modele=Publication,
+        portee=Portee.ouverte(),
         schema_lecture=PublicationLecture,
         schema_creation=None,
         schema_maj=None,
@@ -1527,6 +1550,7 @@ router.include_router(
 router.include_router(
     creer_routeur_crud(
         modele=ProjetRecherche,
+        portee=Portee.ouverte(),
         schema_lecture=ProjetRechercheLecture,
         schema_creation=None,
         schema_maj=None,

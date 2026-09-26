@@ -58,6 +58,7 @@ router = APIRouter()
 
 annees = creer_routeur_crud(
     modele=AnneeAcademique,
+    portee=Portee.ouverte(),
     schema_lecture=AnneeLecture,
     schema_creation=AnneeEcriture,
     schema_maj=AnneeEcriture,
@@ -350,6 +351,7 @@ router.include_router(inscriptions)
 
 creneaux = creer_routeur_crud(
     modele=CreneauEmploiDuTemps,
+    portee=Portee(classe="classe_id", enseignant="enseignant_id"),
     schema_lecture=CreneauLecture,
     schema_creation=CreneauEcriture,
     schema_maj=CreneauEcriture,

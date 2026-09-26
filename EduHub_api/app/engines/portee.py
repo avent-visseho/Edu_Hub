@@ -29,8 +29,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.enums import NiveauScope
 from app.engines.identity import ContexteUtilisateur
 from app.models.apprenant import Apprenant, ApprenantParent, Parent
+from app.models.examen import Candidat
 from app.models.personnel import Enseignant
-from app.models.scolarite import Inscription
+from app.models.scolarite import Classe, Inscription
 
 
 @dataclass(slots=True)
@@ -126,10 +127,22 @@ class Portee:
     etablissement: str | None = None
     #: Colonne portant l'identifiant de l'enseignant.
     enseignant: str | None = None
+    #: Colonne portant l'identifiant du candidat à un examen.
+    candidat: str | None = None
+    #: Colonne portant l'identifiant du compte, pour les entités qui en
+    #: désignent un directement — un parent, un chercheur.
+    utilisateur: str | None = None
     #: L'entité elle-même est un apprenant : on filtre sur sa clé primaire.
     est_apprenant: bool = False
     #: Données non personnelles, consultables par tous — décision explicite.
     catalogue: bool = False
+    #: L'appartenance à l'établissement suffit-elle à y donner accès ?
+    #:
+    #: Vrai pour ce qui est offert à tous ses usagers : résidences, lignes de
+    #: transport, projets, centres de santé. Faux par défaut, car la plupart des
+    #: entités rattachées à un établissement décrivent autrui — les résultats
+    #: d'examen de l'école ne regardent pas chacun de ses élèves.
+    partage_etablissement: bool = False
 
     @staticmethod
     def ouverte() -> Portee:
@@ -137,10 +150,74 @@ class Portee:
         return Portee(catalogue=True)
 
 
+def _apprenants_de(etablissements: set[uuid.UUID]) -> Select:
+    """Sous-requête des apprenants inscrits dans ces établissements.
+
+    La table des apprenants ne porte pas d'établissement : le rattachement
+    passe par l'inscription, qui seule sait où l'élève est scolarisé et pour
+    quelle année.
+    """
+    return select(Inscription.apprenant_id).where(Inscription.etablissement_id.in_(etablissements))
+
+
+def _classes_de(etablissements: set[uuid.UUID]) -> Select:
+    """Sous-requête des classes de ces établissements."""
+    return select(Classe.id).where(Classe.etablissement_id.in_(etablissements))
+
+
+def _candidats_de_apprenants(apprenants: set[uuid.UUID]) -> Select:
+    """Sous-requête des candidatures à examen de ces apprenants.
+
+    Résultats, copies et contentieux désignent un candidat, non un apprenant :
+    la même personne porte deux identités selon qu'elle est scolarisée ou
+    inscrite à un examen.
+    """
+    return select(Candidat.id).where(Candidat.apprenant_id.in_(apprenants))
+
+
+def _candidats_de_etablissements(etablissements: set[uuid.UUID]) -> Select:
+    """Sous-requête des candidatures présentées par ces établissements."""
+    return select(Candidat.id).where(Candidat.etablissement_id.in_(etablissements))
+
+
+def condition_etablissement(
+    modele: type,
+    portee: Portee,
+    etablissements: set[uuid.UUID],
+) -> ColumnElement[bool] | None:
+    """Condition restreignant les lignes aux établissements de rattachement.
+
+    Les mêmes colonnes déclarées pour la portée personnelle servent ici, mais
+    l'ensemble de référence change : au lieu des apprenants que l'on est ou que
+    l'on a pour enfants, ce sont ceux de l'établissement où l'on exerce.
+    """
+    conditions: list[ColumnElement[bool]] = []
+
+    if portee.etablissement and hasattr(modele, portee.etablissement):
+        conditions.append(getattr(modele, portee.etablissement).in_(etablissements))
+    if portee.est_apprenant:
+        conditions.append(modele.id.in_(_apprenants_de(etablissements)))
+    if portee.apprenant and hasattr(modele, portee.apprenant):
+        conditions.append(getattr(modele, portee.apprenant).in_(_apprenants_de(etablissements)))
+    if portee.classe and hasattr(modele, portee.classe):
+        conditions.append(getattr(modele, portee.classe).in_(_classes_de(etablissements)))
+    if portee.candidat and hasattr(modele, portee.candidat):
+        conditions.append(
+            getattr(modele, portee.candidat).in_(_candidats_de_etablissements(etablissements))
+        )
+
+    if not conditions:
+        return None
+    if len(conditions) == 1:
+        return conditions[0]
+    return or_(*conditions)
+
+
 def condition_portee(
     modele: type,
     portee: Portee | None,
     perimetre: PerimetrePersonnel,
+    contexte_id: uuid.UUID | None = None,
 ) -> ColumnElement[bool] | None:
     """Condition restreignant les lignes au périmètre, ou None si tout est visible."""
     if portee is not None and portee.catalogue:
@@ -160,6 +237,23 @@ def condition_portee(
         conditions.append(getattr(modele, portee.classe).in_(perimetre.classes))
     if portee.enseignant and perimetre.enseignants and hasattr(modele, portee.enseignant):
         conditions.append(getattr(modele, portee.enseignant).in_(perimetre.enseignants))
+    if portee.candidat and perimetre.apprenants and hasattr(modele, portee.candidat):
+        conditions.append(
+            getattr(modele, portee.candidat).in_(_candidats_de_apprenants(perimetre.apprenants))
+        )
+    if portee.utilisateur and contexte_id is not None and hasattr(modele, portee.utilisateur):
+        conditions.append(getattr(modele, portee.utilisateur) == contexte_id)
+    # L'appartenance à l'établissement n'ouvre l'accès que là où c'est
+    # explicitement voulu : un élève accède aux résidences et aux lignes de bus
+    # de son école, mais pas aux résultats d'examen de ses camarades.
+    partage = (
+        portee.partage_etablissement
+        and portee.etablissement
+        and perimetre.etablissements
+        and hasattr(modele, portee.etablissement)
+    )
+    if partage:
+        conditions.append(getattr(modele, portee.etablissement).in_(perimetre.etablissements))
 
     if not conditions:
         return false()
@@ -192,22 +286,16 @@ def appliquer_portee(
         return statement
 
     if contexte.niveau_max is NiveauScope.ETABLISSEMENT:
-        rattachable = (
-            portee is not None
-            and bool(portee.etablissement)
-            and hasattr(modele, portee.etablissement)
-        )
-        if rattachable:
-            if not perimetre.etablissements:
-                return statement.where(false())
-            colonne = getattr(modele, portee.etablissement)
-            return statement.where(colonne.in_(perimetre.etablissements))
-        # Le rattachement à l'établissement n'est pas encore déclaré sur cette
-        # entité. On laisse passer plutôt que de vider la page : le niveau
-        # établissement reste à traiter entité par entité, alors que le niveau
-        # personnel — le cas où la confidentialité est réellement en jeu — est
-        # traité ci-dessous.
-        return statement
+        if portee is None:
+            # Portée non déclarée : on laisse passer à ce niveau. Le périmètre
+            # d'un personnel d'établissement n'expose pas d'inconnus, et fermer
+            # d'un coup viderait ses écrans sans nécessité. Les entités se
+            # déclarent au fur et à mesure.
+            return statement
+        if not perimetre.etablissements:
+            return statement.where(false())
+        condition = condition_etablissement(modele, portee, perimetre.etablissements)
+        return statement if condition is None else statement.where(condition)
 
-    condition = condition_portee(modele, portee, perimetre)
+    condition = condition_portee(modele, portee, perimetre, contexte.id)
     return statement if condition is None else statement.where(condition)

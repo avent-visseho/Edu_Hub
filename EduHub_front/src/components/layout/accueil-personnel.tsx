@@ -140,7 +140,11 @@ export function AccueilPersonnel() {
         <Carte className="mb-4">
           <EnteteCarte
             titre="Prochaines évaluations"
-            description="Les devoirs annoncés dans vos classes, du plus proche au plus lointain."
+            description={
+              roles.includes('PARENT')
+                ? 'Les devoirs annoncés dans les classes de vos enfants, du plus proche au plus lointain.'
+                : 'Les devoirs annoncés dans vos classes, du plus proche au plus lointain.'
+            }
           />
           <ul className="divide-y">
             {prochaines.map((evaluation) => (

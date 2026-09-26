@@ -111,6 +111,12 @@ export default function PageEmploi() {
         personnel={{
           titre: 'Mes candidatures',
           description: "Vos candidatures aux offres de stage et d'emploi.",
+          parRole: {
+            PARENT: {
+              titre: 'Candidatures de mes enfants',
+              description: "Leurs candidatures aux offres de stage et d'emploi.",
+            },
+          },
         }}
       />
 

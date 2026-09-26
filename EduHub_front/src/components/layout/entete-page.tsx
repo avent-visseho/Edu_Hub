@@ -28,11 +28,24 @@ export function EntetePage({
    * même chose : annoncer « Élèves et étudiants inscrits dans le système » à
    * qui n'y verra que sa propre fiche serait trompeur.
    */
-  personnel?: { titre: string; description?: ReactNode };
+  personnel?: {
+    titre: string;
+    description?: ReactNode;
+    /**
+     * Variantes par rôle, prioritaires sur le titre ci-dessus.
+     *
+     * « Mes résultats » convient à l'élève mais pas au parent, qui n'en a pas :
+     * ce sont ceux de ses enfants.
+     */
+    parRole?: Record<string, { titre: string; description?: ReactNode }>;
+  };
 }) {
   const { utilisateur } = useSession();
   const portePersonnelle = utilisateur?.niveau_scope === 'PERSONNEL';
-  const adapte = personnel && portePersonnelle ? personnel : null;
+  const parRole = personnel?.parRole
+    ? (utilisateur?.roles ?? []).map((role) => personnel.parRole?.[role]).find(Boolean)
+    : undefined;
+  const adapte = personnel && portePersonnelle ? (parRole ?? personnel) : null;
   const titreAffiche = adapte?.titre ?? titre;
   const descriptionAffichee = adapte ? adapte.description : description;
 

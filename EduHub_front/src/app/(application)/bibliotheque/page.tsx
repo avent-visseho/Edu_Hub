@@ -84,6 +84,12 @@ export default function PageBibliotheque() {
         personnel={{
           titre: 'Mes emprunts',
           description: 'Vos emprunts en cours et le fonds consultable.',
+          parRole: {
+            PARENT: {
+              titre: 'Emprunts de mes enfants',
+              description: 'Leurs emprunts en cours et le fonds consultable.',
+            },
+          },
         }}
       />
 

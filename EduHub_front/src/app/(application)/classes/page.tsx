@@ -22,6 +22,13 @@ export default function PageClasses() {
           titre: 'Ma classe',
           description:
             'La division dans laquelle vous êtes inscrit, avec son effectif et sa moyenne.',
+          parRole: {
+            PARENT: {
+              titre: 'Classes de mes enfants',
+              description:
+                'Les divisions où ils sont inscrits, avec leur effectif et leur moyenne.',
+            },
+          },
         }}
       />
 

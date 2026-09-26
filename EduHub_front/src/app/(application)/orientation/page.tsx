@@ -130,6 +130,12 @@ export default function PageOrientation() {
         personnel={{
           titre: 'Mon orientation',
           description: "Vos vœux d'orientation et les formations accessibles.",
+          parRole: {
+            PARENT: {
+              titre: 'Orientation de mes enfants',
+              description: "Leurs vœux d'orientation et les formations accessibles.",
+            },
+          },
         }}
       />
 

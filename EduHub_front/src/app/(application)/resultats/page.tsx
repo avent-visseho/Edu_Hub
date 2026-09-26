@@ -47,6 +47,13 @@ export default function PageResultats() {
           titre: 'Mes résultats',
           description:
             'Vos résultats aux examens et concours, une fois les délibérations publiées.',
+          parRole: {
+            PARENT: {
+              titre: 'Résultats de mes enfants',
+              description:
+                'Leurs résultats aux examens et concours, une fois les délibérations publiées.',
+            },
+          },
         }}
         actions={
           sessionId ? (

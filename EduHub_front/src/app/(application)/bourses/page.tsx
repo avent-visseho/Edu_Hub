@@ -77,6 +77,12 @@ export default function PageBourses() {
         personnel={{
           titre: 'Mes bourses',
           description: "Vos demandes de bourse et d'aide sociale, et leur suivi.",
+          parRole: {
+            PARENT: {
+              titre: 'Bourses de mes enfants',
+              description: "Leurs demandes de bourse et d'aide sociale, et leur suivi.",
+            },
+          },
         }}
       />
 

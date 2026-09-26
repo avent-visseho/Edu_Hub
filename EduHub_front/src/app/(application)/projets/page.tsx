@@ -82,7 +82,16 @@ export default function PageProjets() {
       <EntetePage
         titre="Projets collaboratifs"
         description="Initiatives portées par les apprenants, les enseignants et les partenaires, avec leur état d'avancement."
-        personnel={{ titre: 'Mes projets', description: 'Les projets auxquels vous participez.' }}
+        personnel={{
+          titre: 'Mes projets',
+          description: 'Les projets auxquels vous participez.',
+          parRole: {
+            PARENT: {
+              titre: 'Projets de mes enfants',
+              description: 'Les projets auxquels ils participent.',
+            },
+          },
+        }}
       />
 
       <ListeRessource

@@ -130,6 +130,12 @@ export default function PageTransport() {
         personnel={{
           titre: 'Mon transport',
           description: 'Votre abonnement et les lignes desservant votre établissement.',
+          parRole: {
+            PARENT: {
+              titre: 'Transport de mes enfants',
+              description: 'Leur abonnement et les lignes desservant leur établissement.',
+            },
+          },
         }}
       />
 

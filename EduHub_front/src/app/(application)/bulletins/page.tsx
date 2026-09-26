@@ -27,6 +27,13 @@ export default function PageBulletins() {
         personnel={{
           titre: 'Mes bulletins',
           description: 'Vos bulletins de fin de période : moyennes, rangs et décisions du conseil.',
+          parRole: {
+            PARENT: {
+              titre: 'Bulletins de mes enfants',
+              description:
+                'Leurs bulletins de fin de période : moyennes, rangs et décisions du conseil.',
+            },
+          },
         }}
       />
 

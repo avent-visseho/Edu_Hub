@@ -116,6 +116,12 @@ export default function PageLogement() {
         personnel={{
           titre: 'Mon logement',
           description: 'Votre hébergement et les résidences ouvertes à votre établissement.',
+          parRole: {
+            PARENT: {
+              titre: 'Logement de mes enfants',
+              description: 'Leur hébergement et les résidences ouvertes à leur établissement.',
+            },
+          },
         }}
       />
 

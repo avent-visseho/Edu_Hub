@@ -21,6 +21,12 @@ export default function PageApprenants() {
         personnel={{
           titre: 'Mon dossier',
           description: 'Votre fiche scolaire : état civil, inscription et parcours.',
+          parRole: {
+            PARENT: {
+              titre: 'Mes enfants',
+              description: 'Leur fiche scolaire : état civil, inscription et parcours.',
+            },
+          },
         }}
       />
 

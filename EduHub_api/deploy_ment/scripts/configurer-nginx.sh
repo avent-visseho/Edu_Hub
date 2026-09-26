@@ -13,6 +13,9 @@
 # signale avant d'agir.
 #
 #   EDUHUB_DOMAINE=api.ezafri.com EDUHUB_PORT=8100 bash configurer-nginx.sh
+#
+# EDUHUB_COURRIEL fixe l'adresse d'inscription à Let's Encrypt. La valeur
+# « aucun » s'inscrit sans adresse ; sans la variable, certbot pose la question.
 # ===========================================================================
 set -euo pipefail
 
@@ -195,11 +198,20 @@ if [ -d "/etc/letsencrypt/live/${DOMAINE}" ]; then
     ok "certificat déjà présent — renouvellement géré par le minuteur de certbot"
 else
     info "Obtention du certificat Let's Encrypt…"
-    if [ -n "${COURRIEL}" ]; then
+    if [ "${COURRIEL}" = "aucun" ]; then
+        # Inscription sans adresse : Let's Encrypt ne pourra pas prévenir si un
+        # renouvellement échoue un jour. Le minuteur de certbot s'en charge
+        # automatiquement, mais une panne passerait inaperçue jusqu'à
+        # l'expiration. Une adresse s'ajoute après coup :
+        #     certbot update_account --email vous@exemple.org
+        attention "inscription sans adresse de courriel : aucune alerte d'expiration"
+        certbot --nginx -d "${DOMAINE}" --redirect --agree-tos \
+            --register-unsafely-without-email --non-interactive
+    elif [ -n "${COURRIEL}" ]; then
         certbot --nginx -d "${DOMAINE}" --redirect --agree-tos --no-eff-email \
             -m "${COURRIEL}" --non-interactive
     else
-        # Sans courriel fourni, certbot le demande — ainsi que l'acceptation des
+        # Sans consigne, certbot demande l'adresse et l'acceptation des
         # conditions. C'est le mode par défaut, volontairement interactif.
         certbot --nginx -d "${DOMAINE}" --redirect
     fi

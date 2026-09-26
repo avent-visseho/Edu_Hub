@@ -20,15 +20,15 @@ import { useSession } from '@/lib/session';
  * générateur donne une adresse mémorable.
  */
 const COMPTES_DEMO = [
-  { role: 'Super administrateur', email: 'super.admin@eduhub.bj', pictogramme: '🛡️' },
-  { role: 'Ministère (MEMP)', email: 'admin.memp@eduhub.bj', pictogramme: '🏛️' },
-  { role: 'Direction des examens', email: 'admin.dec.memp@eduhub.bj', pictogramme: '🎓' },
-  { role: 'Direction départementale', email: 'admin.ddeps.atlantique@eduhub.bj', pictogramme: '📍' },
-  { role: "Chef d'établissement", email: 'directeur@eduhub.bj', pictogramme: '🏫' },
-  { role: 'Enseignant', email: 'enseignant@eduhub.bj', pictogramme: '👩🏾‍🏫' },
-  { role: 'Élève', email: 'eleve@eduhub.bj', pictogramme: '🎒' },
-  { role: "Parent d'élève", email: 'parent@eduhub.bj', pictogramme: '👨🏾‍👩🏾‍👦🏾' },
-  { role: 'Compte de démonstration', email: 'demo@education.local', pictogramme: '👁️' },
+  { role: 'Super administrateur', email: 'super.admin@eduhub.bj' },
+  { role: 'Ministère (MEMP)', email: 'admin.memp@eduhub.bj' },
+  { role: 'Direction des examens', email: 'admin.dec.memp@eduhub.bj' },
+  { role: 'Direction départementale', email: 'admin.ddeps.atlantique@eduhub.bj' },
+  { role: "Chef d'établissement", email: 'directeur@eduhub.bj' },
+  { role: 'Enseignant', email: 'enseignant@eduhub.bj' },
+  { role: 'Élève', email: 'eleve@eduhub.bj' },
+  { role: "Parent d'élève", email: 'parent@eduhub.bj' },
+  { role: 'Compte de démonstration', email: 'demo@education.local' },
 ];
 
 const MOT_DE_PASSE_DEMO = 'EduHub2026!';
@@ -189,9 +189,6 @@ export default function PageConnexion() {
                     onClick={() => remplir(compte.email)}
                     className="flex h-full w-full items-center gap-2.5 rounded-lg border px-3 py-2 text-left transition hover:bg-[rgb(var(--fond-doux))]"
                   >
-                    <span aria-hidden className="text-lg">
-                      {compte.pictogramme}
-                    </span>
                     <span className="min-w-0 flex-1">
                       <span className="block text-sm font-medium">{compte.role}</span>
                       <span className="block truncate text-xs texte-doux">{compte.email}</span>

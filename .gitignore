@@ -33,6 +33,10 @@ out/
 .env.*
 !.env.example
 !.env.*.example
+# Exception : ce fichier ne contient que des variables NEXT_PUBLIC_, qui
+# finissent de toute façon en clair dans le paquet servi au navigateur. Le
+# versionner rend la configuration de production reproductible.
+!EduHub_front/.env.production
 
 # ---- Données locales / stockage ----
 *.sqlite3

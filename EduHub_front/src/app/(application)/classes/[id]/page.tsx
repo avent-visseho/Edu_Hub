@@ -6,7 +6,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { useState } from 'react';
 
 import { EntetePage } from '@/components/layout/entete-page';
-import { GraphiqueBarres } from '@/components/graphiques';
+import { COULEURS, GraphiqueBarres } from '@/components/graphiques';
 import { EmploiDuTemps, type Creneau } from '@/components/ui/emploi-du-temps';
 import { Indicateur, Jauge, Tableau } from '@/components/ui/donnees';
 import {
@@ -373,7 +373,7 @@ export default function PageDetailClasse() {
                   titre="Distribution des moyennes de la classe"
                   donnees={stats.distribution}
                   cleAbscisse="tranche"
-                  series={[{ cle: 'effectif', libelle: 'Apprenants', couleur: '#284f8b' }]}
+                  series={[{ cle: 'effectif', libelle: 'Apprenants', couleur: COULEURS.bleu }]}
                   hauteur={250}
                 />
               </CorpsCarte>
@@ -386,7 +386,7 @@ export default function PageDetailClasse() {
                   titre="Moyenne par matière"
                   donnees={stats.par_matiere}
                   cleAbscisse="matiere"
-                  series={[{ cle: 'moyenne', libelle: 'Moyenne', couleur: '#16a153' }]}
+                  series={[{ cle: 'moyenne', libelle: 'Moyenne', couleur: COULEURS.vert }]}
                   hauteur={250}
                 />
               </CorpsCarte>

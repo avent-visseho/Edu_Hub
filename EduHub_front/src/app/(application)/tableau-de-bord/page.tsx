@@ -16,7 +16,7 @@ import Link from 'next/link';
 
 import { AccueilPersonnel } from '@/components/layout/accueil-personnel';
 import { EntetePage } from '@/components/layout/entete-page';
-import { GraphiqueBarres, GraphiqueSecteurs } from '@/components/graphiques';
+import { COULEURS, GraphiqueBarres, GraphiqueSecteurs } from '@/components/graphiques';
 import { Indicateur } from '@/components/ui/donnees';
 import {
   Badge,
@@ -160,7 +160,7 @@ export default function PageTableauDeBord() {
               titre="Distribution des moyennes"
               donnees={distribution}
               cleAbscisse="tranche"
-              series={[{ cle: 'effectif', libelle: 'Apprenants', couleur: '#16a153' }]}
+              series={[{ cle: 'effectif', libelle: 'Apprenants', couleur: COULEURS.vert }]}
               hauteur={260}
             />
           </CorpsCarte>
@@ -199,7 +199,9 @@ export default function PageTableauDeBord() {
               titre="Taux de réussite par session"
               donnees={reussite}
               cleAbscisse="session"
-              series={[{ cle: 'taux_reussite', libelle: 'Taux de réussite', couleur: '#284f8b' }]}
+              series={[
+                { cle: 'taux_reussite', libelle: 'Taux de réussite', couleur: COULEURS.bleu },
+              ]}
               hauteur={300}
               unite="%"
               longueurEtiquette={26}

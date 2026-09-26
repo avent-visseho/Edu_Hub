@@ -13,33 +13,63 @@
   --police-interface: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   --taille-base: 1rem;
 
-  --fond: 248 250 252;
+  /*
+   * Palette relevée sur l'identité EduHub et le drapeau béninois.
+   *
+   * Le logo porte deux bleus — un bleu profond pour « Edu », un bleu vif pour
+   * « Hub » — et les pages d'un livre ouvert en vert et or. Le drapeau fournit
+   * le vert, le jaune et le rouge, employés ici comme accents de statut et
+   * comme filet tricolore, jamais comme fond de texte : le rouge et le vert du
+   * drapeau sont trop saturés pour porter de la lecture.
+   */
+  --marque-bleu: 0 72 156; /* #00489c — « Edu », mortier du logo */
+  --marque-bleu-vif: 12 120 216; /* #0c78d8 — « Hub » */
+  --marque-or: 240 176 0; /* #f0b000 — page droite du livre */
+  --marque-vert: 12 144 60; /* #0c903c — page gauche du livre */
+  --benin-vert: 0 135 81; /* #008751 */
+  --benin-jaune: 252 209 22; /* #fcd116 */
+  --benin-rouge: 232 17 45; /* #e8112d */
+
+  --fond: 246 249 252;
   --fond-carte: 255 255 255;
-  --fond-doux: 241 245 249;
-  --bordure: 226 232 240;
-  --texte: 15 30 53;
-  --texte-doux: 71 85 105;
-  --accent: 40 79 139;
+  --fond-doux: 239 244 250;
+  --bordure: 219 229 240;
+  --texte: 12 31 58;
+  --texte-doux: 84 103 128;
+  --accent: var(--marque-bleu);
   --accent-contraste: 255 255 255;
-  --succes: 22 161 83;
-  --alerte: 243 157 11;
-  --danger: 185 28 28;
-  --anneau: 57 102 168;
+  --succes: var(--benin-vert);
+  --alerte: 214 148 0;
+  --danger: 200 24 44;
+  --anneau: var(--marque-bleu-vif);
 }
 
+/*
+ * Thème sombre : les mêmes teintes, éclaircies pour tenir le contraste sur
+ * fond foncé. Le bleu profond de la marque y deviendrait illisible ; c'est le
+ * bleu vif qui prend le relais.
+ */
 :root[data-theme='sombre'] {
-  --fond: 13 21 37;
-  --fond-carte: 20 32 54;
-  --fond-doux: 26 40 66;
-  --bordure: 45 65 98;
+  --marque-bleu: 96 160 232;
+  --marque-bleu-vif: 120 180 245;
+  --marque-or: 250 200 60;
+  --marque-vert: 70 200 120;
+  --benin-vert: 70 200 120;
+  --benin-jaune: 250 209 70;
+  --benin-rouge: 248 113 113;
+
+  --fond: 10 19 34;
+  --fond-carte: 18 31 52;
+  --fond-doux: 25 41 66;
+  --bordure: 42 62 94;
   --texte: 226 235 248;
-  --texte-doux: 155 175 203;
-  --accent: 149 177 216;
-  --accent-contraste: 12 22 40;
-  --succes: 74 222 141;
-  --alerte: 249 190 34;
-  --danger: 252 165 165;
-  --anneau: 149 177 216;
+  --texte-doux: 158 178 205;
+  --accent: var(--marque-bleu);
+  --accent-contraste: 8 18 34;
+  --succes: var(--benin-vert);
+  --alerte: 250 200 60;
+  --danger: 248 113 113;
+  --anneau: var(--marque-bleu-vif);
 }
 
 /* Contraste élevé : noir et blanc francs, bordures épaissies. */
@@ -79,6 +109,37 @@
 
 :root[data-police='tres-grande'] {
   --taille-base: 1.375rem;
+}
+
+@layer components {
+  /*
+   * Filet tricolore : vert, jaune, rouge dans l'ordre du drapeau. Il souligne
+   * l'en-tête et ferme la page, comme sur la bannière de référence. Purement
+   * décoratif, il est masqué aux lecteurs d'écran par aria-hidden côté balise.
+   */
+  .filet-benin {
+    height: 4px;
+    background: linear-gradient(
+      to right,
+      rgb(var(--benin-vert)) 0 33.34%,
+      rgb(var(--benin-jaune)) 33.34% 66.67%,
+      rgb(var(--benin-rouge)) 66.67% 100%
+    );
+  }
+
+  /* Dégradé de marque, du bleu profond au bleu vif. */
+  .degrade-marque {
+    background-image: linear-gradient(
+      135deg,
+      rgb(var(--marque-bleu)) 0%,
+      rgb(var(--marque-bleu-vif)) 100%
+    );
+  }
+
+  /* Titre en deux tons, à la manière du logo. */
+  .titre-marque > .accentue {
+    color: rgb(var(--marque-bleu-vif));
+  }
 }
 
 @layer base {

@@ -5,7 +5,7 @@ import { FileDown } from 'lucide-react';
 import { useState } from 'react';
 
 import { EntetePage } from '@/components/layout/entete-page';
-import { GraphiqueBarres, GraphiqueLignes } from '@/components/graphiques';
+import { COULEURS, GraphiqueBarres, GraphiqueLignes } from '@/components/graphiques';
 import { Indicateur, Jauge, Tableau } from '@/components/ui/donnees';
 import {
   Bouton,
@@ -209,7 +209,7 @@ export default function PageStatistiques() {
               cleAbscisse="session"
               series={[
                 { cle: 'taux_reussite', libelle: 'Taux de réussite' },
-                { cle: 'moyenne', libelle: 'Moyenne générale', couleur: '#16a153' },
+                { cle: 'moyenne', libelle: 'Moyenne générale', couleur: COULEURS.vert },
               ]}
               hauteur={280}
               longueurEtiquette={14}

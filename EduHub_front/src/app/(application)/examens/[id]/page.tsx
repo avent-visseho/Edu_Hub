@@ -17,7 +17,7 @@ import {
 import { useParams } from 'next/navigation';
 
 import { EntetePage } from '@/components/layout/entete-page';
-import { GraphiqueBarres } from '@/components/graphiques';
+import { COULEURS, GraphiqueBarres } from '@/components/graphiques';
 import { Indicateur, Jauge, Tableau } from '@/components/ui/donnees';
 import {
   Badge,
@@ -370,7 +370,7 @@ export default function PagePilotageSession() {
               titre="Dossiers par statut"
               donnees={dossiers}
               cleAbscisse="statut"
-              series={[{ cle: 'effectif', libelle: 'Candidats', couleur: '#284f8b' }]}
+              series={[{ cle: 'effectif', libelle: 'Candidats', couleur: COULEURS.bleu }]}
               hauteur={250}
             />
           </CorpsCarte>

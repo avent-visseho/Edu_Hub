@@ -2,6 +2,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { ArrowRight, Lock, Mail } from 'lucide-react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -89,29 +90,73 @@ export default function PageConnexion() {
 
   return (
     <div className="min-h-screen lg:grid lg:grid-cols-2">
-      {/* Colonne de présentation */}
-      <aside className="hidden flex-col justify-between bg-[rgb(var(--accent))] p-10 text-[rgb(var(--accent-contraste))] lg:flex">
-        <Link href="/" className="flex items-center gap-2.5 font-semibold">
-          <span
-            aria-hidden
-            className="grid h-9 w-9 place-items-center rounded-lg bg-white/20 text-sm font-bold"
-          >
-            EH
+      {/*
+        Colonne de présentation : la photographie d'un établissement béninois.
+        Le cadrage décale l'image vers la droite pour que l'élève reste dans la
+        moitié claire, et le voile dégradé va de gauche (dense, sous le texte) à
+        droite (léger, sur la photo). Le voile n'est pas un effet de style —
+        sans lui, le contraste du texte tombe sous le seuil d'accessibilité sur
+        les zones claires du ciel.
+      */}
+      <aside className="relative hidden flex-col justify-between overflow-hidden p-10 text-white lg:flex">
+        <Image
+          src="/images/image_banner.jpeg"
+          alt=""
+          aria-hidden
+          fill
+          sizes="50vw"
+          className="object-cover object-[58%_38%]"
+          priority
+        />
+        <div
+          aria-hidden
+          className="absolute inset-0 bg-gradient-to-r from-[rgb(var(--marque-bleu))]/95 via-[rgb(var(--marque-bleu))]/70 to-[rgb(var(--marque-bleu-vif))]/25"
+        />
+        <div
+          aria-hidden
+          className="absolute inset-0 bg-gradient-to-t from-[rgb(var(--marque-bleu))]/92 via-[rgb(var(--marque-bleu))]/35 to-[rgb(var(--marque-bleu))]/55"
+        />
+
+        <Link href="/" className="relative flex items-center gap-3 font-semibold">
+          <span className="grid h-12 w-12 place-items-center rounded-xl bg-white/95 p-1.5">
+            <Image
+              src="/images/logo-embleme.png"
+              alt=""
+              aria-hidden
+              width={40}
+              height={40}
+              className="h-full w-full object-contain"
+            />
           </span>
-          <span className="text-lg tracking-tight">EduHub</span>
+          <span className="flex flex-col leading-tight">
+            <span className="text-xl tracking-tight">EduHub</span>
+            <span className="text-xs font-normal opacity-85">
+              L&apos;éducation au service d&apos;un meilleur Bénin
+            </span>
+          </span>
         </Link>
 
-        <div>
-          <h1 className="max-w-md text-3xl font-semibold leading-tight tracking-tight">
-            Toute la vie éducative dans un système unique.
+        <div className="relative">
+          <h1 className="max-w-md text-4xl font-semibold leading-tight tracking-tight">
+            Ensemble pour une éducation de qualité au Bénin.
           </h1>
-          <p className="mt-4 max-w-md opacity-90">
+          <p className="mt-4 max-w-md text-white/90">
             Scolarité, examens et concours, diplômes vérifiables, vie étudiante, projets, stages et
             gouvernance — reliés de bout en bout.
           </p>
+          <ul className="mt-7 flex flex-wrap gap-2">
+            {['Apprendre', 'Enseigner', 'Réussir', "Construire l'avenir"].map((mot) => (
+              <li
+                key={mot}
+                className="rounded-full bg-white/15 px-3.5 py-1.5 text-sm backdrop-blur-sm"
+              >
+                {mot}
+              </li>
+            ))}
+          </ul>
         </div>
 
-        <p className="text-sm opacity-80">
+        <p className="relative text-sm text-white/80">
           Prototype de démonstration. Toutes les données sont fictives.
         </p>
       </aside>
@@ -120,13 +165,17 @@ export default function PageConnexion() {
       <main className="flex min-h-screen flex-col px-4 py-8 sm:px-8">
         <div className="flex items-center justify-between lg:justify-end">
           <Link href="/" className="flex items-center gap-2 font-semibold lg:hidden">
-            <span
+            <Image
+              src="/images/logo-embleme.png"
+              alt=""
               aria-hidden
-              className="grid h-8 w-8 place-items-center rounded-lg bg-[rgb(var(--accent))] text-xs font-bold text-[rgb(var(--accent-contraste))]"
-            >
-              EH
+              width={32}
+              height={32}
+              className="h-8 w-8 object-contain"
+            />
+            <span className="titre-marque tracking-tight">
+              Edu<span className="accentue">Hub</span>
             </span>
-            EduHub
           </Link>
           <BarreAccessibilite />
         </div>

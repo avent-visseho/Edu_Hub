@@ -5,8 +5,17 @@ import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import Link from 'next/link';
 import { useEffect, useMemo, useRef } from 'react';
-import { CircleMarker, MapContainer, Polygon, Popup, TileLayer, Tooltip, useMap } from 'react-leaflet';
+import {
+  CircleMarker,
+  MapContainer,
+  Polygon,
+  Popup,
+  TileLayer,
+  Tooltip,
+  useMap,
+} from 'react-leaflet';
 
+import { COULEURS } from '@/components/graphiques';
 import { EMPRISE_BENIN, FRONTIERE_BENIN } from '@/data/frontiere-benin';
 import { formaterNombre, humaniser } from '@/lib/utils';
 
@@ -27,20 +36,22 @@ export interface PointCarte {
  * Couleur par type d'établissement. Les familles partagent une teinte — bleus
  * pour le primaire, verts pour le secondaire général, orangés pour le
  * technique — afin que la carte se lise sans consulter la légende à chaque
- * point.
+ * point. Chaque famille part d'une couleur de la marque et se décline ensuite
+ * en nuances : la carte ne peut pas se contenter des huit couleurs de la
+ * palette, il lui en faut onze, toutes distinctes.
  */
 export const COULEURS_TYPE: Record<string, string> = {
-  EPP: '#284f8b',
-  EPRIV: '#5d86c1',
-  EM: '#0891b2',
-  CEG: '#16a153',
+  EPP: COULEURS.bleu,
+  EPRIV: COULEURS.bleuVif,
+  EM: COULEURS.cyan,
+  CEG: COULEURS.vert,
   LYCEE: '#15803d',
   CS: '#65a30d',
-  LT: '#d77706',
+  LT: COULEURS.or,
   CFP: '#b45309',
-  UNIV: '#7c3aed',
+  UNIV: COULEURS.violet,
   IUT: '#a855f7',
-  CAL: '#be123c',
+  CAL: COULEURS.rouge,
 };
 
 export const COULEUR_DEFAUT = '#4b5563';

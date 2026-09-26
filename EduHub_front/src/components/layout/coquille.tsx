@@ -1,6 +1,7 @@
 'use client';
 
 import { Bell, LogOut, Menu, X } from 'lucide-react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState, type ReactNode } from 'react';
@@ -126,13 +127,23 @@ export function Coquille({ children }: { children: ReactNode }) {
             href="/tableau-de-bord"
             className="flex items-center gap-2.5 border-b px-5 py-4 font-semibold"
           >
-            <span
+            <Image
+              src="/images/logo-embleme.png"
+              alt=""
               aria-hidden
-              className="grid h-9 w-9 place-items-center rounded-lg bg-[rgb(var(--accent))] text-sm font-bold text-[rgb(var(--accent-contraste))]"
-            >
-              EH
+              width={36}
+              height={36}
+              className="h-9 w-9 shrink-0 object-contain"
+              priority
+            />
+            <span className="flex flex-col leading-tight">
+              <span className="titre-marque text-lg tracking-tight">
+                Edu<span className="accentue">Hub</span>
+              </span>
+              <span className="text-[0.68rem] font-normal texte-doux">
+                L&apos;éducation au service d&apos;un meilleur Bénin
+              </span>
             </span>
-            <span className="text-lg tracking-tight">EduHub</span>
           </Link>
           <div className="defilement-fin flex-1 overflow-y-auto">{navigation}</div>
         </div>
@@ -218,6 +229,7 @@ export function Coquille({ children }: { children: ReactNode }) {
               </Bouton>
             </div>
           </div>
+          <div className="filet-benin" aria-hidden />
         </header>
 
         <main id="contenu" className="min-w-0 flex-1 px-4 py-6 sm:px-6 lg:px-8">

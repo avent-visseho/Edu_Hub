@@ -42,20 +42,29 @@ export function Indicateur({
   const affichage = typeof valeur === 'number' ? formaterNombre(valeur, decimales) : valeur;
 
   return (
-    <div className={cn('surface rounded-xl p-4 shadow-carte', className)}>
+    /*
+     * Le liseré supérieur reprend le bleu de la marque : il donne un point
+     * d'ancrage commun à tous les indicateurs, quel que soit le tableau de
+     * bord, sans ajouter de couleur au contenu lui-même.
+     */
+    <div
+      className={cn(
+        'surface relative overflow-hidden rounded-xl p-4 pt-[1.15rem] shadow-carte',
+        'before:absolute before:inset-x-0 before:top-0 before:h-1 before:degrade-marque',
+        className,
+      )}
+    >
       <div className="flex items-start justify-between gap-2">
         <p className="text-sm font-medium texte-doux">{libelle}</p>
-        <span aria-hidden className="texte-doux opacity-70">
-          {modeSimplifie && pictogramme ? (
-            <span className="text-xl">{pictogramme}</span>
-          ) : (
-            icone
-          )}
+        <span aria-hidden className="text-[rgb(var(--marque-bleu-vif))]">
+          {modeSimplifie && pictogramme ? <span className="text-xl">{pictogramme}</span> : icone}
         </span>
       </div>
 
       <p className="mt-2 flex items-baseline gap-1.5">
-        <span className="text-3xl font-semibold tabular-nums tracking-tight">{affichage}</span>
+        <span className="text-3xl font-semibold tabular-nums tracking-tight text-[rgb(var(--marque-bleu))]">
+          {affichage}
+        </span>
         {unite ? <span className="text-sm texte-doux">{unite}</span> : null}
       </p>
 
@@ -317,9 +326,7 @@ export function ListeDescriptive({
     <dl className={cn('grid grid-cols-1 gap-x-6 gap-y-4', grilles[colonnes])}>
       {entrees.map((entree) => (
         <div key={entree.terme} className="min-w-0">
-          <dt className="text-xs font-medium uppercase tracking-wide texte-doux">
-            {entree.terme}
-          </dt>
+          <dt className="text-xs font-medium uppercase tracking-wide texte-doux">{entree.terme}</dt>
           <dd className="mt-0.5 break-words font-medium">{entree.valeur}</dd>
         </div>
       ))}

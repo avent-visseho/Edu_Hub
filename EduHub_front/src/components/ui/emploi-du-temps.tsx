@@ -3,6 +3,7 @@
 import { Trash2 } from 'lucide-react';
 import { useMemo } from 'react';
 
+import { PALETTE } from '@/components/graphiques';
 import { cn } from '@/lib/utils';
 
 export interface Creneau {
@@ -26,22 +27,15 @@ const LIBELLES_JOURS: Record<string, string> = {
   SAMEDI: 'Samedi',
 };
 
-/** Couleur stable dérivée d'un identifiant, pour distinguer les matières. */
-const COULEURS = [
-  '#284f8b',
-  '#16a153',
-  '#d77706',
-  '#7c3aed',
-  '#b91c1c',
-  '#0891b2',
-  '#a16207',
-  '#be123c',
-];
-
+/**
+ * Couleur stable dérivée d'un identifiant, pour distinguer les matières. La
+ * palette des graphiques est reprise telle quelle : une matière garde ainsi la
+ * même teinte dans l'emploi du temps et dans les graphiques de la scolarité.
+ */
 function couleurDe(cle: string): string {
   let somme = 0;
   for (const caractere of cle) somme += caractere.charCodeAt(0);
-  return COULEURS[somme % COULEURS.length];
+  return PALETTE[somme % PALETTE.length];
 }
 
 /**

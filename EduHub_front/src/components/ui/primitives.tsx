@@ -1,6 +1,12 @@
 'use client';
 
-import { forwardRef, type ButtonHTMLAttributes, type InputHTMLAttributes, type ReactNode, type SelectHTMLAttributes } from 'react';
+import {
+  forwardRef,
+  type ButtonHTMLAttributes,
+  type InputHTMLAttributes,
+  type ReactNode,
+  type SelectHTMLAttributes,
+} from 'react';
 
 import { cn } from '@/lib/utils';
 
@@ -12,10 +18,8 @@ type VarianteBouton = 'principal' | 'secondaire' | 'discret' | 'danger' | 'fanto
 type TailleBouton = 'sm' | 'md' | 'lg';
 
 const VARIANTES: Record<VarianteBouton, string> = {
-  principal:
-    'bg-[rgb(var(--accent))] text-[rgb(var(--accent-contraste))] hover:brightness-110 shadow-sm',
-  secondaire:
-    'surface text-[rgb(var(--texte))] hover:bg-[rgb(var(--fond-doux))] border',
+  principal: 'degrade-marque text-white hover:brightness-110 shadow-sm',
+  secondaire: 'surface text-[rgb(var(--texte))] hover:bg-[rgb(var(--fond-doux))] border',
   discret: 'surface-douce text-[rgb(var(--texte))] hover:brightness-95 border border-transparent',
   danger: 'bg-[rgb(var(--danger))] text-white hover:brightness-110 shadow-sm',
   fantome: 'text-[rgb(var(--texte))] hover:bg-[rgb(var(--fond-doux))]',
@@ -36,7 +40,16 @@ interface ProprietesBouton extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 export const Bouton = forwardRef<HTMLButtonElement, ProprietesBouton>(function Bouton(
-  { className, variante = 'principal', taille = 'md', chargement, icone, children, disabled, ...reste },
+  {
+    className,
+    variante = 'principal',
+    taille = 'md',
+    chargement,
+    icone,
+    children,
+    disabled,
+    ...reste
+  },
   ref,
 ) {
   return (
@@ -292,7 +305,11 @@ export function Interrupteur({
       )}
     >
       <span className="flex min-w-0 items-center gap-2.5">
-        {icone ? <span aria-hidden className="shrink-0">{icone}</span> : null}
+        {icone ? (
+          <span aria-hidden className="shrink-0">
+            {icone}
+          </span>
+        ) : null}
         <span className="min-w-0">
           <span className="block text-sm font-medium">{etiquette}</span>
           {description ? <span className="block text-xs texte-doux">{description}</span> : null}

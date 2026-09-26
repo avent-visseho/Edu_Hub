@@ -5,7 +5,7 @@ import { Award, Languages, Users } from 'lucide-react';
 import { useState } from 'react';
 
 import { EntetePage } from '@/components/layout/entete-page';
-import { GraphiqueBarres } from '@/components/graphiques';
+import { COULEURS, GraphiqueBarres } from '@/components/graphiques';
 import { Indicateur, Jauge, Tableau } from '@/components/ui/donnees';
 import {
   Badge,
@@ -128,7 +128,7 @@ export default function PageAlphabetisation() {
             cleAbscisse="langue"
             series={[
               { cle: 'apprenants', libelle: 'Apprenants' },
-              { cle: 'certifies', libelle: 'Certifiés', couleur: '#16a153' },
+              { cle: 'certifies', libelle: 'Certifiés', couleur: COULEURS.vert },
             ]}
             hauteur={260}
           />

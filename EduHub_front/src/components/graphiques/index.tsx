@@ -20,18 +20,40 @@ import { useAccessibilite } from '@/lib/accessibilite';
 import { formaterNombre } from '@/lib/utils';
 
 /**
- * Palette catégorielle, lisible en clair comme en sombre, et distinguable
- * par les principales formes de daltonisme.
+ * Palette catégorielle bâtie sur l'identité : le bleu profond du logo, l'or de
+ * ses pages, le vert et le rouge du drapeau, le bleu vif du sigle.
+ *
+ * L'ordre n'est pas celui de l'identité mais celui du contraste : les deux
+ * bleus de la marque sont volontairement séparés, car un camembert à deux parts
+ * — la parité filles / garçons, par exemple — prend les deux premières couleurs
+ * et deux bleus voisins y seraient indistinguables.
+ *
+ * Les valeurs sont figées et non tirées des jetons de thème : un graphique doit
+ * garder les mêmes couleurs en clair, en sombre et à l'impression, sans quoi
+ * une légende imprimée ne correspondrait plus à l'écran. Elles ont été
+ * choisies lisibles sur les deux fonds et distinguables par les principales
+ * formes de daltonisme.
  */
+export const COULEURS = {
+  bleu: '#00489c', // bleu profond — « Edu »
+  or: '#f0b000', // or des pages du livre
+  vert: '#008751', // vert du drapeau
+  bleuVif: '#0c78d8', // bleu vif — « Hub »
+  rouge: '#e8112d', // rouge du drapeau
+  violet: '#7c3aed',
+  cyan: '#0891b2', // pour les séries longues
+  ardoise: '#54677f', // pour les restes et les « autres »
+} as const;
+
 export const PALETTE = [
-  '#284f8b',
-  '#16a153',
-  '#d77706',
-  '#7c3aed',
-  '#b91c1c',
-  '#0891b2',
-  '#a16207',
-  '#4b5563',
+  COULEURS.bleu,
+  COULEURS.or,
+  COULEURS.vert,
+  COULEURS.bleuVif,
+  COULEURS.rouge,
+  COULEURS.violet,
+  COULEURS.cyan,
+  COULEURS.ardoise,
 ];
 
 const STYLE_INFOBULLE = {
@@ -124,7 +146,9 @@ export function GraphiqueBarres({
 }: ProprietesGraphique) {
   const { economieDonnees } = useAccessibilite();
   if (economieDonnees || donnees.length === 0) {
-    return <TableauDeRepli donnees={donnees} cleAbscisse={cleAbscisse} series={series} titre={titre} />;
+    return (
+      <TableauDeRepli donnees={donnees} cleAbscisse={cleAbscisse} series={series} titre={titre} />
+    );
   }
 
   return (
@@ -150,7 +174,9 @@ export function GraphiqueBarres({
           />
           <Tooltip
             contentStyle={STYLE_INFOBULLE}
-            formatter={(valeur: number) => `${formaterNombre(valeur, 1)}${unite ? ` ${unite}` : ''}`}
+            formatter={(valeur: number) =>
+              `${formaterNombre(valeur, 1)}${unite ? ` ${unite}` : ''}`
+            }
           />
           {series.length > 1 ? <Legend wrapperStyle={{ fontSize: '0.8125rem' }} /> : null}
           {series.map((serie, index) => (
@@ -179,7 +205,9 @@ export function GraphiqueLignes({
 }: ProprietesGraphique) {
   const { economieDonnees } = useAccessibilite();
   if (economieDonnees || donnees.length === 0) {
-    return <TableauDeRepli donnees={donnees} cleAbscisse={cleAbscisse} series={series} titre={titre} />;
+    return (
+      <TableauDeRepli donnees={donnees} cleAbscisse={cleAbscisse} series={series} titre={titre} />
+    );
   }
 
   return (
@@ -200,7 +228,9 @@ export function GraphiqueLignes({
           />
           <Tooltip
             contentStyle={STYLE_INFOBULLE}
-            formatter={(valeur: number) => `${formaterNombre(valeur, 1)}${unite ? ` ${unite}` : ''}`}
+            formatter={(valeur: number) =>
+              `${formaterNombre(valeur, 1)}${unite ? ` ${unite}` : ''}`
+            }
           />
           {series.length > 1 ? <Legend wrapperStyle={{ fontSize: '0.8125rem' }} /> : null}
           {series.map((serie, index) => (

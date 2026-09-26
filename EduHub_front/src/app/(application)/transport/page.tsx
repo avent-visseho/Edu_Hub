@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Bus, Clock, CreditCard, MapPin, Truck, Users } from 'lucide-react';
 import { useState } from 'react';
 
+import { COULEURS } from '@/components/graphiques';
 import { EntetePage } from '@/components/layout/entete-page';
 import { Jauge, Tableau } from '@/components/ui/donnees';
 import {
@@ -159,7 +160,7 @@ export default function PageTransport() {
                   <span
                     aria-hidden
                     className="grid h-9 w-9 shrink-0 place-items-center rounded-lg text-xs font-bold text-white"
-                    style={{ backgroundColor: element.couleur ?? '#284f8b' }}
+                    style={{ backgroundColor: element.couleur ?? COULEURS.bleu }}
                   >
                     {element.code}
                   </span>

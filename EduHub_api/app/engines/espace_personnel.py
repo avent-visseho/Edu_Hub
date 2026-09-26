@@ -139,20 +139,56 @@ async def indicateurs_eleve(
 async def indicateurs_parent(
     session: AsyncSession, perimetre: PerimetrePersonnel
 ) -> list[Indicateur]:
-    """Le suivi d'un parent porte sur ses enfants, pas sur lui."""
-    moyenne, rang, effectif = await _moyenne_et_rang(session, perimetre.apprenants)
-    presence = await _taux_presence(session, perimetre.apprenants)
-    bulletins = await session.scalar(
-        _compter(Bulletin, Bulletin.apprenant_id.in_(perimetre.apprenants or {uuid.uuid4()}))
+    """Le suivi d'un parent porte sur ses enfants, nommément.
+
+    Agréger plusieurs enfants n'aurait pas de sens : « dernière moyenne 11,5 »
+    ne dirait pas de qui il s'agit, et mélangerait l'aîné qui décroche avec la
+    cadette qui réussit. Chaque enfant a donc ses propres indicateurs, préfixés
+    de son prénom.
+    """
+    if not perimetre.apprenants:
+        return [Indicateur("enfants", "Mes enfants", 0)]
+
+    enfants = list(
+        await session.execute(
+            select(Apprenant.id, Apprenant.prenoms, Apprenant.nom)
+            .where(Apprenant.id.in_(perimetre.apprenants))
+            .order_by(Apprenant.date_naissance)
+        )
     )
 
-    return [
-        Indicateur("enfants", "Mes enfants", len(perimetre.apprenants)),
-        Indicateur("moyenne_generale", "Dernière moyenne", moyenne or 0, "sur 20"),
-        Indicateur("rang", "Rang", rang or 0, f"sur {effectif}" if effectif else None),
-        Indicateur("taux_presence", "Assiduité", presence or 0, "%"),
-        Indicateur("bulletins", "Bulletins disponibles", bulletins or 0),
-    ]
+    indicateurs = [Indicateur("enfants", "Mes enfants", len(enfants))]
+    for identifiant, prenoms, nom in enfants:
+        seul = {identifiant}
+        moyenne, rang, effectif = await _moyenne_et_rang(session, seul)
+        presence = await _taux_presence(session, seul)
+        # Le prénom suffit à distinguer, sauf homonymie dans la fratrie.
+        appel = prenoms.split()[0] if prenoms else nom
+        suffixe = str(identifiant)[:8]
+        indicateurs.extend(
+            [
+                Indicateur(
+                    f"moyenne_{suffixe}",
+                    f"Moyenne de {appel}",
+                    moyenne or 0,
+                    "sur 20",
+                    detail={"apprenant_id": str(identifiant)},
+                ),
+                Indicateur(
+                    f"rang_{suffixe}",
+                    f"Rang de {appel}",
+                    rang or 0,
+                    f"sur {effectif}" if effectif else None,
+                ),
+                Indicateur(
+                    f"presence_{suffixe}",
+                    f"Assiduité de {appel}",
+                    presence or 0,
+                    "%",
+                ),
+            ]
+        )
+    return indicateurs
 
 
 async def repartition_par_niveau(

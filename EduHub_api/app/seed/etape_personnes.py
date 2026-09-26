@@ -392,6 +392,25 @@ async def _apprenants_et_parents(ctx: ContexteSeed) -> None:
             }
         )
 
+        # Fratries : un apprenant sur quatre rejoint une famille déjà créée dans
+        # sa commune, plutôt que de recevoir des parents à lui. Sans cela, le
+        # pays comptait autant de familles que d'élèves — aucun frère, aucune
+        # sœur — et l'espace d'un parent n'aurait jamais montré qu'un enfant.
+        familles = ctx.cache("familles_par_commune").setdefault(info["commune"], [])
+        if familles and ctx.probabilite(0.25):
+            for id_parent, rang in ctx.choix(familles):
+                liens.append(
+                    {
+                        "id": ctx.nouvel_id(),
+                        "apprenant_id": ident,
+                        "parent_id": id_parent,
+                        "lien": LienParente.PERE if rang == 0 else LienParente.MERE,
+                        "contact_principal": rang == 0,
+                        "autorise_sortie": True,
+                    }
+                )
+            continue
+
         # Parents : un ou deux par apprenant.
         contacts = []
         for rang in range(ctx.entier(1, 2)):
@@ -445,6 +464,9 @@ async def _apprenants_et_parents(ctx: ContexteSeed) -> None:
                     "autorise_sortie": True,
                 }
             )
+
+        # La famille devient disponible pour les cadets de la même commune.
+        familles.append(contacts)
 
     await ctx.inserer(Utilisateur, utilisateurs)
     await ctx.inserer(UtilisateurRole, affectations)

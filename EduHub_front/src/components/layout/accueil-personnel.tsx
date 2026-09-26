@@ -1,11 +1,15 @@
 'use client';
 
+import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
 
 import { NAVIGATION } from '@/components/layout/navigation';
 import { EntetePage } from '@/components/layout/entete-page';
-import { Carte, CorpsCarte, EnteteCarte } from '@/components/ui/primitives';
+import { Indicateur } from '@/components/ui/donnees';
+import { Carte, CorpsCarte, EnteteCarte, Squelette } from '@/components/ui/primitives';
+import { api } from '@/lib/api';
 import { useSession } from '@/lib/session';
+import type { TableauBord } from '@/types/api';
 
 /** Phrase d'accueil propre au rôle, pour situer d'emblée ce qu'on peut faire. */
 const INTRODUCTIONS: Record<string, string> = {
@@ -34,6 +38,14 @@ const INTRODUCTIONS: Record<string, string> = {
 export function AccueilPersonnel() {
   const { utilisateur, peut } = useSession();
 
+  // Les indicateurs du rôle : la moyenne et l'assiduité d'un élève, le suivi
+  // des enfants d'un parent, les classes d'un enseignant. L'API les compose
+  // dans le périmètre de l'appelant ; rien n'est à filtrer ici.
+  const tableau = useQuery({
+    queryKey: ['mon-tableau'],
+    queryFn: () => api.get<TableauBord>('/tableaux-de-bord/mon-tableau'),
+  });
+
   const roles = utilisateur?.roles ?? [];
   const introduction =
     roles.map((role) => INTRODUCTIONS[role]).find(Boolean) ??
@@ -56,6 +68,27 @@ export function AccueilPersonnel() {
         titre={`Bonjour ${utilisateur?.prenoms ?? ''}`.trim()}
         description={introduction}
       />
+
+      {tableau.isLoading && (
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+          {[0, 1, 2, 3, 4].map((rang) => (
+            <Squelette key={rang} className="h-24" />
+          ))}
+        </div>
+      )}
+
+      {tableau.data && tableau.data.indicateurs.length > 0 && (
+        <div className="mb-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+          {tableau.data.indicateurs.map((indicateur) => (
+            <Indicateur
+              key={indicateur.code}
+              libelle={indicateur.libelle}
+              valeur={indicateur.valeur}
+              unite={indicateur.unite}
+            />
+          ))}
+        </div>
+      )}
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {groupes.map((groupe) => (

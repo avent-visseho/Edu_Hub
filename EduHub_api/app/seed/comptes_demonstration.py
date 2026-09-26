@@ -24,7 +24,9 @@ from sqlalchemy import func, select, text, update
 
 from app.core.enums import RoleCode
 from app.core.logging import get_logger
+from app.models.evaluation import Evaluation
 from app.models.identity import Role, Utilisateur, UtilisateurRole
+from app.models.personnel import Enseignant
 from app.models.scolarite import Classe
 from app.seed.contexte import ContexteSeed
 
@@ -62,12 +64,33 @@ async def generer(ctx: ContexteSeed) -> None:
 async def _premier_compte(ctx: ContexteSeed, role_code: RoleCode) -> object | None:
     """Compte retenu pour ce rôle : le mieux pourvu, à défaut le premier.
 
-    Pour un chef d'établissement, le tri alphabétique tombait sur un centre
-    d'alphabétisation sans aucune classe : la démonstration n'y montrait rien.
-    On privilégie donc l'établissement qui compte le plus de classes, et l'on
-    départage par l'adresse pour rester déterministe.
+    Le tri alphabétique seul désignait un chef d'établissement dirigeant un
+    centre d'alphabétisation sans classes, et un enseignant sans la moindre
+    évaluation : la démonstration ouvrait sur des écrans vides. On privilégie
+    donc le compte qui a quelque chose à montrer, en départageant par l'adresse
+    pour rester déterministe.
     """
-    if role_code is RoleCode.SCHOOL_ADMIN:
+    if role_code is RoleCode.TEACHER:
+        evaluations = (
+            select(Evaluation.enseignant_id, func.count().label("total"))
+            .group_by(Evaluation.enseignant_id)
+            .subquery()
+        )
+        enseignants = (
+            select(Enseignant.utilisateur_id, evaluations.c.total)
+            .join(evaluations, evaluations.c.enseignant_id == Enseignant.id)
+            .subquery()
+        )
+        requete = (
+            select(Utilisateur.id)
+            .join(UtilisateurRole, UtilisateurRole.utilisateur_id == Utilisateur.id)
+            .join(Role, Role.id == UtilisateurRole.role_id)
+            .outerjoin(enseignants, enseignants.c.utilisateur_id == Utilisateur.id)
+            .where(Role.code == role_code.value)
+            .order_by(func.coalesce(enseignants.c.total, 0).desc(), Utilisateur.email)
+            .limit(1)
+        )
+    elif role_code is RoleCode.SCHOOL_ADMIN:
         classes = (
             select(Classe.etablissement_id, func.count().label("total"))
             .group_by(Classe.etablissement_id)

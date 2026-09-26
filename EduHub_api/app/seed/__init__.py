@@ -61,6 +61,13 @@ async def executer(echelle: str | None = None, graine: int | None = None) -> dic
             await session.commit()
             logger.info("  ✔ %s (%.1f s)", libelle, time.perf_counter() - etape_depart)
 
+        # En dernier, quand tous les acteurs existent : une adresse mémorable
+        # par rôle, pour que la page de connexion puisse les proposer.
+        from app.seed import comptes_demonstration
+
+        await comptes_demonstration.generer(contexte)
+        await session.commit()
+
     duree = time.perf_counter() - depart
     total = sum(contexte.statistiques.values())
     logger.info("Génération terminée : %d lignes en %.1f s.", total, duree)

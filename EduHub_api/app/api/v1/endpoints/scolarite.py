@@ -14,7 +14,7 @@ from app.core.enums import Action
 from app.core.exceptions import BusinessRuleError, ConflictError
 from app.engines import workflow
 from app.engines.audit import journaliser
-from app.engines.portee import Portee
+from app.engines.portee import Portee, exiger_pilotage
 from app.engines.search import DescripteurChamp
 from app.models.apprenant import Apprenant
 from app.models.pedagogie import (
@@ -652,6 +652,7 @@ async def statistiques_scolarite(
     annee_id: Annotated[uuid.UUID | None, Query()] = None,
 ) -> dict:
     contexte.exiger("analytics", Action.READ)
+    exiger_pilotage(contexte)
 
     stmt = select(func.count()).select_from(Inscription)
     if annee_id:

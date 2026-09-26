@@ -28,7 +28,7 @@ from app.engines.espace_personnel import (
     prochaines_evaluations,
     repartition_par_niveau,
 )
-from app.engines.portee import Portee, resoudre_perimetre
+from app.engines.portee import Portee, exiger_pilotage, resoudre_perimetre
 from app.engines.reporting import BlocTableau, EnTeteDocument, exporter_csv, generer_document
 from app.engines.search import Conjonction, Critere, DescripteurChamp, Operateur
 from app.models.apprenant import Apprenant
@@ -159,6 +159,7 @@ async def tableau_national(
     annee_id: Annotated[uuid.UUID | None, Query()] = None,
 ) -> TableauBord:
     contexte.exiger("analytics", Action.READ)
+    exiger_pilotage(contexte)
 
     indicateurs = await tableau_bord_national(session, annee_id)
     territoires = await effectifs_par_departement(session, annee_id)
@@ -242,6 +243,7 @@ async def synthese_territoriale(
     session_examen_id: Annotated[uuid.UUID | None, Query()] = None,
 ) -> list[SyntheseTerritoriale]:
     contexte.exiger("analytics", Action.READ)
+    exiger_pilotage(contexte)
 
     effectifs = {ligne["code"]: ligne for ligne in await effectifs_par_departement(session)}
     resultats = (
@@ -847,6 +849,7 @@ async def indicateurs(
     annee_id: Annotated[uuid.UUID | None, Query()] = None,
 ) -> list[dict]:
     contexte.exiger("analytics", Action.READ)
+    exiger_pilotage(contexte)
     stmt = select(IndicateurStatistique).where(
         IndicateurStatistique.perimetre_type == perimetre_type
     )
@@ -1087,6 +1090,7 @@ async def comparaison_annuelle(
     identifiant: uuid.UUID, session: SessionDep, contexte: ContexteDep
 ) -> dict:
     contexte.exiger("analytics", Action.READ)
+    exiger_pilotage(contexte)
     await obtenir_ou_404(session, AnneeAcademique, identifiant, "Année académique")
 
     stmt = (

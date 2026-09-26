@@ -73,6 +73,7 @@ export function AccueilPersonnel() {
     entrees: groupe.entrees.filter((entree) => {
       // L'accueil lui-même n'a pas à figurer parmi les destinations proposées.
       if (entree.href === '/tableau-de-bord') return false;
+      if (entree.porteesExclues?.includes(utilisateur?.niveau_scope ?? '')) return false;
       if (!entree.permission) return true;
       const [ressource, action] = entree.permission.split(':');
       return peut(ressource, action);

@@ -12,7 +12,7 @@ from app.api.deps import ContexteDep, MetadonneesDep, SessionDep
 from app.core.enums import Action
 from app.core.exceptions import BusinessRuleError
 from app.engines.audit import journaliser
-from app.engines.portee import Portee
+from app.engines.portee import Portee, exiger_classe_dans_la_portee
 from app.engines.reporting import exporter_csv
 from app.engines.search import DescripteurChamp
 from app.models.apprenant import Apprenant
@@ -520,6 +520,10 @@ async def statistiques_classe(
 ) -> StatistiquesClasse:
     contexte.exiger("analytics", Action.READ)
     classe = await obtenir_ou_404(session, Classe, identifiant, "Classe")
+    # Sans cette vérification, un enseignant lisait les statistiques de
+    # n'importe quelle classe du pays : la permission ouvre la fonction, elle ne
+    # désigne pas les classes auxquelles elle s'applique.
+    await exiger_classe_dans_la_portee(session, contexte, identifiant)
     periode = await obtenir_ou_404(session, Periode, periode_id, "Période")
 
     stmt = select(Bulletin.moyenne_generale).where(

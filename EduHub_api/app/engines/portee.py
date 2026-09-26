@@ -27,6 +27,7 @@ from sqlalchemy import ColumnElement, Select, false, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.enums import NiveauScope
+from app.core.exceptions import NotFoundError, PermissionDeniedError
 from app.engines.identity import ContexteUtilisateur
 from app.models.apprenant import Apprenant, ApprenantParent, Parent
 from app.models.examen import Candidat
@@ -211,6 +212,53 @@ def condition_etablissement(
     if len(conditions) == 1:
         return conditions[0]
     return or_(*conditions)
+
+
+def exiger_pilotage(contexte: ContexteUtilisateur) -> None:
+    """Réserve les vues nationales aux rôles qui pilotent le système.
+
+    La permission « analytics » dit qu'on sait lire des agrégats ; elle ne dit
+    pas jusqu'où. Un chef d'établissement en a besoin pour les statistiques de
+    ses classes, sans avoir pour autant vocation à consulter les chiffres du
+    pays. C'est donc le niveau de portée qui tranche, et non la permission.
+    """
+    if contexte.est_omnipotent:
+        return
+    if contexte.niveau_max in (NiveauScope.PERSONNEL, NiveauScope.ETABLISSEMENT):
+        raise PermissionDeniedError(
+            "Cette vue couvre l'ensemble du territoire ; votre périmètre est plus restreint.",
+            details={"niveau": contexte.niveau_max.value},
+        )
+
+
+async def exiger_classe_dans_la_portee(
+    session: AsyncSession,
+    contexte: ContexteUtilisateur,
+    classe_id: uuid.UUID,
+) -> None:
+    """Refuse l'accès à une classe hors du périmètre de l'appelant.
+
+    Comme ailleurs, on répond introuvable plutôt qu'interdit : confirmer
+    l'existence d'une classe renseigne déjà sur l'établissement qui l'abrite.
+    """
+    if contexte.est_omnipotent:
+        return
+    if contexte.niveau_max not in (NiveauScope.PERSONNEL, NiveauScope.ETABLISSEMENT):
+        return
+
+    perimetre = await resoudre_perimetre(session, contexte)
+    if contexte.niveau_max is NiveauScope.ETABLISSEMENT:
+        autorisee = await session.scalar(
+            select(Classe.id).where(
+                Classe.id == classe_id,
+                Classe.etablissement_id.in_(perimetre.etablissements or {uuid.uuid4()}),
+            )
+        )
+    else:
+        autorisee = classe_id if classe_id in perimetre.classes else None
+
+    if autorisee is None:
+        raise NotFoundError("Classe introuvable.", details={"id": str(classe_id)})
 
 
 def condition_portee(

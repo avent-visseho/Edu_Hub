@@ -51,6 +51,14 @@ export interface EntreeNavigation {
   /** Permission requise, au format `ressource:action`. */
   permission?: string;
   /**
+   * Portées pour lesquelles l'entrée n'a pas de sens.
+   *
+   * Les vues nationales en font partie : la permission « analytics » sert
+   * aussi aux statistiques d'une classe, dont un chef d'établissement a besoin,
+   * mais elle ne lui donne pas vocation à consulter les chiffres du pays.
+   */
+  porteesExclues?: string[];
+  /**
    * Libellé employé pour les comptes dont la portée est personnelle.
    *
    * « Apprenants » décrit un registre national ; pour l'élève qui n'y trouve
@@ -105,6 +113,7 @@ export const NAVIGATION: GroupeNavigation[] = [
         libelleSimple: 'Chiffres',
         pictogramme: '📊',
         href: '/statistiques',
+        porteesExclues: ['PERSONNEL', 'ETABLISSEMENT'],
         icone: BarChart3,
         permission: 'analytics:READ',
       },

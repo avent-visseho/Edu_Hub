@@ -59,6 +59,7 @@ export function Coquille({ children }: { children: ReactNode }) {
     ...groupe,
     entrees: groupe.entrees
       .filter((entree) => {
+        if (entree.porteesExclues?.includes(utilisateur?.niveau_scope ?? '')) return false;
         if (!entree.permission) return true;
         const [ressource, action] = entree.permission.split(':');
         return peut(ressource, action);

@@ -179,6 +179,56 @@ class TestTableauParRole:
         reponse = await client.get("/api/v1/tableaux-de-bord/national", headers=eleve)
         assert reponse.status_code == 403
 
+    async def test_vues_nationales_reservees_au_pilotage(
+        self,
+        client: AsyncClient,
+        eleve: dict[str, str],
+        directeur: dict[str, str],
+        entetes: dict[str, str],
+    ) -> None:
+        """Le périmètre décide, pas la seule permission.
+
+        Un chef d'établissement porte « analytics:READ » parce qu'il lui faut
+        les statistiques de ses classes ; cela ne lui donne pas vocation à
+        consulter les chiffres du pays.
+        """
+        for vue in ("/national", "/territoires"):
+            chemin = f"/api/v1/tableaux-de-bord{vue}"
+            assert (await client.get(chemin, headers=entetes)).status_code == 200
+            assert (await client.get(chemin, headers=directeur)).status_code == 403
+            assert (await client.get(chemin, headers=eleve)).status_code == 403
+
+    async def test_statistiques_d_une_classe_etrangere_introuvables(
+        self, client: AsyncClient, directeur: dict[str, str], entetes: dict[str, str]
+    ) -> None:
+        """La permission ouvre la fonction, elle ne désigne pas les classes.
+
+        Sans cette vérification, un chef d'établissement lisait les
+        statistiques de n'importe quelle classe du pays.
+        """
+        bulletins = await client.get("/api/v1/bulletins", headers=entetes, params={"size": 1})
+        periode = bulletins.json()["items"][0]["periode_id"]
+
+        toutes = await client.get("/api/v1/classes", headers=entetes, params={"size": 20})
+        siennes = await client.get("/api/v1/classes", headers=directeur, params={"size": 20})
+        identifiants = {ligne["id"] for ligne in siennes.json()["items"]}
+        etrangere = next(
+            ligne["id"] for ligne in toutes.json()["items"] if ligne["id"] not in identifiants
+        )
+
+        sienne = next(iter(identifiants))
+        parametres = {"periode_id": periode}
+        assert (
+            await client.get(
+                f"/api/v1/classes/{sienne}/statistiques", headers=directeur, params=parametres
+            )
+        ).status_code == 200
+        assert (
+            await client.get(
+                f"/api/v1/classes/{etrangere}/statistiques", headers=directeur, params=parametres
+            )
+        ).status_code == 404
+
     async def test_graphiques_propres_a_chaque_portee(
         self, client: AsyncClient, eleve: dict[str, str], directeur: dict[str, str]
     ) -> None:

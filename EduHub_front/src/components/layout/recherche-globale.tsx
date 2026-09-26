@@ -102,9 +102,7 @@ export function RechercheGlobale() {
           }}
           onFocus={() => setOuvert(true)}
           onKeyDown={auClavier}
-          placeholder={
-            modeSimplifie ? 'Chercher' : 'Rechercher un élève, une école, un diplôme…'
-          }
+          placeholder={modeSimplifie ? 'Chercher' : 'Rechercher un élève, une école, un diplôme…'}
           className="w-full bg-transparent text-sm outline-none placeholder:text-[rgb(var(--texte-doux))]"
         />
       </span>
@@ -119,9 +117,7 @@ export function RechercheGlobale() {
           {resultats.isLoading ? (
             <p className="px-4 py-3 text-sm texte-doux">Recherche en cours…</p>
           ) : liste.length === 0 ? (
-            <p className="px-4 py-3 text-sm texte-doux">
-              Aucun résultat pour « {differe} ».
-            </p>
+            <p className="px-4 py-3 text-sm texte-doux">Aucun résultat pour « {differe} ».</p>
           ) : (
             <ul className="max-h-80 overflow-y-auto">
               {liste.map((resultat, index) => (
@@ -145,9 +141,7 @@ export function RechercheGlobale() {
                         </span>
                       ) : null}
                     </span>
-                    <span className="shrink-0 text-xs texte-doux">
-                      {humaniser(resultat.type)}
-                    </span>
+                    <span className="shrink-0 text-xs texte-doux">{humaniser(resultat.type)}</span>
                   </button>
                 </li>
               ))}
